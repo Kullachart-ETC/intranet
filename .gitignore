@@ -1,0 +1,4 @@
+node_modules/
+intranet.db
+*.db-journal
+.env

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intranet บริษัท</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size:15px}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+.topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:52px;position:sticky;top:0;z-index:10}
+.logo{font-size:17px;font-weight:600;color:#1a1a18}.logo span{color:#1D9E75}
+.nav{display:flex;gap:4px;margin-left:auto}
+.nav button{background:none;border:none;padding:7px 14px;border-radius:8px;font-size:14px;cursor:pointer;color:#666;display:flex;align-items:center;gap:6px;font-family:'Sarabun',sans-serif}
+.nav button:hover{background:#f0f0ec}
+.nav button.active{background:#f0f0ec;color:#1a1a18;font-weight:500}
+.page{display:none;padding:1.5rem;max-width:1100px;margin:0 auto}
+.page.active{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.page-header h2{font-size:19px;font-weight:600}
+.btn{background:none;border:1px solid #ccc;padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Sarabun',sans-serif;color:#444}
+.btn:hover{background:#f0f0ec}
+.btn-primary{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.btn-primary:hover{background:#18896a}
+.btn-danger{background:#e24b4a;color:#fff;border-color:#e24b4a}
+.btn-danger:hover{background:#c03d3c}
+
+/* Posts */
+.posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.post-card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.1rem 1.25rem}
+.post-card.pinned{border-top:3px solid #1D9E75}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:500}
+.tag-announce{background:#E1F5EE;color:#0F6E56}
+.tag-event{background:#E6F1FB;color:#185FA5}
+.tag-urgent{background:#FCEBEB;color:#A32D2D}
+.tag-welfare{background:#FBEAF0;color:#993556}
+.post-title{font-size:15px;font-weight:600;margin-bottom:6px}
+.post-body{font-size:13px;color:#666;line-height:1.6;margin-bottom:10px}
+.post-meta{font-size:12px;color:#999;display:flex;justify-content:space-between;align-items:center}
+.post-del{background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0 4px}
+.post-del:hover{color:#e24b4a}
+
+/* Modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:480px;max-width:95vw}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:1rem}
+.form-row{margin-bottom:12px}
+.form-row label{font-size:13px;color:#666;display:block;margin-bottom:4px}
+.form-row input,.form-row select,.form-row textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 12px;font-size:14px;font-family:'Sarabun',sans-serif;background:#fff}
+.form-row textarea{height:80px;resize:vertical}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:#1D9E75}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+
+/* Calendar */
+.cal-wrap{display:grid;grid-template-columns:200px 1fr;gap:1rem;align-items:start}
+.sidebar{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem}
+.sidebar h3{font-size:13px;font-weight:600;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.emp-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13px}
+.emp-item:hover{background:#f5f5f3}
+.emp-item.sel{background:#f0f0ec;font-weight:500}
+.emp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.emp-sub{font-size:11px;color:#999}
+.cal-box{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.cal-nav span{font-size:15px;font-weight:600}
+.cal-nav button{background:none;border:1px solid #ddd;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.day-head{text-align:center;font-size:12px;color:#888;padding:4px;font-weight:600}
+.day-cell{min-height:70px;border:1px solid #eee;border-radius:6px;padding:4px;font-size:12px;cursor:pointer}
+.day-cell:hover{background:#f5f5f3}
+.day-cell.other{color:#ccc;background:none;border-color:transparent}
+.day-cell.today{border-color:#1D9E75}
+.day-num{font-size:11px;color:#999;margin-bottom:2px}
+.day-cell.today .day-num{background:#1D9E75;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.ev-chip{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#fff;cursor:pointer}
+
+/* Rooms */
+.date-row{display:flex;align-items:center;gap:8px}
+.date-row label{font-size:13px;color:#666}
+.date-row input{border:1px solid #ddd;border-radius:8px;padding:6px 10px;font-size:13px;font-family:'Sarabun',sans-serif}
+.rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.room-card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.1rem}
+.room-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:10px}
+.room-name{font-size:15px;font-weight:600}
+.room-cap{font-size:12px;color:#888;margin-top:2px}
+.badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.badge-free{background:#E1F5EE;color:#0F6E56}
+.badge-full{background:#FCEBEB;color:#A32D2D}
+.slot{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:6px;font-size:12px;margin-bottom:3px}
+.slot.free{background:#f5f5f3;cursor:pointer}
+.slot.free:hover{background:#e8e8e4}
+.slot.booked{background:#FCEBEB}
+.slot-time{color:#666}
+.slot-who{color:#999;font-size:11px;flex:1;margin:0 8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.slot-act{font-size:11px;color:#0F6E56;font-weight:500}
+.slot-cancel{font-size:11px;color:#A32D2D;cursor:pointer;border:none;background:none;font-family:'Sarabun',sans-serif;padding:0}
+.slot-cancel:hover{text-decoration:underline}
+.loading{text-align:center;padding:3rem;color:#888}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><span>●</span> Intranet บริษัท</div>
+  <nav class="nav">
+    <button class="active" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
+    <button onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
+    <button onclick="showPage('rooms',this)">🚪 จองห้องประชุม</button>
+  </nav>
+</div>
+
+<!-- BOARD -->
+<div id="page-board" class="page active">
+  <div class="page-header">
+    <h2>Board ประชาสัมพันธ์</h2>
+    <button class="btn btn-primary" onclick="openModal('post-modal')">+ โพสต์ใหม่</button>
+  </div>
+  <div class="posts-grid" id="posts-list"><div class="loading">กำลังโหลด...</div></div>
+</div>
+
+<!-- CALENDAR -->
+<div id="page-calendar" class="page">
+  <div class="page-header">
+    <h2>ปฏิทินการทำงาน</h2>
+    <button class="btn btn-primary" onclick="openModal('ev-modal')">+ เพิ่มกิจกรรม</button>
+  </div>
+  <div class="cal-wrap">
+    <div class="sidebar">
+      <h3>พนักงาน</h3>
+      <div id="emp-list"><div class="loading">โหลด...</div></div>
+    </div>
+    <div class="cal-box">
+      <div class="cal-nav">
+        <button onclick="changeMonth(-1)">‹</button>
+        <span id="month-label"></span>
+        <button onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ROOMS -->
+<div id="page-rooms" class="page">
+  <div class="page-header">
+    <h2>จองห้องประชุม</h2>
+    <div class="date-row">
+      <label>วันที่</label>
+      <input type="date" id="room-date" onchange="renderRooms()">
+    </div>
+  </div>
+  <div class="rooms-grid" id="rooms-list"><div class="loading">กำลังโหลด...</div></div>
+</div>
+
+<!-- POST MODAL -->
+<div class="overlay" id="post-modal">
+  <div class="modal">
+    <h3>โพสต์ประชาสัมพันธ์ใหม่</h3>
+    <div class="form-row"><label>หัวข้อ</label><input id="p-title" type="text" placeholder="หัวข้อประกาศ"></div>
+    <div class="form-row"><label>ประเภท</label>
+      <select id="p-type">
+        <option value="announce">ประกาศทั่วไป</option>
+        <option value="event">กิจกรรม</option>
+        <option value="urgent">ด่วน</option>
+        <option value="welfare">สวัสดิการ</option>
+      </select>
+    </div>
+    <div class="form-row"><label>รายละเอียด</label><textarea id="p-body" placeholder="รายละเอียด..."></textarea></div>
+    <div class="form-row"><label>ผู้โพสต์ / ฝ่าย</label><input id="p-author" type="text" placeholder="เช่น ฝ่าย HR"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('post-modal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitPost()">โพสต์</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="overlay" id="ev-modal">
+  <div class="modal">
+    <h3>เพิ่มกิจกรรม</h3>
+    <div class="form-row"><label>พนักงาน</label><select id="ev-emp"></select></div>
+    <div class="form-row"><label>วันที่</label><input id="ev-date" type="date"></div>
+    <div class="form-row"><label>ประเภท</label>
+      <select id="ev-type">
+        <option value="work">ทำงานปกติ</option>
+        <option value="leave">ลาพักร้อน</option>
+        <option value="sick">ลาป่วย</option>
+        <option value="wfh">WFH</option>
+        <option value="trip">ออกพื้นที่</option>
+      </select>
+    </div>
+    <div class="form-row"><label>หมายเหตุ</label><input id="ev-note" type="text" placeholder="(ไม่บังคับ)"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('ev-modal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitEvent()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="overlay" id="bk-modal">
+  <div class="modal">
+    <h3>จองห้องประชุม</h3>
+    <div class="form-row"><label>ห้อง</label><input id="bk-room" type="text" readonly style="background:#f5f5f3"></div>
+    <div class="form-row"><label>ช่วงเวลา</label><input id="bk-slot" type="text" readonly style="background:#f5f5f3"></div>
+    <div class="form-row"><label>ชื่อผู้จอง / ฝ่าย</label><input id="bk-name" type="text" placeholder="เช่น สมชาย / ฝ่าย IT"></div>
+    <div class="form-row"><label>วัตถุประสงค์</label><input id="bk-purpose" type="text" placeholder="เช่น ประชุมทีม, นำเสนองาน"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('bk-modal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="confirmBooking()">ยืนยันจอง</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROOMS = [
+  {name:'ห้องบัวหลวง', cap:20, fac:'จอ LED 85", Whiteboard, VC'},
+  {name:'ห้องจามจุรี', cap:10, fac:'TV 65", Whiteboard'},
+  {name:'ห้องราชพฤกษ์', cap:6,  fac:'TV 55"'},
+  {name:'ห้องแก้วมังกร', cap:30, fac:'จอ LED 98", เวที, Mic'},
+];
+const SLOTS = ['08:00–09:00','09:00–10:00','10:00–11:00','11:00–12:00','13:00–14:00','14:00–15:00','15:00–16:00','16:00–17:00'];
+const EV_COLOR = {work:'#1D9E75',leave:'#185FA5',sick:'#A32D2D',wfh:'#534AB7',trip:'#BA7517'};
+const EV_LABEL = {work:'ทำงาน',leave:'ลาพักร้อน',sick:'ลาป่วย',wfh:'WFH',trip:'ออกพื้นที่'};
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TAG_MAP = {announce:{cls:'tag-announce',label:'ประกาศ'},event:{cls:'tag-event',label:'กิจกรรม'},urgent:{cls:'tag-urgent',label:'ด่วน'},welfare:{cls:'tag-welfare',label:'สวัสดิการ'}};
+
+let state = {
+  posts:[], employees:[], events:[], bookings:[],
+  selectedEmp:null, calYear:new Date().getFullYear(), calMonth:new Date().getMonth(),
+  pendingBooking:null
+};
+
+// ======== UTILS ========
+const $ = id => document.getElementById(id);
+function todayStr() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+}
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  $('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'calendar') renderCalendar();
+  if (id === 'rooms') renderRooms();
+}
+
+// ======== API ========
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('/api' + path, opts);
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error || 'เกิดข้อผิดพลาด'); }
+  return r.json();
+}
+
+async function loadAll() {
+  const [posts, employees, events, bookings] = await Promise.all([
+    api('/posts'), api('/employees'), api('/events'), api('/bookings')
+  ]);
+  state.posts = posts;
+  state.employees = employees;
+  state.events = events;
+  state.bookings = bookings;
+}
+
+// ======== BOARD ========
+function renderBoard() {
+  const pinned = state.posts.filter(p=>p.pinned);
+  const rest   = state.posts.filter(p=>!p.pinned);
+  const all = [...pinned, ...rest];
+  if (!all.length) { $('posts-list').innerHTML = '<div class="loading">ยังไม่มีประกาศ</div>'; return; }
+  $('posts-list').innerHTML = all.map(p => {
+    const t = TAG_MAP[p.type] || TAG_MAP.announce;
+    return `<div class="post-card${p.pinned?' pinned':''}">
+      <span class="tag ${t.cls}">${p.pinned?'📌 ':''}${t.label}</span>
+      <div class="post-title">${p.title}</div>
+      <div class="post-body">${p.body}</div>
+      <div class="post-meta">
+        <span>${p.author} · ${p.date}</span>
+        <button class="post-del" onclick="deletePost(${p.id})" title="ลบ">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function submitPost() {
+  const title = $('p-title').value.trim();
+  const body  = $('p-body').value.trim();
+  if (!title || !body) { alert('กรุณากรอกหัวข้อและรายละเอียด'); return; }
+  await api('/posts', 'POST', {
+    title, body,
+    type:   $('p-type').value,
+    author: $('p-author').value.trim() || 'ไม่ระบุ',
+    date:   new Date().toLocaleDateString('th-TH'),
+    pinned: false
+  });
+  closeModal('post-modal');
+  ['p-title','p-body','p-author'].forEach(id => $(id).value='');
+  state.posts = await api('/posts');
+  renderBoard();
+}
+
+async function deletePost(id) {
+  if (!confirm('ต้องการลบประกาศนี้?')) return;
+  await api('/posts/'+id, 'DELETE');
+  state.posts = await api('/posts');
+  renderBoard();
+}
+
+// ======== CALENDAR ========
+function renderEmpList() {
+  const items = [
+    `<div class="emp-item${state.selectedEmp===null?' sel':''}" onclick="selectEmp(null)">
+      <div class="emp-dot" style="background:#888"></div><span>ทุกคน</span>
+    </div>`
+  ].concat(state.employees.map((e,i) =>
+    `<div class="emp-item${state.selectedEmp===i?' sel':''}" onclick="selectEmp(${i})">
+      <div class="emp-dot" style="background:${e.color}"></div>
+      <div><div>${e.name}</div><div class="emp-sub">${e.dept}</div></div>
+    </div>`
+  ));
+  $('emp-list').innerHTML = items.join('');
+  // Populate employee select in modal
+  $('ev-emp').innerHTML = state.employees.map((e,i)=>`<option value="${i}">${e.name} (${e.dept})</option>`).join('');
+}
+
+function selectEmp(idx) { state.selectedEmp = idx; renderEmpList(); renderCal(); }
+
+function renderCalendar() { renderEmpList(); renderCal(); }
+
+function renderCal() {
+  $('month-label').textContent = `${MONTHS_TH[state.calMonth]} ${state.calYear + 543}`;
+  const first = new Date(state.calYear, state.calMonth, 1).getDay();
+  const days  = new Date(state.calYear, state.calMonth+1, 0).getDate();
+  const today = new Date();
+  const DAYS  = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  let html = DAYS.map(d=>`<div class="day-head">${d}</div>`).join('');
+  for (let i=0; i<first; i++) html += `<div class="day-cell other"></div>`;
+  for (let d=1; d<=days; d++) {
+    const ds = `${state.calYear}-${String(state.calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getFullYear()===state.calYear && today.getMonth()===state.calMonth && today.getDate()===d;
+    const evs = state.events.filter(e => e.date===ds && (state.selectedEmp===null || e.emp_idx===state.selectedEmp));
+    const chips = evs.map(e => {
+      const emp = state.employees[e.emp_idx] || {};
+      const color = state.selectedEmp===null ? (emp.color||'#888') : (EV_COLOR[e.type]||'#888');
+      const label = state.selectedEmp===null ? (emp.name||'').split(' ')[0] : EV_LABEL[e.type];
+      return `<div class="ev-chip" style="background:${color}" title="${emp.name}: ${EV_LABEL[e.type]}" onclick="deleteEventPrompt(${e.id})">${label}</div>`;
+    }).join('');
+    html += `<div class="day-cell${isToday?' today':''}" onclick="pickDate('${ds}')">
+      <div class="day-num">${d}</div>${chips}
+    </div>`;
+  }
+  $('cal-grid').innerHTML = html;
+}
+
+function changeMonth(d) {
+  state.calMonth += d;
+  if (state.calMonth < 0) { state.calMonth=11; state.calYear--; }
+  if (state.calMonth > 11) { state.calMonth=0; state.calYear++; }
+  renderCal();
+}
+
+function pickDate(ds) {
+  $('ev-date').value = ds;
+  if (state.selectedEmp !== null) $('ev-emp').value = state.selectedEmp;
+  openModal('ev-modal');
+}
+
+async function submitEvent() {
+  const emp_idx = parseInt($('ev-emp').value);
+  const date    = $('ev-date').value;
+  const type    = $('ev-type').value;
+  const note    = $('ev-note').value;
+  if (!date) { alert('กรุณาเลือกวันที่'); return; }
+  await api('/events','POST',{emp_idx,date,type,note});
+  closeModal('ev-modal');
+  $('ev-note').value = '';
+  state.events = await api('/events');
+  renderCal();
+}
+
+async function deleteEventPrompt(id) {
+  if (!confirm('ต้องการลบกิจกรรมนี้?')) return;
+  await api('/events/'+id,'DELETE');
+  state.events = await api('/events');
+  renderCal();
+}
+
+// ======== ROOMS ========
+function renderRooms() {
+  const date = $('room-date').value || todayStr();
+  $('room-date').value = date;
+  $('rooms-list').innerHTML = ROOMS.map((r,ri) => {
+    const bks = state.bookings.filter(b => b.room_idx===ri && b.date===date);
+    const bookedSlots = bks.map(b=>b.slot);
+    const freeCount = SLOTS.length - bookedSlots.length;
+    const badgeHtml = freeCount > 0
+      ? `<span class="badge badge-free">ว่าง ${freeCount} ช่วง</span>`
+      : `<span class="badge badge-full">เต็ม</span>`;
+    const slotsHtml = SLOTS.map(s => {
+      const bk = bks.find(b=>b.slot===s);
+      if (bk) return `<div class="slot booked">
+        <span class="slot-time">${s}</span>
+        <span class="slot-who">${bk.name} — ${bk.purpose}</span>
+        <button class="slot-cancel" onclick="cancelBooking(${bk.id})">ยกเลิก</button>
+      </div>`;
+      return `<div class="slot free" onclick="openBooking(${ri},'${s}','${date}')">
+        <span class="slot-time">${s}</span>
+        <span class="slot-act">จอง</span>
+      </div>`;
+    }).join('');
+    return `<div class="room-card">
+      <div class="room-head">
+        <div><div class="room-name">${r.name}</div><div class="room-cap">👥 ${r.cap} คน · ${r.fac}</div></div>
+        ${badgeHtml}
+      </div>
+      <div>${slotsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function openBooking(ri, slot, date) {
+  state.pendingBooking = {room_idx:ri, slot, date};
+  $('bk-room').value = ROOMS[ri].name;
+  $('bk-slot').value = slot;
+  $('bk-name').value = '';
+  $('bk-purpose').value = '';
+  openModal('bk-modal');
+}
+
+async function confirmBooking() {
+  const name = $('bk-name').value.trim();
+  if (!name) { alert('กรุณาระบุชื่อผู้จอง'); return; }
+  const purpose = $('bk-purpose').value.trim() || '—';
+  try {
+    await api('/bookings','POST', {...state.pendingBooking, name, purpose});
+    closeModal('bk-modal');
+    state.bookings = await api('/bookings');
+    renderRooms();
+  } catch(e) { alert(e.message); }
+}
+
+async function cancelBooking(id) {
+  if (!confirm('ต้องการยกเลิกการจองนี้?')) return;
+  await api('/bookings/'+id,'DELETE');
+  state.bookings = await api('/bookings');
+  renderRooms();
+}
+
+// ======== INIT ========
+(async () => {
+  await loadAll();
+  renderBoard();
+  $('room-date').value = todayStr();
+})();
+</script>
+</body>
+</html>
