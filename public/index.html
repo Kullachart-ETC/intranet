@@ -724,9 +724,11 @@ async function changePassword(){const pw=$('pw-new').value;if(!pw){alert('กร
     const[posts,employees,events,bookings]=await Promise.all([api('/posts'),api('/employees'),api('/events'),api('/bookings')]);
     state.posts=posts;state.employees=employees;state.events=events;state.bookings=bookings;
     renderBoard();$('room-date').value=todayStr();
-    // โหลดจำนวนรออนุมัติ
-    const pending=await api('/leave/pending');
-    $('pending-count').textContent=pending.length||'';
+    // โหลดจำนวนรออนุมัติ (ไม่ throw error ถ้าไม่มีสิทธิ์)
+    try{
+      const pending=await api('/leave/pending');
+      $('pending-count').textContent=pending.length||'';
+    }catch(e){}
   }catch(e){window.location.replace('/login');}
 })();
 </script>
