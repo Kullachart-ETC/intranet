@@ -72,6 +72,8 @@ async function initDB() {
       slot TEXT, name TEXT, purpose TEXT,
       user_id INTEGER
     );
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS time_start TEXT;
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS time_end TEXT;
     CREATE TABLE IF NOT EXISTS leave_requests (
       id SERIAL PRIMARY KEY,
       leave_no TEXT UNIQUE,
@@ -166,13 +168,28 @@ app.get('/api/me', (req, res) => {
   else res.status(401).json({ error: 'ไม่ได้เข้าสู่ระบบ' });
 });
 
-// Static
+// Static สำหรับ assets เท่านั้น (css, js, png) ไม่รวม index.html
+app.use('/login', (req, res) => {
+  if (req.session && req.session.user) return res.redirect('/');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.use('/logo.png', (req, res) => res.sendFile(path.join(__dirname, 'public', 'logo.png')));
+
+// ทุก route ที่ไม่ใช่ /api และ /login ต้อง login ก่อน
 app.use((req, res, next) => {
-  if (req.path === '/login' || req.path.startsWith('/api/')) return next();
+  if (req.path.startsWith('/api/')) return next();
   if (!req.session.user) return res.redirect('/login');
   next();
 });
-app.use(express.static(path.join(__dirname, 'public')));
+
+// ส่ง index.html เฉพาะเมื่อ login แล้ว พร้อม no-cache header
+app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ======== API Users ========
 app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
@@ -278,8 +295,9 @@ app.post('/api/bookings', requireLogin, async (req, res) => {
   const { room_idx, date, slot, name, purpose } = req.body;
   const existing = await pool.query('SELECT id FROM bookings WHERE room_idx=$1 AND date=$2 AND slot=$3', [room_idx, date, slot]);
   if (existing.rows.length > 0) return res.status(409).json({ error: 'ช่วงเวลานี้ถูกจองแล้ว' });
-  await pool.query('INSERT INTO bookings (room_idx,date,slot,name,purpose,user_id) VALUES ($1,$2,$3,$4,$5,$6)',
-    [room_idx, date, slot, name, purpose, req.session.user.id]);
+  const { time_start, time_end } = req.body;
+  await pool.query('INSERT INTO bookings (room_idx,date,slot,name,purpose,user_id,time_start,time_end) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [room_idx, date, slot, name, purpose, req.session.user.id, time_start||'', time_end||'']);
   res.json({ ok: true });
 });
 app.delete('/api/bookings/:id', requireLogin, async (req, res) => {
