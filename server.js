@@ -55,8 +55,13 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS events (
       id SERIAL PRIMARY KEY,
       emp_idx INTEGER, date TEXT, type TEXT, note TEXT,
+      title TEXT, time_start TEXT, time_end TEXT,
       user_id INTEGER
     );
+    -- เพิ่ม column ถ้ายังไม่มี (กรณี table มีอยู่แล้ว)
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS title TEXT;
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS time_start TEXT;
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS time_end TEXT;
     CREATE TABLE IF NOT EXISTS employees (
       id SERIAL PRIMARY KEY,
       name TEXT, dept TEXT, color TEXT
@@ -252,9 +257,11 @@ app.get('/api/events', requireLogin, async (req, res) => {
   res.json(r.rows);
 });
 app.post('/api/events', requireLogin, async (req, res) => {
-  const { emp_idx, date, type, note } = req.body;
-  await pool.query('INSERT INTO events (emp_idx,date,type,note,user_id) VALUES ($1,$2,$3,$4,$5)',
-    [emp_idx, date, type, note, req.session.user.id]);
+  const { emp_idx, date, type, note, title, time_start, time_end } = req.body;
+  await pool.query(
+    'INSERT INTO events (emp_idx,date,type,note,title,time_start,time_end,user_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [emp_idx, date, type, note||'', title||'', time_start||'', time_end||'', req.session.user.id]
+  );
   res.json({ ok: true });
 });
 app.delete('/api/events/:id', requireLogin, async (req, res) => {

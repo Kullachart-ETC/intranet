@@ -266,8 +266,13 @@ tr:last-child td{border-bottom:none}
     <h3>เพิ่มกิจกรรม</h3>
     <div class="form-row" id="ev-emp-row"><label>พนักงาน</label><select id="ev-emp"></select></div>
     <div class="form-row"><label>วันที่</label><input id="ev-date" type="date"></div>
+    <div class="form-row"><label>ชื่อกิจกรรม</label><input id="ev-title" type="text" placeholder="เช่น ประชุมกับลูกค้า, เยี่ยมลูกค้า"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row"><label>เวลาเริ่ม</label><input id="ev-time-start" type="time" value="09:00"></div>
+      <div class="form-row"><label>เวลาสิ้นสุด</label><input id="ev-time-end" type="time" value="10:00"></div>
+    </div>
     <div class="form-row"><label>ประเภท</label>
-      <select id="ev-type"><option value="work">ทำงานปกติ</option><option value="leave">ลาพักร้อน</option><option value="sick">ลาป่วย</option><option value="wfh">WFH</option><option value="trip">ออกพื้นที่</option></select>
+      <select id="ev-type"><option value="work">ทำงานปกติ</option><option value="meeting">ประชุม</option><option value="leave">ลาพักร้อน</option><option value="sick">ลาป่วย</option><option value="wfh">WFH</option><option value="trip">ออกพื้นที่</option></select>
     </div>
     <div class="form-row"><label>หมายเหตุ</label><input id="ev-note" type="text" placeholder="(ไม่บังคับ)"></div>
     <div class="modal-footer">
@@ -350,8 +355,8 @@ tr:last-child td{border-bottom:none}
 <script>
 const ROOMS=[{name:'ห้องบัวหลวง',cap:20,fac:'จอ LED 85", Whiteboard, VC'},{name:'ห้องจามจุรี',cap:10,fac:'TV 65", Whiteboard'},{name:'ห้องราชพฤกษ์',cap:6,fac:'TV 55"'},{name:'ห้องแก้วมังกร',cap:30,fac:'จอ LED 98", เวที, Mic'}];
 const SLOTS=['08:00–09:00','09:00–10:00','10:00–11:00','11:00–12:00','13:00–14:00','14:00–15:00','15:00–16:00','16:00–17:00'];
-const EV_COLOR={work:'#1D9E75',leave:'#185FA5',sick:'#A32D2D',wfh:'#534AB7',trip:'#BA7517'};
-const EV_LABEL={work:'ทำงาน',leave:'ลาพักร้อน',sick:'ลาป่วย',wfh:'WFH',trip:'ออกพื้นที่'};
+const EV_COLOR={work:'#1D9E75',meeting:'#0f2c6f',leave:'#185FA5',sick:'#A32D2D',wfh:'#534AB7',trip:'#BA7517'};
+const EV_LABEL={work:'ทำงาน',meeting:'ประชุม',leave:'ลาพักร้อน',sick:'ลาป่วย',wfh:'WFH',trip:'ออกพื้นที่'};
 const MONTHS_TH=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const TAG_MAP={announce:{cls:'tag-announce',label:'ประกาศ'},event:{cls:'tag-event',label:'กิจกรรม'},urgent:{cls:'tag-urgent',label:'ด่วน'},welfare:{cls:'tag-welfare',label:'สวัสดิการ'}};
 const LEAVE_NAMES={sick:'ลาป่วย',annual:'ลาพักร้อน',personal:'ลากิจจำเป็น',personal_special:'ลากิจพิเศษ',maternity:'ลาคลอด',ordain:'ลาบวช',military:'ลาราชการทหาร',marriage:'ลาสมรส',work_injury:'ลาป่วยเนื่องจากงาน',unpaid:'ลาตัดเงิน'};
@@ -437,13 +442,16 @@ function renderCal(){
     const ds=`${state.calYear}-${String(state.calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday=today.getFullYear()===state.calYear&&today.getMonth()===state.calMonth&&today.getDate()===d;
     const evs=state.events.filter(e=>e.date===ds&&(state.selectedEmp===null||e.emp_idx===state.selectedEmp));
-    html+=`<div class="day-cell${isToday?' today':''}" onclick="pickDate('${ds}')"><div class="day-num">${d}</div>${evs.map(e=>{const emp=state.employees[e.emp_idx]||{};const color=state.selectedEmp===null?(emp.color||'#888'):(EV_COLOR[e.type]||'#888');return`<div class="ev-chip" style="background:${color}" onclick="event.stopPropagation();deleteEventPrompt(${e.id})">${state.selectedEmp===null?(emp.name||'').split(' ')[0]:EV_LABEL[e.type]}</div>`;}).join('')}</div>`;
+    html+=`<div class="day-cell${isToday?' today':''}" onclick="pickDate('${ds}')"><div class="day-num">${d}</div>${evs.map(e=>{const emp=state.employees[e.emp_idx]||{};const color=state.selectedEmp===null?(emp.color||'#888'):(EV_COLOR[e.type]||'#888');const timeStr=e.time_start?e.time_start.substring(0,5):'';
+      const evTitle=e.title||EV_LABEL[e.type]||e.type;
+      const label=state.selectedEmp===null?(emp.name||'').split(' ')[0]:(timeStr?timeStr+' '+evTitle:evTitle);
+      return`<div class="ev-chip" style="background:${color}" title="${timeStr?timeStr+' - '+(e.time_end||'').substring(0,5)+' '+evTitle:evTitle}" onclick="event.stopPropagation();deleteEventPrompt(${e.id})">${label}</div>`;}).join('')}</div>`;
   }
   $('cal-grid').innerHTML=html;
 }
 function changeMonth(d){state.calMonth+=d;if(state.calMonth<0){state.calMonth=11;state.calYear--;}if(state.calMonth>11){state.calMonth=0;state.calYear++;}renderCal();}
-function pickDate(ds){$('ev-date').value=ds;if(state.selectedEmp!==null)$('ev-emp').value=state.selectedEmp;openModal('ev-modal');}
-async function submitEvent(){const date=$('ev-date').value;if(!date){alert('กรุณาเลือกวันที่');return;}await api('/events','POST',{emp_idx:parseInt($('ev-emp').value),date,type:$('ev-type').value,note:$('ev-note').value});closeModal('ev-modal');$('ev-note').value='';state.events=await api('/events');renderCal();}
+function pickDate(ds){$('ev-date').value=ds;$('ev-time-start').value='09:00';$('ev-time-end').value='10:00';if(state.selectedEmp!==null)$('ev-emp').value=state.selectedEmp;openModal('ev-modal');}
+async function submitEvent(){const date=$('ev-date').value;if(!date){alert('กรุณาเลือกวันที่');return;}await api('/events','POST',{emp_idx:parseInt($('ev-emp').value),date,type:$('ev-type').value,note:$('ev-note').value,title:$('ev-title').value,time_start:$('ev-time-start').value,time_end:$('ev-time-end').value});closeModal('ev-modal');$('ev-note').value='';$('ev-title').value='';state.events=await api('/events');renderCal();}
 async function deleteEventPrompt(id){if(!confirm('ต้องการลบ?'))return;await api('/events/'+id,'DELETE');state.events=await api('/events');renderCal();}
 
 // Rooms
