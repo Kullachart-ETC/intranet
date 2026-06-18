@@ -2,17 +2,6 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<script>
-// เช็ค login ก่อนแสดงหน้าเลย
-(async function(){
-  try{
-    const r = await fetch('/api/me');
-    if(!r.ok) window.location.replace('/login');
-  }catch(e){
-    window.location.replace('/login');
-  }
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intranet — EARTH (THAILAND)</title>
 <style>
