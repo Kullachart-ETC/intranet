@@ -72,6 +72,8 @@ async function initDB() {
       slot TEXT, name TEXT, purpose TEXT,
       user_id INTEGER
     );
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS time_start TEXT;
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS time_end TEXT;
     CREATE TABLE IF NOT EXISTS leave_requests (
       id SERIAL PRIMARY KEY,
       leave_no TEXT UNIQUE,
@@ -278,8 +280,9 @@ app.post('/api/bookings', requireLogin, async (req, res) => {
   const { room_idx, date, slot, name, purpose } = req.body;
   const existing = await pool.query('SELECT id FROM bookings WHERE room_idx=$1 AND date=$2 AND slot=$3', [room_idx, date, slot]);
   if (existing.rows.length > 0) return res.status(409).json({ error: 'ช่วงเวลานี้ถูกจองแล้ว' });
-  await pool.query('INSERT INTO bookings (room_idx,date,slot,name,purpose,user_id) VALUES ($1,$2,$3,$4,$5,$6)',
-    [room_idx, date, slot, name, purpose, req.session.user.id]);
+  const { time_start, time_end } = req.body;
+  await pool.query('INSERT INTO bookings (room_idx,date,slot,name,purpose,user_id,time_start,time_end) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+    [room_idx, date, slot, name, purpose, req.session.user.id, time_start||'', time_end||'']);
   res.json({ ok: true });
 });
 app.delete('/api/bookings/:id', requireLogin, async (req, res) => {
