@@ -169,7 +169,11 @@ app.get('/api/me', (req, res) => {
 });
 
 // Static สำหรับ assets เท่านั้น (css, js, png) ไม่รวม index.html
-app.use('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.use('/login', (req, res) => {
+  if (req.session && req.session.user) return res.redirect('/');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
 app.use('/logo.png', (req, res) => res.sendFile(path.join(__dirname, 'public', 'logo.png')));
 
 // ทุก route ที่ไม่ใช่ /api และ /login ต้อง login ก่อน
@@ -179,8 +183,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// ส่ง index.html เฉพาะเมื่อ login แล้ว
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// ส่ง index.html เฉพาะเมื่อ login แล้ว พร้อม no-cache header
+app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ======== API Users ========
 app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
