@@ -264,7 +264,7 @@ tr:last-child td{border-bottom:none}
 <div class="overlay" id="ev-modal">
   <div class="modal">
     <h3>เพิ่มกิจกรรม</h3>
-    <div class="form-row"><label>พนักงาน</label><select id="ev-emp"></select></div>
+    <div class="form-row" id="ev-emp-row"><label>พนักงาน</label><select id="ev-emp"></select></div>
     <div class="form-row"><label>วันที่</label><input id="ev-date" type="date"></div>
     <div class="form-row"><label>ประเภท</label>
       <select id="ev-type"><option value="work">ทำงานปกติ</option><option value="leave">ลาพักร้อน</option><option value="sick">ลาป่วย</option><option value="wfh">WFH</option><option value="trip">ออกพื้นที่</option></select>
@@ -410,9 +410,20 @@ async function deletePost(id){if(!confirm('ต้องการลบ?'))return
 
 // Calendar
 function renderEmpList(){
-  $('emp-list').innerHTML=[`<div class="emp-item${state.selectedEmp===null?' sel':''}" onclick="selectEmp(null)"><div class="emp-dot" style="background:#888"></div><span>ทุกคน</span></div>`]
-    .concat(state.employees.map((e,i)=>`<div class="emp-item${state.selectedEmp===i?' sel':''}" onclick="selectEmp(${i})"><div class="emp-dot" style="background:${e.color}"></div><div><div>${e.name}</div><div class="emp-sub">${e.dept}</div></div></div>`)).join('');
-  $('ev-emp').innerHTML=state.employees.map((e,i)=>`<option value="${i}">${e.name}</option>`).join('');
+  const isAdmin=state.me&&state.me.role==='admin';
+  if(isAdmin){
+    $('emp-list').innerHTML=[`<div class="emp-item${state.selectedEmp===null?' sel':''}" onclick="selectEmp(null)"><div class="emp-dot" style="background:#888"></div><span>ทุกคน</span></div>`]
+      .concat(state.employees.map((e,i)=>`<div class="emp-item${state.selectedEmp===i?' sel':''}" onclick="selectEmp(${i})"><div class="emp-dot" style="background:${e.color}"></div><div><div>${e.name}</div><div class="emp-sub">${e.dept}</div></div></div>`)).join('');
+    $('ev-emp').innerHTML=state.employees.map((e,i)=>`<option value="${i}">${e.name}</option>`).join('');
+    if($('ev-emp-row'))$('ev-emp-row').style.display='';
+  } else {
+    // user ทั่วไป เห็นเฉพาะตัวเอง
+    const myIdx=state.employees.findIndex(e=>e.id===state.me.id);
+    $('emp-list').innerHTML=state.employees.filter(e=>e.id===state.me.id).map((e,i)=>`<div class="emp-item sel"><div class="emp-dot" style="background:${e.color}"></div><div><div>${e.name}</div><div class="emp-sub">${e.dept}</div></div></div>`).join('');
+    $('ev-emp').innerHTML=state.employees.filter(e=>e.id===state.me.id).map((e,i)=>`<option value="${state.employees.indexOf(e)}">${e.name}</option>`).join('');
+    if($('ev-emp-row'))$('ev-emp-row').style.display='none';
+    if(myIdx>=0)state.selectedEmp=myIdx;
+  }
 }
 function selectEmp(idx){state.selectedEmp=idx;renderEmpList();renderCal();}
 function renderCalendar(){renderEmpList();renderCal();}
