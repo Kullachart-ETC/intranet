@@ -168,19 +168,19 @@ app.get('/api/me', (req, res) => {
   else res.status(401).json({ error: 'ไม่ได้เข้าสู่ระบบ' });
 });
 
-// Static — เช็ค session ก่อนส่งไฟล์ทุกไฟล์ยกเว้น login
+// Static สำหรับ assets เท่านั้น (css, js, png) ไม่รวม index.html
+app.use('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.use('/logo.png', (req, res) => res.sendFile(path.join(__dirname, 'public', 'logo.png')));
+
+// ทุก route ที่ไม่ใช่ /api และ /login ต้อง login ก่อน
 app.use((req, res, next) => {
-  if (req.path === '/login' || req.path.startsWith('/api/')) return next();
+  if (req.path.startsWith('/api/')) return next();
   if (!req.session.user) return res.redirect('/login');
   next();
 });
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Route หน้าหลัก — ส่ง index.html เฉพาะ login แล้วเท่านั้น
-app.get('/', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// ส่ง index.html เฉพาะเมื่อ login แล้ว
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // ======== API Users ========
 app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
