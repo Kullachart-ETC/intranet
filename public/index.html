@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intranet — EARTH (THAILAND)</title>
 <style>
@@ -144,6 +145,25 @@ tr:last-child td{border-bottom:none}
 .tabs{display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid #eee;padding-bottom:8px}
 .tab{background:none;border:none;padding:7px 14px;border-radius:8px;font-size:14px;cursor:pointer;color:#666;font-family:'Sarabun',sans-serif}
 .tab.active{background:#f0f0ec;color:#1a1a18;font-weight:500}
+
+/* Room Calendar */
+.room-cal-day{min-height:80px;border:1px solid #eee;border-radius:6px;padding:4px;cursor:pointer;font-size:12px}
+.room-cal-day:hover{background:#f5f5f3}
+.room-cal-day.other-month{color:#ccc;background:none;border-color:transparent}
+.room-cal-day.today-room{border-color:#1D9E75}
+.room-cal-day.selected-day{background:#f0f7f4;border-color:#1D9E75}
+.room-chip{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#fff;cursor:pointer}
+.room-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:4px}
+.room-item:hover{background:#f5f5f3}
+.room-item.active-room{background:#f0f0ec;font-weight:500}
+.room-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.booking-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:6px;border:1px solid #eee}
+.booking-time{font-size:13px;font-weight:500;white-space:nowrap;margin-right:10px}
+.booking-info{flex:1}
+.booking-name{font-size:13px;font-weight:500}
+.booking-purpose{font-size:12px;color:#888}
+.booking-room-tag{font-size:11px;padding:2px 8px;border-radius:20px;color:#fff;white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -194,10 +214,34 @@ tr:last-child td{border-bottom:none}
 
 <!-- ROOMS -->
 <div id="page-rooms" class="page">
-  <div class="page-header"><h2>จองห้องประชุม</h2>
-    <div class="date-row"><label>วันที่</label><input type="date" id="room-date" onchange="renderRooms()"></div>
+  <div class="page-header">
+    <h2>จองห้องประชุม</h2>
+    <button class="btn btn-primary" onclick="openBookingModal()">+ จองห้อง</button>
   </div>
-  <div class="rooms-grid" id="rooms-list"><div class="loading">กำลังโหลด...</div></div>
+  <div style="display:grid;grid-template-columns:180px 1fr;gap:1rem;align-items:start">
+    <!-- Room List Sidebar -->
+    <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
+      <div style="font-size:13px;font-weight:600;color:#888;margin-bottom:10px">ห้องประชุม</div>
+      <div id="room-sidebar"></div>
+    </div>
+    <!-- Calendar -->
+    <div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <button class="btn" onclick="changeRoomMonth(-1)">‹</button>
+        <span id="room-month-label" style="font-size:15px;font-weight:600"></span>
+        <button class="btn" onclick="changeRoomMonth(1)">›</button>
+      </div>
+      <div id="room-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+    </div>
+  </div>
+  <!-- Day Detail Modal -->
+  <div id="room-day-detail" style="display:none;margin-top:1rem;background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3 id="room-detail-title" style="font-size:15px;font-weight:600"></h3>
+      <button class="btn btn-primary btn-sm" onclick="openBookingModalDate()">+ จองวันนี้</button>
+    </div>
+    <div id="room-detail-content"></div>
+  </div>
 </div>
 
 <!-- LEAVE -->
@@ -285,10 +329,21 @@ tr:last-child td{border-bottom:none}
 <div class="overlay" id="bk-modal">
   <div class="modal">
     <h3>จองห้องประชุม</h3>
-    <div class="form-row"><label>ห้อง</label><input id="bk-room" type="text" readonly style="background:#f5f5f3"></div>
-    <div class="form-row"><label>ช่วงเวลา</label><input id="bk-slot" type="text" readonly style="background:#f5f5f3"></div>
+    <div class="form-row"><label>ห้อง</label>
+      <select id="bk-room-sel">
+        <option value="0">VIP (8 ที่นั่ง)</option>
+        <option value="1">Meeting 1 (30 ที่นั่ง)</option>
+        <option value="2">Meeting 2 (6 ที่นั่ง)</option>
+        <option value="3">Meeting 3 (12 ที่นั่ง)</option>
+      </select>
+    </div>
+    <div class="form-row"><label>วันที่</label><input id="bk-date" type="date"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row"><label>เวลาเริ่ม</label><input id="bk-time-start" type="time" value="09:00"></div>
+      <div class="form-row"><label>เวลาสิ้นสุด</label><input id="bk-time-end" type="time" value="10:00"></div>
+    </div>
     <div class="form-row"><label>ชื่อผู้จอง / ฝ่าย</label><input id="bk-name" type="text" placeholder="เช่น สมชาย / ฝ่าย IT"></div>
-    <div class="form-row"><label>วัตถุประสงค์</label><input id="bk-purpose" type="text" placeholder="เช่น ประชุมทีม"></div>
+    <div class="form-row"><label>วัตถุประสงค์</label><input id="bk-purpose" type="text" placeholder="เช่น ประชุมทีม, นำเสนองาน"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('bk-modal')">ยกเลิก</button>
       <button class="btn btn-primary" onclick="confirmBooking()">ยืนยันจอง</button>
@@ -353,7 +408,7 @@ tr:last-child td{border-bottom:none}
 </div>
 
 <script>
-const ROOMS=[{name:'ห้องบัวหลวง',cap:20,fac:'จอ LED 85", Whiteboard, VC'},{name:'ห้องจามจุรี',cap:10,fac:'TV 65", Whiteboard'},{name:'ห้องราชพฤกษ์',cap:6,fac:'TV 55"'},{name:'ห้องแก้วมังกร',cap:30,fac:'จอ LED 98", เวที, Mic'}];
+const ROOMS=[{name:'VIP',cap:8,fac:'จอ LED 85", Whiteboard, VC',color:'#8B0000'},{name:'Meeting 1',cap:30,fac:'จอ LED 98", Whiteboard, Mic',color:'#185FA5'},{name:'Meeting 2',cap:6,fac:'TV 55", Whiteboard',color:'#1D9E75'},{name:'Meeting 3',cap:12,fac:'TV 65", Whiteboard',color:'#993556'}];
 const SLOTS=['08:00–09:00','09:00–10:00','10:00–11:00','11:00–12:00','13:00–14:00','14:00–15:00','15:00–16:00','16:00–17:00'];
 const EV_COLOR={work:'#1D9E75',meeting:'#0f2c6f',leave:'#185FA5',sick:'#A32D2D',wfh:'#534AB7',trip:'#BA7517'};
 const EV_LABEL={work:'ทำงาน',meeting:'ประชุม',leave:'ลาพักร้อน',sick:'ลาป่วย',wfh:'WFH',trip:'ออกพื้นที่'};
@@ -455,27 +510,108 @@ async function submitEvent(){const date=$('ev-date').value;if(!date){alert('ก�
 async function deleteEventPrompt(id){if(!confirm('ต้องการลบ?'))return;await api('/events/'+id,'DELETE');state.events=await api('/events');renderCal();}
 
 // Rooms
-function renderRooms(){
-  const date=$('room-date').value||todayStr();$('room-date').value=date;
-  $('rooms-list').innerHTML=ROOMS.map((r,ri)=>{
-    const bks=state.bookings.filter(b=>b.room_idx===ri&&b.date===date);
-    const freeCount=SLOTS.length-bks.length;
-    return`<div class="room-card"><div class="room-head"><div><div class="room-name">${r.name}</div><div class="room-cap">👥 ${r.cap} คน · ${r.fac}</div></div>${freeCount>0?`<span class="badge badge-free">ว่าง ${freeCount} ช่วง</span>`:`<span class="badge badge-full">เต็ม</span>`}</div>${SLOTS.map(s=>{const bk=bks.find(b=>b.slot===s);return bk?`<div class="slot booked"><span class="slot-time">${s}</span><span class="slot-who">${bk.name} — ${bk.purpose}</span><button class="slot-cancel" onclick="cancelBooking(${bk.id})">ยกเลิก</button></div>`:`<div class="slot free" onclick="openBooking(${ri},'${s}','${date}')"><span class="slot-time">${s}</span><span class="slot-act">จอง</span></div>`;}).join('')}</div>`;
+// ======== Room Calendar ========
+let roomCalYear=new Date().getFullYear(),roomCalMonth=new Date().getMonth();
+let selectedRoomIdx=null,selectedDay=null;
+
+function renderRooms(){initRoomCalendar();}
+
+function initRoomCalendar(){
+  const sidebar=$('room-sidebar');
+  if(!sidebar)return;
+  sidebar.innerHTML=`<div class="room-item${selectedRoomIdx===null?' active-room':''}" onclick="selectRoom(null)"><div class="room-dot" style="background:#888"></div><span>ทุกห้อง</span></div>`+
+    ROOMS.map((r,i)=>`<div class="room-item${selectedRoomIdx===i?' active-room':''}" onclick="selectRoom(${i})"><div class="room-dot" style="background:${r.color}"></div><div><div>${r.name}</div><div style="font-size:11px;color:#888">👥 ${r.cap} ที่นั่ง</div></div></div>`).join('');
+  renderRoomCal();
+}
+
+function selectRoom(idx){selectedRoomIdx=idx;initRoomCalendar();}
+
+function changeRoomMonth(d){
+  roomCalMonth+=d;
+  if(roomCalMonth<0){roomCalMonth=11;roomCalYear--;}
+  if(roomCalMonth>11){roomCalMonth=0;roomCalYear++;}
+  renderRoomCal();
+}
+
+function renderRoomCal(){
+  const lbl=$('room-month-label');
+  if(!lbl)return;
+  lbl.textContent=`${MONTHS_TH[roomCalMonth]} ${roomCalYear+543}`;
+  const first=new Date(roomCalYear,roomCalMonth,1).getDay();
+  const days=new Date(roomCalYear,roomCalMonth+1,0).getDate();
+  const today=new Date();
+  const DAYS=['อา','จ','อ','พ','พฤ','ศ','ส'];
+  let html=DAYS.map(d=>`<div class="day-head">${d}</div>`).join('');
+  for(let i=0;i<first;i++)html+=`<div class="room-cal-day other-month"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${roomCalYear}-${String(roomCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=today.getFullYear()===roomCalYear&&today.getMonth()===roomCalMonth&&today.getDate()===d;
+    const isSel=selectedDay===ds;
+    const bks=state.bookings.filter(b=>b.date===ds&&(selectedRoomIdx===null||b.room_idx===selectedRoomIdx));
+    const chips=bks.slice(0,2).map(b=>{
+      const r=ROOMS[b.room_idx]||{color:'#888'};
+      const timeStr=(b.slot||b.time_start||'').substring(0,5);
+      return`<div class="room-chip" style="background:${r.color}">${timeStr} ${b.name}</div>`;
+    }).join('');
+    const more=bks.length>2?`<div style="font-size:10px;color:#888">+${bks.length-2} อื่นๆ</div>`:'';
+    html+=`<div class="room-cal-day${isToday?' today-room':''}${isSel?' selected-day':''}" onclick="selectCalDay('${ds}')"><div class="day-num">${d}</div>${chips}${more}</div>`;
+  }
+  $('room-cal-grid').innerHTML=html;
+}
+
+function selectCalDay(ds){
+  selectedDay=ds;
+  renderRoomCal();
+  showDayDetail(ds);
+}
+
+function showDayDetail(ds){
+  const detail=$('room-day-detail');
+  if(!detail)return;
+  detail.style.display='';
+  const dateObj=new Date(ds+'T00:00:00');
+  $('room-detail-title').textContent=`การจองวันที่ ${dateObj.toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+  const bks=state.bookings.filter(b=>b.date===ds&&(selectedRoomIdx===null||b.room_idx===selectedRoomIdx));
+  if(!bks.length){$('room-detail-content').innerHTML='<div style="text-align:center;padding:1.5rem;color:#888">ยังไม่มีการจองในวันนี้</div>';return;}
+  const sorted=[...bks].sort((a,b)=>(a.slot||a.time_start||'').localeCompare(b.slot||b.time_start||''));
+  $('room-detail-content').innerHTML=sorted.map(b=>{
+    const r=ROOMS[b.room_idx]||{name:'?',color:'#888'};
+    const timeStr=b.slot||((b.time_start||'')+' - '+(b.time_end||'')).trim();
+    return`<div class="booking-row"><span class="booking-time">${timeStr}</span><div class="booking-info"><div class="booking-name">${b.name}</div><div class="booking-purpose">${b.purpose}</div></div><span class="booking-room-tag" style="background:${r.color}">${r.name}</span><button class="slot-cancel" style="margin-left:10px" onclick="cancelBooking(${b.id})">ยกเลิก</button></div>`;
   }).join('');
 }
-function openBooking(ri,slot,date){state.pendingBooking={room_idx:ri,slot,date};$('bk-room').value=ROOMS[ri].name;$('bk-slot').value=slot;$('bk-name').value=state.me?state.me.name+' / '+state.me.dept:'';$('bk-purpose').value='';openModal('bk-modal');}
-async function confirmBooking(){const name=$('bk-name').value.trim();if(!name){alert('กรุณาระบุชื่อ');return;}try{await api('/bookings','POST',{...state.pendingBooking,name,purpose:$('bk-purpose').value.trim()||'—'});closeModal('bk-modal');state.bookings=await api('/bookings');renderRooms();}catch(e){alert(e.message);}}
-async function cancelBooking(id){if(!confirm('ยกเลิกการจอง?'))return;await api('/bookings/'+id,'DELETE');state.bookings=await api('/bookings');renderRooms();}
 
-// Leave
-function showLeaveTab(tab,btn){
-  document.querySelectorAll('.leave-tab').forEach(t=>t.style.display='none');
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  $('leave-'+tab).style.display='';btn.classList.add('active');
-  if(tab==='quota')loadLeaveQuota();
-  if(tab==='my')loadMyLeave();
-  if(tab==='approve')loadPendingLeave();
-  if(tab==='report')loadLeaveReport();
+function openBookingModal(){
+  $('bk-date').value=selectedDay||todayStr();
+  $('bk-name').value=state.me?state.me.name+' / '+state.me.dept:'';
+  $('bk-purpose').value='';
+  openModal('bk-modal');
+}
+function openBookingModalDate(){openBookingModal();}
+
+async function confirmBooking(){
+  const name=$('bk-name').value.trim();
+  if(!name){alert('กรุณาระบุชื่อผู้จอง');return;}
+  const room_idx=parseInt($('bk-room-sel').value);
+  const date=$('bk-date').value;
+  const time_start=$('bk-time-start').value;
+  const time_end=$('bk-time-end').value;
+  const slot=time_start+'–'+time_end;
+  try{
+    await api('/bookings','POST',{room_idx,date,slot,name,purpose:$('bk-purpose').value.trim()||'—',time_start,time_end});
+    closeModal('bk-modal');
+    state.bookings=await api('/bookings');
+    renderRoomCal();
+    if(selectedDay)showDayDetail(selectedDay);
+  }catch(e){alert(e.message);}
+}
+
+async function cancelBooking(id){
+  if(!confirm('ยกเลิกการจอง?'))return;
+  await api('/bookings/'+id,'DELETE');
+  state.bookings=await api('/bookings');
+  renderRoomCal();
+  if(selectedDay)showDayDetail(selectedDay);
 }
 
 async function loadLeaveQuota(){
@@ -580,6 +716,7 @@ async function changePassword(){const pw=$('pw-new').value;if(!pw){alert('กร
 (async()=>{
   try{
     state.me=await api('/me');
+    
     $('user-name').textContent=state.me.name+' ('+state.me.dept+')';
     $('user-badge').textContent=state.me.role;
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-tab').style.display='';}
@@ -587,10 +724,12 @@ async function changePassword(){const pw=$('pw-new').value;if(!pw){alert('กร
     const[posts,employees,events,bookings]=await Promise.all([api('/posts'),api('/employees'),api('/events'),api('/bookings')]);
     state.posts=posts;state.employees=employees;state.events=events;state.bookings=bookings;
     renderBoard();$('room-date').value=todayStr();
-    // โหลดจำนวนรออนุมัติ
-    const pending=await api('/leave/pending');
-    $('pending-count').textContent=pending.length||'';
-  }catch(e){window.location.href='/login';}
+    // โหลดจำนวนรออนุมัติ (ไม่ throw error ถ้าไม่มีสิทธิ์)
+    try{
+      const pending=await api('/leave/pending');
+      $('pending-count').textContent=pending.length||'';
+    }catch(e){}
+  }catch(e){window.location.replace('/login');}
 })();
 </script>
 </body>
