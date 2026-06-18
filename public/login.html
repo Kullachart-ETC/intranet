@@ -3,51 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>เข้าสู่ระบบ — Intranet บริษัท</title>
+<title>เข้าสู่ระบบ — EARTH (THAILAND)</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun',sans-serif;background:#f5f5f3;display:flex;align-items:center;justify-content:center;min-height:100vh}
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
-.card{background:#fff;border-radius:16px;padding:2.5rem 2rem;width:360px;border:1px solid #e5e5e0}
-.logo{text-align:center;font-size:20px;font-weight:600;margin-bottom:0.5rem}.logo span{color:#1D9E75}
-.subtitle{text-align:center;font-size:13px;color:#888;margin-bottom:2rem}
-label{font-size:13px;color:#666;display:block;margin-bottom:4px}
-input{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:15px;font-family:'Sarabun',sans-serif;margin-bottom:14px}
-input:focus{outline:none;border-color:#1D9E75}
-.btn{width:100%;background:#1D9E75;color:#fff;border:none;border-radius:8px;padding:11px;font-size:15px;font-weight:500;cursor:pointer;font-family:'Sarabun',sans-serif}
-.btn:hover{background:#18896a}
-.error{background:#FCEBEB;color:#A32D2D;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:14px;display:none}
-.hint{text-align:center;font-size:12px;color:#aaa;margin-top:1.5rem}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Sarabun',sans-serif;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(135deg, #0f2c6f 0%, #1a5fa8 40%, #2196c4 70%, #1a8a6e 100%);
+  position:relative;
+  overflow:hidden;
+}
+/* วงกลมตกแต่ง */
+body::before{
+  content:'';
+  position:absolute;
+  width:600px;height:600px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.04);
+  top:-200px;right:-150px;
+}
+body::after{
+  content:'';
+  position:absolute;
+  width:400px;height:400px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.04);
+  bottom:-100px;left:-100px;
+}
+.circle-mid{
+  position:absolute;
+  width:300px;height:300px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.03);
+  top:50%;left:10%;
+  transform:translateY(-50%);
+}
+.card{
+  background:rgba(255,255,255,0.97);
+  border-radius:20px;
+  padding:2.5rem 2.25rem;
+  width:380px;
+  max-width:95vw;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  position:relative;
+  z-index:1;
+}
+.logo-wrap{text-align:center;margin-bottom:1.5rem}
+.logo-wrap img{width:110px;height:110px;object-fit:contain}
+.company-name{
+  text-align:center;
+  font-size:20px;
+  font-weight:600;
+  color:#0f2c6f;
+  margin-bottom:4px;
+}
+.company-sub{
+  text-align:center;
+  font-size:13px;
+  color:#888;
+  margin-bottom:1.75rem;
+}
+.divider{
+  border:none;
+  border-top:1px solid #eee;
+  margin-bottom:1.5rem;
+}
+.form-label{
+  font-size:13px;
+  color:#555;
+  display:block;
+  margin-bottom:5px;
+  font-weight:500;
+}
+.form-input{
+  width:100%;
+  border:1.5px solid #e0e0e0;
+  border-radius:10px;
+  padding:11px 14px;
+  font-size:15px;
+  font-family:'Sarabun',sans-serif;
+  margin-bottom:16px;
+  transition:border-color .2s;
+  color:#1a1a18;
+}
+.form-input:focus{
+  outline:none;
+  border-color:#1a5fa8;
+  box-shadow:0 0 0 3px rgba(26,95,168,0.1);
+}
+.btn-login{
+  width:100%;
+  background:linear-gradient(135deg,#1a5fa8,#0f2c6f);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  padding:12px;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:'Sarabun',sans-serif;
+  transition:opacity .2s, transform .1s;
+  margin-top:4px;
+}
+.btn-login:hover{opacity:0.9;}
+.btn-login:active{transform:scale(0.98);}
+.error-box{
+  background:#fff0f0;
+  border:1px solid #ffd0d0;
+  color:#c0392b;
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:13px;
+  margin-bottom:14px;
+  display:none;
+  text-align:center;
+}
+.footer-note{
+  text-align:center;
+  font-size:12px;
+  color:#bbb;
+  margin-top:1.5rem;
+}
 </style>
 </head>
 <body>
+<div class="circle-mid"></div>
 <div class="card">
-  <div class="logo"><span>●</span> Intranet บริษัท</div>
-  <div class="subtitle">กรุณาเข้าสู่ระบบเพื่อใช้งาน</div>
-  <div class="error" id="err"></div>
-  <label>ชื่อผู้ใช้</label>
-  <input type="text" id="username" placeholder="username" autocomplete="username">
-  <label>รหัสผ่าน</label>
-  <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
-  <button class="btn" onclick="login()">เข้าสู่ระบบ</button>
-  <div class="hint">ติดต่อ Admin หากยังไม่มี account</div>
+  <div class="logo-wrap">
+    <img src="/logo.png" alt="EARTH Logo">
+  </div>
+  <div class="company-name">EARTH (THAILAND)</div>
+  <div class="company-sub">ระบบ Intranet ภายในองค์กร</div>
+  <hr class="divider">
+  <div class="error-box" id="err"></div>
+  <label class="form-label">ชื่อผู้ใช้งาน</label>
+  <input class="form-input" type="text" id="username" placeholder="กรอก Username" autocomplete="username">
+  <label class="form-label">รหัสผ่าน</label>
+  <input class="form-input" type="password" id="password" placeholder="กรอก Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+  <button class="btn-login" onclick="login()">เข้าสู่ระบบ</button>
+  <div class="footer-note">ติดต่อผู้ดูแลระบบหากยังไม่มี account</div>
 </div>
 <script>
-async function login() {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  const err = document.getElementById('err');
-  err.style.display = 'none';
-  if (!username || !password) { err.textContent='กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'; err.style.display='block'; return; }
-  try {
-    const r = await fetch('/api/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username, password})
-    });
-    const data = await r.json();
-    if (!r.ok) { err.textContent = data.error; err.style.display='block'; return; }
-    window.location.href = '/';
-  } catch(e) { err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่'; err.style.display='block'; }
+async function login(){
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  const err=document.getElementById('err');
+  err.style.display='none';
+  if(!username||!password){err.textContent='กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';err.style.display='block';return;}
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data=await r.json();
+    if(!r.ok){err.textContent=data.error;err.style.display='block';return;}
+    window.location.href='/';
+  }catch(e){err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่';err.style.display='block';}
 }
 </script>
 </body>
