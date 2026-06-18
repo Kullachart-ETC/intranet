@@ -2,13 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<style>body{display:none!important}</style>
-<script>
-fetch('/api/me').then(r=>{
-  if(!r.ok){window.location.replace('/login');}
-  else{document.addEventListener('DOMContentLoaded',()=>{document.body.style.display='';})}
-}).catch(()=>window.location.replace('/login'));
-</script>
+<style>body{opacity:0}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intranet — EARTH (THAILAND)</title>
 <style>
@@ -733,7 +727,7 @@ async function changePassword(){const pw=$('pw-new').value;if(!pw){alert('กร
     // โหลดจำนวนรออนุมัติ
     const pending=await api('/leave/pending');
     $('pending-count').textContent=pending.length||'';
-  }catch(e){window.location.href='/login';}
+  }catch(e){window.location.replace('/login');}
 })();
 </script>
 </body>
