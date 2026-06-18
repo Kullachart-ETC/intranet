@@ -2,6 +2,13 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<style>body{display:none!important}</style>
+<script>
+fetch('/api/me').then(r=>{
+  if(!r.ok){window.location.replace('/login');}
+  else{document.addEventListener('DOMContentLoaded',()=>{document.body.style.display='';})}
+}).catch(()=>window.location.replace('/login'));
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intranet — EARTH (THAILAND)</title>
 <style>
