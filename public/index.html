@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<style>body{visibility:hidden}</style>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intranet — EARTH (THAILAND)</title>
 <style>
@@ -716,7 +716,7 @@ async function changePassword(){const pw=$('pw-new').value;if(!pw){alert('กร
 (async()=>{
   try{
     state.me=await api('/me');
-    document.body.style.visibility='visible';
+    
     $('user-name').textContent=state.me.name+' ('+state.me.dept+')';
     $('user-badge').textContent=state.me.role;
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-tab').style.display='';}
