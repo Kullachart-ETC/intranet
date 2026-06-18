@@ -8,7 +8,7 @@ const nodemailer = require('nodemailer');
 const app = express();
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false }
 });
 
 app.use(express.json());
@@ -231,7 +231,18 @@ app.delete('/api/posts/:id', requireLogin, async (req, res) => {
 
 // ======== API Employees ========
 app.get('/api/employees', requireLogin, async (req, res) => {
-  const r = await pool.query('SELECT * FROM employees');
+  const r = await pool.query(`
+    SELECT id, name, dept,
+      CASE dept
+        WHEN 'IT' THEN '#1D9E75'
+        WHEN 'HR' THEN '#185FA5'
+        WHEN 'Finance' THEN '#993C1D'
+        WHEN 'Marketing' THEN '#993556'
+        WHEN 'Sales' THEN '#534AB7'
+        ELSE '#888888'
+      END as color
+    FROM users WHERE role != 'admin' ORDER BY name
+  `);
   res.json(r.rows);
 });
 
