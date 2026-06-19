@@ -5,460 +5,373 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>จองห้องประชุม - EARTH (THAILAND)</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F0F2F7;
+  --white: #FFFFFF;
+  --primary: #0f2c6f;
+  --primary-light: #E8F0FB;
+  --accent: #1D9E75;
+  --danger: #D94040;
+  --text: #1A1A2E;
+  --muted: #6B7280;
+  --border: #DDE1EA;
+  --radius: 10px;
+}
+body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-  :root {
-    --bg: #F5F6FA;
-    --white: #FFFFFF;
-    --primary: #1D5FA5;
-    --primary-light: #E8F0FB;
-    --accent: #1D9E75;
-    --danger: #D94040;
-    --text: #1A1A2E;
-    --text-muted: #6B7280;
-    --border: #E2E5EC;
-    --shadow: 0 1px 4px rgba(0,0,0,0.08);
-    --radius: 10px;
-  }
+/* TOP NAV */
+.topnav {
+  background: var(--primary);
+  color: #fff;
+  display: flex; align-items: center;
+  padding: 0 16px; height: 50px; gap: 10px;
+  flex-shrink: 0; z-index: 50;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.topnav a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; }
+.topnav a:hover { color: #fff; }
+.topnav h1 { font-size: 15px; font-weight: 600; flex: 1; }
+.topnav .nav-actions { display: flex; gap: 6px; }
+.top-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;
+  font-family: inherit;
+}
+.top-btn:hover { background: rgba(255,255,255,0.25); }
 
-  body {
-    font-family: 'Sarabun', 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-  }
+/* MAIN LAYOUT */
+.main { display: flex; flex: 1; overflow: hidden; }
 
-  /* NAV */
-  .topnav {
-    background: var(--primary);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    height: 52px;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  }
-  .topnav a.back {
-    color: rgba(255,255,255,0.8);
-    text-decoration: none;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .topnav a.back:hover { color: #fff; }
-  .topnav h1 { font-size: 16px; font-weight: 600; flex: 1; }
-  .topnav .today-btn {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: #fff;
-    padding: 5px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-  .topnav .today-btn:hover { background: rgba(255,255,255,0.25); }
+/* SIDEBAR */
+.sidebar {
+  width: 190px; flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-section { padding: 14px 12px 8px; }
+.sidebar-label {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  letter-spacing: 0.8px; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.room-btn {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 9px 10px;
+  border: none; background: none;
+  border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 13px;
+  color: var(--text); text-align: left;
+  margin-bottom: 3px; transition: background 0.12s;
+}
+.room-btn:hover { background: var(--bg); }
+.room-btn.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+.room-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.room-info { flex: 1; min-width: 0; }
+.room-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-cap { font-size: 10px; color: var(--muted); margin-top: 1px; }
 
-  /* LAYOUT */
-  .container { max-width: 1280px; margin: 0 auto; padding: 20px 16px; }
+.sidebar-divider { height: 1px; background: var(--border); margin: 8px 12px; }
 
-  /* MONTH NAV */
-  .month-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .month-title { font-size: 20px; font-weight: 700; color: var(--text); flex: 1; }
-  .nav-btn {
-    background: var(--white);
-    border: 1px solid var(--border);
-    width: 34px; height: 34px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-    color: var(--text-muted);
-    transition: all 0.15s;
-  }
-  .nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+/* CALENDAR AREA */
+.cal-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* ROOM LEGEND */
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-    user-select: none;
-  }
-  .legend-item.active { border-color: var(--primary); background: var(--primary-light); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+/* MONTH NAV */
+.month-nav {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.month-title { font-size: 17px; font-weight: 700; flex: 1; }
+.nav-btn {
+  width: 30px; height: 30px;
+  border: 1px solid var(--border); background: var(--white);
+  border-radius: 7px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: var(--muted); transition: all 0.12s;
+}
+.nav-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* CALENDAR GRID */
-  .calendar-wrap {
-    background: var(--white);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-  }
-  .weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    background: var(--primary);
-  }
-  .weekday {
-    text-align: center;
-    padding: 10px 0;
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(255,255,255,0.85);
-    letter-spacing: 0.5px;
-  }
-  .weekday.weekend { color: rgba(255,200,200,0.85); }
+/* SELECTED ROOM BADGE */
+.room-badge-bar {
+  padding: 8px 16px;
+  background: var(--primary-light);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--primary); font-weight: 500;
+  flex-shrink: 0;
+}
+.room-badge-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-  .days-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    border-top: none;
-  }
-  .day-cell {
-    min-height: 90px;
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 6px;
-    cursor: pointer;
-    transition: background 0.1s;
-    position: relative;
-  }
-  .day-cell:nth-child(7n) { border-right: none; }
-  .day-cell:hover { background: #F0F4FF; }
-  .day-cell.other-month { background: #FAFAFA; }
-  .day-cell.other-month .day-num { color: #CCC; }
-  .day-cell.today { background: var(--primary-light); }
-  .day-cell.today .day-num {
-    background: var(--primary);
-    color: #fff;
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
-  }
-  .day-cell.weekend-cell { background: #FEFEFE; }
-  .day-cell.weekend-cell:hover { background: #F5F5FF; }
+/* CALENDAR GRID */
+.cal-scroll { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.cal-wrap { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.weekdays { display: grid; grid-template-columns: repeat(7,1fr); background: var(--primary); }
+.wday { text-align: center; padding: 8px 0; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); }
+.wday.wknd { color: rgba(255,190,190,0.9); }
+.days { display: grid; grid-template-columns: repeat(7,1fr); }
+.dcell {
+  min-height: 88px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 5px 4px; cursor: pointer; transition: background 0.1s; position: relative;
+}
+.dcell:nth-child(7n) { border-right: none; }
+.dcell:hover { background: #F4F6FF; }
+.dcell.other { background: #FAFAFA; cursor: default; }
+.dcell.other .dnum { color: #CCC; }
+.dcell.today { background: #EEF3FF; }
+.dcell.wknd-cell { background: #FEFEFE; }
+.dnum {
+  font-size: 12px; font-weight: 600; color: var(--text);
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 3px; border-radius: 50%;
+}
+.dcell.today .dnum { background: var(--primary); color: #fff; font-weight: 700; }
 
-  .day-num {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 4px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+/* EVENT PILLS */
+.epill {
+  font-size: 10px; border-radius: 4px; padding: 2px 5px;
+  margin-bottom: 2px; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; display: block; line-height: 1.4;
+}
+.epill:hover { filter: brightness(0.88); }
+.more-lbl { font-size: 10px; color: var(--muted); padding: 1px 3px; }
 
-  .booking-pill {
-    font-size: 10.5px;
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin-bottom: 2px;
-    color: #fff;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
-    transition: opacity 0.1s;
-  }
-  .booking-pill:hover { opacity: 0.85; }
-  .more-badge {
-    font-size: 10px;
-    color: var(--text-muted);
-    padding: 1px 4px;
-  }
+/* MODAL */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); z-index: 200;
+  align-items: center; justify-content: center; padding: 16px;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: 14px;
+  width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+  animation: up 0.18s ease;
+}
+@keyframes up { from { transform: translateY(16px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.mhead {
+  display: flex; align-items: center;
+  padding: 16px 18px 12px; border-bottom: 1px solid var(--border); gap: 8px;
+}
+.mhead h2 { font-size: 15px; font-weight: 700; flex: 1; }
+.mclose { background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted); width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; }
+.mclose:hover { background: var(--bg); }
+.mbody { padding: 16px 18px; }
+.mfooter { display:flex; gap:8px; justify-content:flex-end; padding:12px 18px; border-top:1px solid var(--border); }
 
-  /* MODAL */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--white);
-    border-radius: 14px;
-    width: 100%;
-    max-width: 520px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-    animation: slideUp 0.2s ease;
-  }
-  @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  .modal-header {
-    display: flex;
-    align-items: center;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border);
-    gap: 10px;
-  }
-  .modal-header h2 { font-size: 16px; font-weight: 700; flex: 1; }
-  .modal-close {
-    background: none; border: none;
-    font-size: 20px; cursor: pointer;
-    color: var(--text-muted); width: 30px; height: 30px;
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .modal-close:hover { background: var(--bg); }
-  .modal-body { padding: 18px 20px; }
+/* FORM */
+.fg { margin-bottom: 13px; }
+.fg label { display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.3px; }
+.fg input, .fg select, .fg textarea {
+  width:100%; border:1px solid var(--border); border-radius:8px;
+  padding:8px 11px; font-size:14px; font-family:inherit; color:var(--text); background:var(--white);
+}
+.fg input:focus, .fg select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,44,111,0.08); }
+.time-row { display:flex; align-items:center; gap:8px; }
+.time-row input { flex:1; }
+.time-sep { color:var(--muted); font-size:13px; flex-shrink:0; }
 
-  /* FORM */
-  .form-group { margin-bottom: 14px; }
-  .form-group label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-  }
-  .form-group input,
-  .form-group select {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 12px;
-    font-size: 14px;
-    font-family: inherit;
-    color: var(--text);
-    background: var(--white);
-    transition: border-color 0.15s;
-  }
-  .form-group input:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(29,95,165,0.1);
-  }
+/* COLOR PICKER */
+.color-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:4px; }
+.color-swatch {
+  width:26px; height:26px; border-radius:50%; cursor:pointer;
+  border: 2px solid transparent; transition: transform 0.1s, border-color 0.1s;
+}
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.selected { border-color: var(--text); transform: scale(1.1); }
+.color-custom { border:1px solid var(--border); border-radius:50%; width:26px; height:26px; cursor:pointer; padding:0; overflow:hidden; }
+.color-custom input[type=color] { width:32px; height:32px; border:none; cursor:pointer; margin:-3px; }
 
-  /* TIME SLOTS */
-  .slots-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    margin-top: 4px;
-  }
-  .slot-btn {
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 7px 4px;
-    text-align: center;
-    font-size: 12px;
-    cursor: pointer;
-    background: var(--white);
-    transition: all 0.12s;
-    color: var(--text);
-  }
-  .slot-btn:hover:not(.booked) { border-color: var(--primary); background: var(--primary-light); }
-  .slot-btn.selected { border-color: var(--primary); background: var(--primary); color: #fff; font-weight: 600; }
-  .slot-btn.booked {
-    background: #FEF2F2;
-    border-color: #FCA5A5;
-    color: #EF4444;
-    cursor: not-allowed;
-    font-size: 11px;
-  }
+/* ROOM TAG IN MODAL */
+.room-tag {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600;
+  color:#fff; margin-bottom:2px;
+}
 
-  /* EXISTING BOOKINGS IN MODAL */
-  .existing-list { margin-top: 16px; }
-  .existing-list h3 { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
-  .existing-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    background: var(--bg);
-    margin-bottom: 6px;
-    font-size: 13px;
-  }
-  .existing-item .room-badge {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
-    color: #fff;
-    white-space: nowrap;
-  }
-  .existing-item .info { flex: 1; min-width: 0; }
-  .existing-item .slot-time { font-weight: 600; font-size: 12px; }
-  .existing-item .booker { color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .delete-btn {
-    background: none;
-    border: none;
-    color: #EF4444;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 2px 4px;
-    border-radius: 4px;
-    opacity: 0.6;
-  }
-  .delete-btn:hover { opacity: 1; background: #FEF2F2; }
+/* EXISTING LIST */
+.exist-section { margin-top:14px; }
+.exist-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:8px; }
+.exist-item {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:8px; background:var(--bg); margin-bottom:5px;
+}
+.exist-color { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.exist-info { flex:1; min-width:0; }
+.exist-time { font-size:12px; font-weight:600; }
+.exist-name { font-size:11px; color:var(--muted); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.exist-del { background:none; border:none; color:#EF4444; cursor:pointer; font-size:14px; padding:2px 5px; border-radius:4px; opacity:0.6; }
+.exist-del:hover { opacity:1; background:#FEF2F2; }
 
-  /* BTNS */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  .btn-primary { background: var(--primary); color: #fff; }
-  .btn-primary:hover { background: #174d8a; }
-  .btn-primary:disabled { background: #9DB5D3; cursor: not-allowed; }
-  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-muted); }
-  .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
-  .modal-footer {
-    display: flex; gap: 8px; justify-content: flex-end;
-    padding: 14px 20px;
-    border-top: 1px solid var(--border);
-  }
+/* BTNS */
+.btn { display:inline-flex; align-items:center; gap:5px; padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; font-family:inherit; transition:all 0.13s; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:#0a1f52; }
+.btn-primary:disabled { background:#9aadcc; cursor:not-allowed; }
+.btn-ghost { background:none; border:1px solid var(--border); color:var(--muted); }
+.btn-ghost:hover { border-color:var(--primary); color:var(--primary); }
 
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    background: var(--text);
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 14px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    z-index: 999;
-    display: none;
-    animation: fadeIn 0.2s ease;
-  }
-  .toast.show { display: block; }
-  .toast.success { background: var(--accent); }
-  .toast.error { background: var(--danger); }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+/* TOAST */
+.toast { position:fixed; bottom:20px; right:20px; padding:11px 18px; border-radius:10px; font-size:13px; color:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.18); z-index:999; display:none; }
+.toast.show { display:block; animation:up 0.2s ease; }
+.toast.ok { background:var(--accent); }
+.toast.err { background:var(--danger); }
 
-  /* LOADING */
-  .loading { text-align: center; padding: 40px; color: var(--text-muted); }
-
-  @media (max-width: 640px) {
-    .slots-grid { grid-template-columns: repeat(2, 1fr); }
-    .day-cell { min-height: 60px; padding: 4px; }
-    .booking-pill { font-size: 9px; }
-  }
+@media (max-width:640px) {
+  .sidebar { width:140px; }
+  .room-cap { display:none; }
+  .dcell { min-height:60px; }
+}
 </style>
 </head>
 <body>
 
+<!-- TOP NAV -->
 <div class="topnav">
-  <a href="/" class="back">← หน้าหลัก</a>
-  <h1>📅 จองห้องประชุม</h1>
-  <button class="today-btn" onclick="goToday()">วันนี้</button>
-</div>
-
-<div class="container">
-  <!-- Month Navigation -->
-  <div class="month-header">
-    <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
-    <div class="month-title" id="monthTitle">—</div>
-    <button class="nav-btn" onclick="changeMonth(1)">›</button>
-  </div>
-
-  <!-- Room Legend / Filter -->
-  <div class="legend" id="roomLegend"></div>
-
-  <!-- Calendar -->
-  <div class="calendar-wrap">
-    <div class="weekdays">
-      <div class="weekday weekend">อา</div>
-      <div class="weekday">จ</div>
-      <div class="weekday">อ</div>
-      <div class="weekday">พ</div>
-      <div class="weekday">พฤ</div>
-      <div class="weekday">ศ</div>
-      <div class="weekday weekend">ส</div>
-    </div>
-    <div class="days-grid" id="daysGrid">
-      <div class="loading">กำลังโหลด...</div>
-    </div>
+  <a href="/">← หน้าหลัก</a>
+  <h1>จองห้องประชุม</h1>
+  <div class="nav-actions">
+    <button class="top-btn" onclick="goToday()">วันนี้</button>
   </div>
 </div>
 
-<!-- Modal -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+<div class="main">
+  <!-- SIDEBAR: Room selector -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">ห้องประชุม</div>
+      <button class="room-btn active" id="rb0" onclick="selectRoom(0)">
+        <div class="room-dot" style="background:#7C3AED"></div>
+        <div class="room-info">
+          <div class="room-name">VIP</div>
+          <div class="room-cap">8 ที่นั่ง</div>
+        </div>
+      </button>
+      <button class="room-btn" id="rb1" onclick="selectRoom(1)">
+        <div class="room-dot" style="background:#1D5FA5"></div>
+        <div class="room-info">
+          <div class="room-name">Meeting 1</div>
+          <div class="room-cap">30 ที่นั่ง</div>
+        </div>
+      </button>
+      <button class="room-btn" id="rb2" onclick="selectRoom(2)">
+        <div class="room-dot" style="background:#1D9E75"></div>
+        <div class="room-info">
+          <div class="room-name">Meeting 2</div>
+          <div class="room-cap">6 ที่นั่ง</div>
+        </div>
+      </button>
+      <button class="room-btn" id="rb3" onclick="selectRoom(3)">
+        <div class="room-dot" style="background:#D97706"></div>
+        <div class="room-info">
+          <div class="room-name">Meeting 3</div>
+          <div class="room-cap">12 ที่นั่ง</div>
+        </div>
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">คำอธิบาย</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6;">
+        เลือกห้องแล้ว<br>คลิกวันที่ในปฏิทิน<br>เพื่อจองได้เลยครับ
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="cal-area">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+      <div class="month-title" id="monthTitle">—</div>
+      <button class="nav-btn" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="room-badge-bar" id="roomBadgeBar">
+      <div class="room-badge-dot" id="badgeDot" style="background:#7C3AED"></div>
+      <span id="badgeText">VIP (8 ที่นั่ง) — คลิกวันที่เพื่อจอง</span>
+    </div>
+    <div class="cal-scroll">
+      <div class="cal-wrap">
+        <div class="weekdays">
+          <div class="wday wknd">อา</div>
+          <div class="wday">จ</div><div class="wday">อ</div>
+          <div class="wday">พ</div><div class="wday">พฤ</div>
+          <div class="wday">ศ</div>
+          <div class="wday wknd">ส</div>
+        </div>
+        <div class="days" id="daysGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="overlay" id="bookOverlay" onclick="overlayClick(event,'bookOverlay')">
   <div class="modal">
-    <div class="modal-header">
-      <h2 id="modalTitle">จองห้องประชุม</h2>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="mhead">
+      <h2 id="mTitle">จองห้องประชุม</h2>
+      <button class="mclose" onclick="closeModal('bookOverlay')">✕</button>
     </div>
-    <div class="modal-body">
-      <!-- Form -->
-      <div id="bookingForm">
-        <div class="form-group">
-          <label>ห้องประชุม</label>
-          <select id="selRoom" onchange="renderSlots()">
-            <option value="0">VIP (8 ที่นั่ง)</option>
-            <option value="1">Meeting 1 (30 ที่นั่ง)</option>
-            <option value="2">Meeting 2 (6 ที่นั่ง)</option>
-            <option value="3">Meeting 3 (12 ที่นั่ง)</option>
-          </select>
+    <div class="mbody">
+      <!-- Room tag (read-only display) -->
+      <div class="fg">
+        <label>ห้องประชุม</label>
+        <div class="room-tag" id="mRoomTag">VIP</div>
+      </div>
+      <!-- Time -->
+      <div class="fg">
+        <label>เวลา</label>
+        <div class="time-row">
+          <input type="time" id="inpStart" value="09:00">
+          <span class="time-sep">ถึง</span>
+          <input type="time" id="inpEnd" value="10:00">
         </div>
-        <div class="form-group">
-          <label>เลือกช่วงเวลา</label>
-          <div class="slots-grid" id="slotsGrid"></div>
-        </div>
-        <div class="form-group">
-          <label>ชื่อผู้จอง / หน่วยงาน</label>
-          <input type="text" id="inpName" placeholder="เช่น สมชาย / ฝ่าย IT">
-        </div>
-        <div class="form-group">
-          <label>วัตถุประสงค์</label>
-          <input type="text" id="inpPurpose" placeholder="เช่น ประชุมทีม, สัมภาษณ์งาน">
+      </div>
+      <!-- Name -->
+      <div class="fg">
+        <label>ชื่อผู้จอง / หน่วยงาน</label>
+        <input type="text" id="inpName" placeholder="เช่น สมชาย / ฝ่าย IT">
+      </div>
+      <!-- Purpose -->
+      <div class="fg">
+        <label>วัตถุประสงค์</label>
+        <input type="text" id="inpPurpose" placeholder="เช่น ประชุมทีม, สัมภาษณ์งาน">
+      </div>
+      <!-- Color -->
+      <div class="fg">
+        <label>สีการจอง</label>
+        <div class="color-row" id="colorRow">
+          <div class="color-swatch selected" style="background:#1D5FA5" data-color="#1D5FA5" onclick="pickColor(this,'#1D5FA5')"></div>
+          <div class="color-swatch" style="background:#7C3AED" data-color="#7C3AED" onclick="pickColor(this,'#7C3AED')"></div>
+          <div class="color-swatch" style="background:#1D9E75" data-color="#1D9E75" onclick="pickColor(this,'#1D9E75')"></div>
+          <div class="color-swatch" style="background:#D97706" data-color="#D97706" onclick="pickColor(this,'#D97706')"></div>
+          <div class="color-swatch" style="background:#DC2626" data-color="#DC2626" onclick="pickColor(this,'#DC2626')"></div>
+          <div class="color-swatch" style="background:#DB2777" data-color="#DB2777" onclick="pickColor(this,'#DB2777')"></div>
+          <div class="color-swatch" style="background:#0891B2" data-color="#0891B2" onclick="pickColor(this,'#0891B2')"></div>
+          <div class="color-swatch" style="background:#65A30D" data-color="#65A30D" onclick="pickColor(this,'#65A30D')"></div>
+          <div class="color-swatch" style="background:#64748B" data-color="#64748B" onclick="pickColor(this,'#64748B')"></div>
+          <!-- Custom color -->
+          <div class="color-custom" title="เลือกสีเอง">
+            <input type="color" id="customColor" value="#1D5FA5" oninput="pickCustomColor(this.value)">
+          </div>
         </div>
       </div>
 
-      <!-- Existing bookings for this day -->
-      <div class="existing-list" id="existingList"></div>
+      <!-- Existing bookings for this day & room -->
+      <div class="exist-section" id="existSection"></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('bookOverlay')">ยกเลิก</button>
       <button class="btn btn-primary" id="btnBook" onclick="submitBooking()">✓ จองห้อง</button>
     </div>
   </div>
@@ -469,337 +382,262 @@
 <script>
 // ===== CONFIG =====
 const ROOMS = [
-  { name: 'VIP', seats: 8,    color: '#7C3AED' },
-  { name: 'Meeting 1', seats: 30, color: '#1D5FA5' },
-  { name: 'Meeting 2', seats: 6,  color: '#1D9E75' },
-  { name: 'Meeting 3', seats: 12, color: '#D97706' },
-];
-
-const SLOTS = [
-  '08:00-09:00','09:00-10:00','10:00-11:00','11:00-12:00',
-  '12:00-13:00','13:00-14:00','14:00-15:00','15:00-16:00',
-  '16:00-17:00','17:00-18:00',
+  { name:'VIP',      seats:8,  color:'#7C3AED' },
+  { name:'Meeting 1',seats:30, color:'#1D5FA5' },
+  { name:'Meeting 2',seats:6,  color:'#1D9E75' },
+  { name:'Meeting 3',seats:12, color:'#D97706' },
 ];
 
 // ===== STATE =====
-let currentDate = new Date();
-let bookings = [];
-let activeRooms = new Set([0,1,2,3]);
-let selectedSlots = new Set();
+let curDate   = new Date();
+let bookings  = [];
+let selRoom   = 0;
+let selColor  = '#1D5FA5';
 let modalDate = null;
-let currentUser = null;
+let me        = null;
 
 // ===== INIT =====
 async function init() {
-  try {
-    const res = await fetch('/api/me');
-    if (res.ok) currentUser = await res.json();
-  } catch(e) {}
-
-  renderLegend();
+  try { const r = await fetch('/api/me'); if(r.ok) me = await r.json(); } catch(e){}
   await loadBookings();
   renderCalendar();
 }
 
-// ===== LEGEND =====
-function renderLegend() {
-  const el = document.getElementById('roomLegend');
-  el.innerHTML = ROOMS.map((r, i) => `
-    <div class="legend-item active" id="leg${i}" onclick="toggleRoom(${i})">
-      <div class="legend-dot" style="background:${r.color}"></div>
-      ${r.name} (${r.seats} ที่นั่ง)
-    </div>
-  `).join('');
-}
-
-function toggleRoom(i) {
-  if (activeRooms.has(i)) {
-    if (activeRooms.size === 1) return; // ต้องเลือกอย่างน้อย 1
-    activeRooms.delete(i);
-    document.getElementById('leg'+i).classList.remove('active');
-  } else {
-    activeRooms.add(i);
-    document.getElementById('leg'+i).classList.add('active');
-  }
+// ===== ROOM SELECT =====
+function selectRoom(idx) {
+  selRoom = idx;
+  document.querySelectorAll('.room-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+  const rm = ROOMS[idx];
+  document.getElementById('badgeDot').style.background = rm.color;
+  document.getElementById('badgeText').textContent = `${rm.name} (${rm.seats} ที่นั่ง) — คลิกวันที่เพื่อจอง`;
   renderCalendar();
 }
 
-// ===== LOAD DATA =====
+// ===== LOAD =====
 async function loadBookings() {
-  try {
-    const res = await fetch('/api/bookings');
-    if (res.ok) bookings = await res.json();
-  } catch(e) { bookings = []; }
+  try { const r = await fetch('/api/bookings'); if(r.ok) bookings = await r.json(); }
+  catch(e) { bookings = []; }
 }
 
 // ===== CALENDAR =====
-function changeMonth(delta) {
-  currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + delta, 1);
+function changeMonth(d) {
+  curDate = new Date(curDate.getFullYear(), curDate.getMonth()+d, 1);
   renderCalendar();
 }
-
 function goToday() {
-  currentDate = new Date();
+  curDate = new Date();
   renderCalendar();
 }
 
 function renderCalendar() {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  const y = curDate.getFullYear(), m = curDate.getMonth();
   const today = new Date();
+  const thaiM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                 'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  document.getElementById('monthTitle').textContent = `${thaiM[m]} ${y+543}`;
 
-  // Month title (Thai)
-  const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
-    'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  document.getElementById('monthTitle').textContent =
-    `${thaiMonths[month]} ${year + 543}`;
-
-  // Compute days
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const daysInPrev = new Date(year, month, 0).getDate();
+  const firstDow = new Date(y,m,1).getDay();
+  const daysInM  = new Date(y,m+1,0).getDate();
+  const daysInP  = new Date(y,m,0).getDate();
+  const total    = Math.ceil((firstDow+daysInM)/7)*7;
 
   const grid = document.getElementById('daysGrid');
   grid.innerHTML = '';
 
-  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+  for (let i=0; i<total; i++) {
+    let d, cm, cy, other=false;
+    if (i<firstDow)                   { d=daysInP-firstDow+i+1; cm=m-1; cy=y; other=true; }
+    else if (i>=firstDow+daysInM)     { d=i-firstDow-daysInM+1; cm=m+1; cy=y; other=true; }
+    else                               { d=i-firstDow+1; cm=m; cy=y; }
 
-  for (let i = 0; i < totalCells; i++) {
-    let d, m, y, isOther = false;
+    const cellDate = new Date(cy,cm,d);
+    const dateStr  = fmt(cellDate);
+    const isToday  = same(cellDate,today);
+    const dow      = cellDate.getDay();
+    const isWknd   = dow===0||dow===6;
 
-    if (i < firstDay) {
-      d = daysInPrev - firstDay + i + 1;
-      m = month - 1; y = year;
-      isOther = true;
-    } else if (i >= firstDay + daysInMonth) {
-      d = i - firstDay - daysInMonth + 1;
-      m = month + 1; y = year;
-      isOther = true;
-    } else {
-      d = i - firstDay + 1;
-      m = month; y = year;
-    }
-
-    const cellDate = new Date(y, m, d);
-    const dateStr = formatDate(cellDate);
-    const isToday = sameDay(cellDate, today);
-    const dow = cellDate.getDay(); // 0=Sun 6=Sat
-
-    // Get bookings for this date (filtered by active rooms)
-    const dayBookings = bookings.filter(b =>
-      b.date === dateStr && activeRooms.has(parseInt(b.room_idx))
-    );
+    // Pills: show only selected room's bookings
+    const dayB = bookings.filter(b => b.date===dateStr && parseInt(b.room_idx)===selRoom);
 
     const cell = document.createElement('div');
-    cell.className = 'day-cell' +
-      (isOther ? ' other-month' : '') +
-      (isToday ? ' today' : '') +
-      (dow === 0 || dow === 6 ? ' weekend-cell' : '');
+    cell.className = 'dcell'+(other?' other':'')+(isToday?' today':'')+(isWknd&&!other?' wknd-cell':'');
+    if (!other) cell.onclick = () => openModal(dateStr);
 
-    if (!isOther) {
-      cell.onclick = () => openModal(dateStr, cellDate);
-    }
+    const dn = document.createElement('div');
+    dn.className = 'dnum'; dn.textContent = d;
+    cell.appendChild(dn);
 
-    // Day number
-    const numEl = document.createElement('div');
-    numEl.className = 'day-num';
-    numEl.textContent = d;
-    cell.appendChild(numEl);
-
-    // Booking pills (max 3 shown)
-    const show = dayBookings.slice(0, 3);
-    show.forEach(b => {
+    // Show up to 3 pills
+    dayB.slice(0,3).forEach(b => {
       const pill = document.createElement('div');
-      pill.className = 'booking-pill';
-      pill.style.background = ROOMS[parseInt(b.room_idx)]?.color || '#888';
-      pill.title = `${ROOMS[parseInt(b.room_idx)]?.name} | ${b.slot} | ${b.name}`;
-      pill.textContent = `${ROOMS[parseInt(b.room_idx)]?.name} ${b.slot.split('-')[0]}`;
-      pill.onclick = (e) => { e.stopPropagation(); openModal(dateStr, cellDate, parseInt(b.room_idx)); };
+      pill.className = 'epill';
+      pill.style.background = b.slot || ROOMS[selRoom].color; // slot field repurposed for color
+      // We store color in `purpose` prefix or use slot; see save logic
+      pill.style.background = b._color || ROOMS[selRoom].color;
+      pill.title = `${b.slot} | ${b.name}`;
+      pill.textContent = `${b.slot.split('-')[0] || ''} ${b.name.split(' ')[0]}`;
+      pill.onclick = e => { e.stopPropagation(); openModal(dateStr); };
       cell.appendChild(pill);
     });
-    if (dayBookings.length > 3) {
-      const more = document.createElement('div');
-      more.className = 'more-badge';
-      more.textContent = `+${dayBookings.length - 3} รายการ`;
-      cell.appendChild(more);
+    if (dayB.length>3) {
+      const ml = document.createElement('div');
+      ml.className='more-lbl'; ml.textContent=`+${dayB.length-3} อื่นๆ`;
+      cell.appendChild(ml);
     }
 
     grid.appendChild(cell);
   }
 }
 
-function formatDate(d) {
+function fmt(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-function sameDay(a, b) {
-  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+function same(a,b) {
+  return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
 
 // ===== MODAL =====
-function openModal(dateStr, dateObj, preselectRoom = null) {
+function openModal(dateStr) {
   modalDate = dateStr;
-  selectedSlots.clear();
+  const rm = ROOMS[selRoom];
+  const [y,mo,d] = dateStr.split('-').map(Number);
+  const thaiM = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  document.getElementById('mTitle').textContent = `${d} ${thaiM[mo]} ${y+543}`;
 
-  const thaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
-    'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  const d = dateObj || new Date(dateStr);
-  document.getElementById('modalTitle').textContent =
-    `จอง — ${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear()+543}`;
+  // Room tag
+  const tag = document.getElementById('mRoomTag');
+  tag.textContent = `${rm.name}  (${rm.seats} ที่นั่ง)`;
+  tag.style.background = rm.color;
 
-  if (preselectRoom !== null) {
-    document.getElementById('selRoom').value = preselectRoom;
-  }
+  // Pre-fill user name
+  if (me && !document.getElementById('inpName').value)
+    document.getElementById('inpName').value = `${me.name} (${me.dept})`;
 
-  // Pre-fill name from user
-  if (currentUser && !document.getElementById('inpName').value) {
-    document.getElementById('inpName').value = `${currentUser.name} (${currentUser.dept})`;
-  }
-
-  renderSlots();
   renderExisting();
-
-  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('bookOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
   document.body.style.overflow = '';
-  selectedSlots.clear();
+}
+function overlayClick(e,id) { if(e.target===document.getElementById(id)) closeModal(id); }
+
+// ===== COLOR =====
+function pickColor(el, color) {
+  selColor = color;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('customColor').value = color;
+}
+function pickCustomColor(color) {
+  selColor = color;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
 }
 
-function closeModalOutside(e) {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-}
-
-function renderSlots() {
-  const roomIdx = parseInt(document.getElementById('selRoom').value);
-  const bookedSlots = bookings
-    .filter(b => b.date === modalDate && parseInt(b.room_idx) === roomIdx)
-    .map(b => b.slot);
-
-  selectedSlots.clear();
-
-  const grid = document.getElementById('slotsGrid');
-  grid.innerHTML = SLOTS.map(slot => {
-    const isBooked = bookedSlots.includes(slot);
-    const booker = isBooked
-      ? bookings.find(b => b.date===modalDate && parseInt(b.room_idx)===roomIdx && b.slot===slot)?.name || ''
-      : '';
-    return `
-      <div class="slot-btn ${isBooked ? 'booked' : ''}"
-           id="slot_${slot.replace(':','-').replace(':','-')}"
-           onclick="${isBooked ? '' : `toggleSlot('${slot}')`}"
-           title="${isBooked ? 'จองแล้ว: '+booker : slot}">
-        ${slot}
-        ${isBooked ? `<br><span style="font-size:10px;opacity:0.7">${booker.split(' ')[0]}</span>` : ''}
-      </div>`;
-  }).join('');
-}
-
-function toggleSlot(slot) {
-  if (selectedSlots.has(slot)) {
-    selectedSlots.delete(slot);
-  } else {
-    selectedSlots.add(slot);
-  }
-  // Re-render slot buttons
-  SLOTS.forEach(s => {
-    const id = 'slot_' + s.replace(':','-').replace(':','-');
-    const el = document.getElementById(id);
-    if (el && !el.classList.contains('booked')) {
-      el.classList.toggle('selected', selectedSlots.has(s));
-    }
-  });
-}
-
+// ===== EXISTING =====
 function renderExisting() {
-  const dayBookings = bookings.filter(b => b.date === modalDate);
-  const el = document.getElementById('existingList');
-  if (dayBookings.length === 0) { el.innerHTML = ''; return; }
-
-  el.innerHTML = `<h3>การจองวันนี้ทั้งหมด (${dayBookings.length} รายการ)</h3>` +
-    dayBookings.map(b => {
-      const room = ROOMS[parseInt(b.room_idx)];
-      const canDelete = currentUser && (currentUser.id === b.user_id || currentUser.role === 'admin');
-      return `
-      <div class="existing-item" id="existingItem_${b.id}">
-        <div class="room-badge" style="background:${room?.color||'#888'}">${room?.name||'?'}</div>
-        <div class="info">
-          <div class="slot-time">${b.slot}</div>
-          <div class="booker">${b.name} — ${b.purpose||'-'}</div>
+  const dayB = bookings.filter(b => b.date===modalDate && parseInt(b.room_idx)===selRoom);
+  const sec = document.getElementById('existSection');
+  if (!dayB.length) { sec.innerHTML=''; return; }
+  sec.innerHTML = `<div class="exist-label">การจองวันนี้ (${dayB.length} รายการ)</div>` +
+    dayB.map(b => {
+      const canDel = me && (me.id===b.user_id || me.role==='admin');
+      const color = b._color || ROOMS[selRoom].color;
+      return `<div class="exist-item" id="ei${b.id}">
+        <div class="exist-color" style="background:${color}"></div>
+        <div class="exist-info">
+          <div class="exist-time">${b.slot}</div>
+          <div class="exist-name">${b.name} — ${b.purpose||'-'}</div>
         </div>
-        ${canDelete ? `<button class="delete-btn" onclick="deleteBooking(${b.id})" title="ยกเลิกการจอง">✕</button>` : ''}
+        ${canDel?`<button class="exist-del" onclick="delBooking(${b.id})" title="ยกเลิก">✕</button>`:''}
       </div>`;
     }).join('');
 }
 
 // ===== SUBMIT =====
 async function submitBooking() {
-  if (selectedSlots.size === 0) { showToast('เลือกช่วงเวลาก่อนครับ', 'error'); return; }
-  const name = document.getElementById('inpName').value.trim();
-  const purpose = document.getElementById('inpPurpose').value.trim();
-  if (!name) { showToast('กรอกชื่อผู้จองด้วยครับ', 'error'); return; }
+  const start = document.getElementById('inpStart').value;
+  const end   = document.getElementById('inpEnd').value;
+  const name  = document.getElementById('inpName').value.trim();
+  const purp  = document.getElementById('inpPurpose').value.trim();
 
-  const roomIdx = parseInt(document.getElementById('selRoom').value);
+  if (!start||!end) { toast('กรอกเวลาด้วยครับ','err'); return; }
+  if (start>=end)   { toast('เวลาสิ้นสุดต้องมากกว่าเริ่มต้น','err'); return; }
+  if (!name)        { toast('กรอกชื่อผู้จองด้วยครับ','err'); return; }
+
+  const slot = `${start}-${end}`;
+  // Encode color into purpose field: "COLOR:#hex|purpose"
+  const purposeWithColor = `COLOR:${selColor}|${purp}`;
+
   const btn = document.getElementById('btnBook');
-  btn.disabled = true;
-  btn.textContent = 'กำลังจอง...';
+  btn.disabled=true; btn.textContent='กำลังจอง...';
 
-  let success = 0, fail = 0;
-  for (const slot of selectedSlots) {
-    try {
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room_idx: roomIdx, date: modalDate, slot, name, purpose })
-      });
-      if (res.ok) success++;
-      else { const e = await res.json(); fail++; }
-    } catch(e) { fail++; }
-  }
+  try {
+    const r = await fetch('/api/bookings',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ room_idx:selRoom, date:modalDate, slot, name, purpose:purposeWithColor })
+    });
+    if (r.ok) {
+      toast('จองสำเร็จแล้วครับ','ok');
+      document.getElementById('inpPurpose').value='';
+      document.getElementById('inpStart').value='09:00';
+      document.getElementById('inpEnd').value='10:00';
+      await loadBookings();
+      parseColors();
+      renderCalendar();
+      renderExisting();
+    } else {
+      const e = await r.json();
+      toast(e.error||'จองไม่สำเร็จ','err');
+    }
+  } catch(e){ toast('เกิดข้อผิดพลาด','err'); }
 
-  btn.disabled = false;
-  btn.textContent = '✓ จองห้อง';
-
-  await loadBookings();
-  renderCalendar();
-  renderSlots();
-  renderExisting();
-
-  if (success > 0) showToast(`จองสำเร็จ ${success} ช่วงเวลา${fail>0?' (ซ้ำ '+fail+' รายการ)':''}`, 'success');
-  else showToast('ไม่สามารถจองได้ ช่วงเวลาถูกจองแล้ว', 'error');
-
-  if (success > 0) {
-    document.getElementById('inpPurpose').value = '';
-    selectedSlots.clear();
-  }
+  btn.disabled=false; btn.textContent='✓ จองห้อง';
 }
 
 // ===== DELETE =====
-async function deleteBooking(id) {
-  if (!confirm('ยืนยันการยกเลิกการจองนี้?')) return;
-  try {
-    const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      showToast('ยกเลิกการจองแล้ว', 'success');
-      await loadBookings();
-      renderCalendar();
-      renderExisting();
-      renderSlots();
-    } else showToast('ไม่สามารถลบได้', 'error');
-  } catch(e) { showToast('เกิดข้อผิดพลาด', 'error'); }
+async function delBooking(id) {
+  if(!confirm('ยืนยันยกเลิกการจอง?')) return;
+  const r = await fetch(`/api/bookings/${id}`,{method:'DELETE'});
+  if (r.ok) {
+    toast('ยกเลิกการจองแล้ว','ok');
+    await loadBookings();
+    parseColors();
+    renderCalendar();
+    renderExisting();
+  } else toast('ไม่สามารถลบได้','err');
+}
+
+// ===== PARSE COLOR from purpose field =====
+function parseColors() {
+  bookings.forEach(b => {
+    if (b.purpose && b.purpose.startsWith('COLOR:')) {
+      const parts = b.purpose.substring(6).split('|');
+      b._color   = parts[0] || ROOMS[parseInt(b.room_idx)]?.color;
+      b._purpose = parts.slice(1).join('|');
+    } else {
+      b._color   = ROOMS[parseInt(b.room_idx)]?.color;
+      b._purpose = b.purpose;
+    }
+  });
 }
 
 // ===== TOAST =====
-function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + type;
-  setTimeout(() => t.className = 'toast', 3000);
+function toast(msg,type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${type==='ok'?'ok':type==='err'?'err':''}`;
+  setTimeout(()=>t.className='toast',3000);
 }
 
-init();
+// ===== RUN =====
+(async()=>{
+  await init();
+  parseColors();
+  renderCalendar();
+})();
 </script>
 </body>
 </html>
