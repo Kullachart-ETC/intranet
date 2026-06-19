@@ -379,6 +379,60 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 
 <div class="toast" id="toast"></div>
 
+<!-- EDIT MODAL (double-click by owner) -->
+<div class="overlay" id="editOverlay" onclick="overlayClick(event,'editOverlay')">
+  <div class="modal">
+    <div class="mhead">
+      <h2 id="editTitle">แก้ไขการจอง</h2>
+      <button class="mclose" onclick="closeModal('editOverlay')">✕</button>
+    </div>
+    <div class="mbody">
+      <input type="hidden" id="editId">
+      <div class="fg">
+        <label>ห้องประชุม</label>
+        <div class="room-tag" id="editRoomTag"></div>
+      </div>
+      <div class="fg">
+        <label>เวลา</label>
+        <div class="time-row">
+          <input type="time" id="editStart">
+          <span class="time-sep">ถึง</span>
+          <input type="time" id="editEnd">
+        </div>
+      </div>
+      <div class="fg">
+        <label>ชื่อผู้จอง / หน่วยงาน</label>
+        <input type="text" id="editName">
+      </div>
+      <div class="fg">
+        <label>วัตถุประสงค์</label>
+        <input type="text" id="editPurpose">
+      </div>
+      <div class="fg">
+        <label>สีการจอง</label>
+        <div class="color-row" id="editColorRow">
+          <div class="color-swatch" style="background:#1D5FA5" data-color="#1D5FA5" onclick="pickEditColor(this,'#1D5FA5')"></div>
+          <div class="color-swatch" style="background:#7C3AED" data-color="#7C3AED" onclick="pickEditColor(this,'#7C3AED')"></div>
+          <div class="color-swatch" style="background:#1D9E75" data-color="#1D9E75" onclick="pickEditColor(this,'#1D9E75')"></div>
+          <div class="color-swatch" style="background:#D97706" data-color="#D97706" onclick="pickEditColor(this,'#D97706')"></div>
+          <div class="color-swatch" style="background:#DC2626" data-color="#DC2626" onclick="pickEditColor(this,'#DC2626')"></div>
+          <div class="color-swatch" style="background:#DB2777" data-color="#DB2777" onclick="pickEditColor(this,'#DB2777')"></div>
+          <div class="color-swatch" style="background:#0891B2" data-color="#0891B2" onclick="pickEditColor(this,'#0891B2')"></div>
+          <div class="color-swatch" style="background:#65A30D" data-color="#65A30D" onclick="pickEditColor(this,'#65A30D')"></div>
+          <div class="color-swatch" style="background:#64748B" data-color="#64748B" onclick="pickEditColor(this,'#64748B')"></div>
+          <div class="color-custom" title="เลือกสีเอง">
+            <input type="color" id="editCustomColor" value="#1D5FA5" oninput="pickEditCustomColor(this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('editOverlay')">ยกเลิก</button>
+      <button class="btn btn-primary" id="btnSaveEdit" onclick="saveEdit()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===== CONFIG =====
 const ROOMS = [
@@ -471,12 +525,18 @@ function renderCalendar() {
     dayB.slice(0,3).forEach(b => {
       const pill = document.createElement('div');
       pill.className = 'epill';
-      pill.style.background = b.slot || ROOMS[selRoom].color; // slot field repurposed for color
-      // We store color in `purpose` prefix or use slot; see save logic
       pill.style.background = b._color || ROOMS[selRoom].color;
-      pill.title = `${b.slot} | ${b.name}`;
+      pill.title = `${b.slot} | ${b.name}` + (me && me.id===b.user_id ? ' (ดับเบิลคลิกเพื่อแก้ไข)' : '');
       pill.textContent = `${b.slot.split('-')[0] || ''} ${b.name.split(' ')[0]}`;
+      // single click → open day modal
       pill.onclick = e => { e.stopPropagation(); openModal(dateStr); };
+      // double click → open edit modal (owner only)
+      pill.ondblclick = e => {
+        e.stopPropagation();
+        if (me && me.id === b.user_id) openEditModal(b);
+      };
+      // cursor hint for owner
+      if (me && me.id === b.user_id) pill.style.cursor = 'grab';
       cell.appendChild(pill);
     });
     if (dayB.length>3) {
@@ -543,17 +603,106 @@ function renderExisting() {
   if (!dayB.length) { sec.innerHTML=''; return; }
   sec.innerHTML = `<div class="exist-label">การจองวันนี้ (${dayB.length} รายการ)</div>` +
     dayB.map(b => {
-      const canDel = me && (me.id===b.user_id || me.role==='admin');
-      const color = b._color || ROOMS[selRoom].color;
-      return `<div class="exist-item" id="ei${b.id}">
+      const isOwner = me && me.id===b.user_id;
+      const canDel  = me && (me.id===b.user_id || me.role==='admin');
+      const color   = b._color || ROOMS[selRoom].color;
+      const editHint = isOwner ? ' title="ดับเบิลคลิกเพื่อแก้ไข" style="cursor:pointer"' : '';
+      return `<div class="exist-item" id="ei${b.id}" ondblclick="${isOwner?`openEditModal(bookings.find(x=>x.id==${b.id}))`:''}">
         <div class="exist-color" style="background:${color}"></div>
-        <div class="exist-info">
-          <div class="exist-time">${b.slot}</div>
-          <div class="exist-name">${b.name} — ${b.purpose||'-'}</div>
+        <div class="exist-info"${editHint}>
+          <div class="exist-time">${b.slot} ${isOwner?'<span style="font-size:10px;color:var(--muted)">(ดับเบิลคลิกแก้ไข)</span>':''}</div>
+          <div class="exist-name">${b.name} — ${b._purpose||b.purpose||'-'}</div>
         </div>
         ${canDel?`<button class="exist-del" onclick="delBooking(${b.id})" title="ยกเลิก">✕</button>`:''}
       </div>`;
     }).join('');
+}
+
+// ===== EDIT MODAL =====
+let editColor = '#1D5FA5';
+
+function openEditModal(b) {
+  if (!b) return;
+  const rm = ROOMS[parseInt(b.room_idx)];
+  const [y,mo,d] = b.date.split('-').map(Number);
+  const thaiM = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  document.getElementById('editTitle').textContent = `แก้ไข — ${d} ${thaiM[mo]} ${y+543}`;
+
+  const tag = document.getElementById('editRoomTag');
+  tag.textContent = `${rm.name} (${rm.seats} ที่นั่ง)`;
+  tag.style.background = rm.color;
+
+  document.getElementById('editId').value  = b.id;
+  const [start,end] = (b.slot||'09:00-10:00').split('-');
+  document.getElementById('editStart').value   = start||'09:00';
+  document.getElementById('editEnd').value     = end||'10:00';
+  document.getElementById('editName').value    = b.name||'';
+  document.getElementById('editPurpose').value = b._purpose||'';
+
+  editColor = b._color || rm.color;
+  document.getElementById('editCustomColor').value = editColor;
+  document.querySelectorAll('#editColorRow .color-swatch').forEach(s => {
+    s.classList.toggle('selected', s.dataset.color === editColor);
+  });
+
+  // close booking modal first
+  closeModal('bookOverlay');
+  document.getElementById('editOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function pickEditColor(el, color) {
+  editColor = color;
+  document.querySelectorAll('#editColorRow .color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('editCustomColor').value = color;
+}
+function pickEditCustomColor(color) {
+  editColor = color;
+  document.querySelectorAll('#editColorRow .color-swatch').forEach(s => s.classList.remove('selected'));
+}
+
+async function saveEdit() {
+  const id    = document.getElementById('editId').value;
+  const start = document.getElementById('editStart').value;
+  const end   = document.getElementById('editEnd').value;
+  const name  = document.getElementById('editName').value.trim();
+  const purp  = document.getElementById('editPurpose').value.trim();
+
+  if (!start||!end) { toast('กรอกเวลาด้วยครับ','err'); return; }
+  if (start>=end)   { toast('เวลาสิ้นสุดต้องมากกว่าเริ่มต้น','err'); return; }
+  if (!name)        { toast('กรอกชื่อผู้จองด้วยครับ','err'); return; }
+
+  const slot    = `${start}-${end}`;
+  const purpose = `COLOR:${editColor}|${purp}`;
+
+  const btn = document.getElementById('btnSaveEdit');
+  btn.disabled=true; btn.textContent='กำลังบันทึก...';
+
+  // ลบอันเก่า แล้วสร้างใหม่ (เพราะ API เดิมไม่มี PUT /bookings/:id)
+  const orig = bookings.find(b=>b.id==id);
+  try {
+    await fetch(`/api/bookings/${id}`,{method:'DELETE'});
+    const r = await fetch('/api/bookings',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ room_idx: orig.room_idx, date: orig.date, slot, name, purpose })
+    });
+    if (r.ok) {
+      toast('แก้ไขสำเร็จแล้วครับ','ok');
+      closeModal('editOverlay');
+      await loadBookings();
+      parseColors();
+      renderCalendar();
+    } else {
+      const e = await r.json();
+      toast(e.error||'บันทึกไม่สำเร็จ','err');
+      // คืนข้อมูลเดิม
+      await loadBookings(); parseColors(); renderCalendar();
+    }
+  } catch(e) { toast('เกิดข้อผิดพลาด','err'); }
+
+  btn.disabled=false; btn.textContent='💾 บันทึก';
 }
 
 // ===== SUBMIT =====
