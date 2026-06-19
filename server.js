@@ -20,18 +20,14 @@ app.use(session({
   cookie: { maxAge: 8 * 60 * 60 * 1000 }
 }));
 
-// Email transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: process.env.SMTP_PORT || 587,
   secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
 });
 
-// สร้างตาราง
+// ======== DB INIT ========
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -58,7 +54,6 @@ async function initDB() {
       title TEXT, time_start TEXT, time_end TEXT,
       user_id INTEGER
     );
-    -- เพิ่ม column ถ้ายังไม่มี (กรณี table มีอยู่แล้ว)
     ALTER TABLE events ADD COLUMN IF NOT EXISTS title TEXT;
     ALTER TABLE events ADD COLUMN IF NOT EXISTS time_start TEXT;
     ALTER TABLE events ADD COLUMN IF NOT EXISTS time_end TEXT;
@@ -77,8 +72,9 @@ async function initDB() {
       leave_no TEXT UNIQUE,
       user_id INTEGER,
       leave_type TEXT,
-      start_date TIMESTAMP,
-      end_date TIMESTAMP,
+      start_datetime TIMESTAMP,
+      end_datetime TIMESTAMP,
+      hours NUMERIC,
       days NUMERIC,
       reason TEXT,
       status TEXT DEFAULT 'pending',
@@ -87,15 +83,26 @@ async function initDB() {
       reject_reason TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
+    ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS start_datetime TIMESTAMP;
+    ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS end_datetime TIMESTAMP;
+    ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS hours NUMERIC DEFAULT 0;
     CREATE TABLE IF NOT EXISTS leave_quotas (
       id SERIAL PRIMARY KEY,
       user_id INTEGER,
-      year INTEGER,
+      leave_year INTEGER,
       leave_type TEXT,
       quota NUMERIC DEFAULT 0,
-      used NUMERIC DEFAULT 0,
-      carried_over NUMERIC DEFAULT 0,
-      UNIQUE(user_id, year, leave_type)
+      used_hours NUMERIC DEFAULT 0,
+      carried_hours NUMERIC DEFAULT 0,
+      UNIQUE(user_id, leave_year, leave_type)
+    );
+    CREATE TABLE IF NOT EXISTS annual_leave_log (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER,
+      work_year INTEGER,
+      quota_hours NUMERIC,
+      granted_at DATE,
+      expires_at DATE
     );
   `);
 
@@ -108,8 +115,6 @@ async function initDB() {
       ['admin', hash, 'ผู้ดูแลระบบ', 'IT', 'admin', 'admin@earth-th.com', '2020-01-01']
     );
   }
-
-  // Seed employees
   const emp = await pool.query('SELECT COUNT(*) FROM employees');
   if (parseInt(emp.rows[0].count) === 0) {
     await pool.query(`INSERT INTO employees (name,dept,color) VALUES
@@ -119,8 +124,6 @@ async function initDB() {
       ('นิดา สวยงาม','Marketing','#993556'),
       ('ประยุทธ์ ตั้งใจ','Sales','#534AB7')`);
   }
-
-  // Seed โพสต์
   const post = await pool.query('SELECT COUNT(*) FROM posts');
   if (parseInt(post.rows[0].count) === 0) {
     await pool.query(
@@ -130,10 +133,193 @@ async function initDB() {
   }
   console.log('Database initialized');
 }
-
 initDB().catch(console.error);
 
-// ======== Middleware ========
+// ======== LEAVE HELPERS ========
+
+// ชั่วโมงทำงานต่อวัน: 8:30-17:40 หักพัก 12:00-13:00 = 8.17 ชม.
+const WORK_HOURS_PER_DAY = 8 + (10/60); // 8.1667
+const WORK_START = { h: 8, m: 30 };
+const WORK_END   = { h: 17, m: 40 };
+const BREAK_START = { h: 12, m: 0 };
+const BREAK_END   = { h: 13, m: 0 };
+const MIN_LEAVE_HOURS = 0.5; // 30 นาที
+
+// คำนวณชั่วโมงทำงานจริง (หักพักเที่ยง)
+function calcWorkHours(startDT, endDT) {
+  const s = new Date(startDT);
+  const e = new Date(endDT);
+  if (e <= s) return 0;
+
+  let totalHours = 0;
+  const cur = new Date(s);
+
+  while (cur < e) {
+    const dayEnd = new Date(cur);
+    dayEnd.setHours(WORK_END.h, WORK_END.m, 0, 0);
+    const dayStart = new Date(cur);
+    dayStart.setHours(WORK_START.h, WORK_START.m, 0, 0);
+    const breakS = new Date(cur);
+    breakS.setHours(BREAK_START.h, BREAK_START.m, 0, 0);
+    const breakE = new Date(cur);
+    breakE.setHours(BREAK_END.h, BREAK_END.m, 0, 0);
+
+    const segStart = cur < dayStart ? dayStart : cur;
+    const segEnd   = e < dayEnd ? e : dayEnd;
+
+    if (segEnd > segStart) {
+      let hrs = (segEnd - segStart) / 3600000;
+      // หักพักเที่ยง
+      const overlapStart = segStart < breakS ? breakS : segStart;
+      const overlapEnd   = segEnd > breakE ? breakE : segEnd;
+      if (overlapEnd > overlapStart) {
+        hrs -= (overlapEnd - overlapStart) / 3600000;
+      }
+      totalHours += Math.max(0, hrs);
+    }
+
+    // ไปวันถัดไป
+    cur.setDate(cur.getDate() + 1);
+    cur.setHours(WORK_START.h, WORK_START.m, 0, 0);
+    if (cur.getDay() === 0) cur.setDate(cur.getDate() + 1); // ข้ามอาทิตย์
+    if (cur.getDay() === 6) cur.setDate(cur.getDate() + 2); // ข้ามเสาร์
+  }
+
+  return Math.round(totalHours * 100) / 100;
+}
+
+// คำนวณ quota พักร้อน (ชั่วโมง) ตามอายุงาน
+function calcAnnualQuotaHours(workYears) {
+  let days = 0;
+  if (workYears >= 11) days = 12;
+  else if (workYears >= 10) days = 10;
+  else if (workYears >= 6)  days = 9;
+  else if (workYears >= 3)  days = 8;
+  else if (workYears >= 2)  days = 7;
+  else if (workYears >= 1)  days = 6;
+  else days = 0;
+  return days * WORK_HOURS_PER_DAY;
+}
+
+// คำนวณอายุงาน (ปี) ณ วันที่ระบุ
+function calcWorkYears(startDate, atDate) {
+  const s = new Date(startDate);
+  const a = new Date(atDate);
+  let years = a.getFullYear() - s.getFullYear();
+  const m = a.getMonth() - s.getMonth();
+  if (m < 0 || (m === 0 && a.getDate() < s.getDate())) years--;
+  return Math.max(0, years);
+}
+
+// Grant annual leave quota เมื่อครบปีทำงาน
+async function grantAnnualLeaveIfDue(userId) {
+  const userR = await pool.query('SELECT * FROM users WHERE id=$1', [userId]);
+  const user = userR.rows[0];
+  if (!user || !user.start_date) return;
+
+  const today = new Date();
+  const startDate = new Date(user.start_date);
+  const workYears = calcWorkYears(startDate, today);
+  if (workYears < 1) return;
+
+  // ตรวจว่า grant ปีนี้แล้วหรือยัง
+  const alreadyGranted = await pool.query(
+    'SELECT id FROM annual_leave_log WHERE user_id=$1 AND work_year=$2',
+    [userId, workYears]
+  );
+  if (alreadyGranted.rows.length > 0) return;
+
+  const quotaHours = calcAnnualQuotaHours(workYears);
+  const grantedAt = new Date(startDate);
+  grantedAt.setFullYear(startDate.getFullYear() + workYears);
+
+  // วันหมดอายุ = วันเข้างาน + (workYears + 2) ปี
+  const expiresAt = new Date(startDate);
+  expiresAt.setFullYear(startDate.getFullYear() + workYears + 2);
+
+  const leaveYear = grantedAt.getFullYear();
+
+  await pool.query(
+    'INSERT INTO annual_leave_log (user_id,work_year,quota_hours,granted_at,expires_at) VALUES ($1,$2,$3,$4,$5)',
+    [userId, workYears, quotaHours, grantedAt, expiresAt]
+  );
+
+  // เพิ่ม quota ใน leave_quotas
+  await pool.query(`
+    INSERT INTO leave_quotas (user_id,leave_year,leave_type,quota,used_hours,carried_hours)
+    VALUES ($1,$2,'annual',$3,0,0)
+    ON CONFLICT (user_id,leave_year,leave_type)
+    DO UPDATE SET quota = leave_quotas.quota + $3
+  `, [userId, leaveYear, quotaHours]);
+
+  // ตัด quota ที่หมดอายุ (ปีแรกถูกตัดเมื่อขึ้นปีที่ 3)
+  if (workYears >= 3) {
+    const expiredWorkYear = workYears - 2;
+    const expiredLog = await pool.query(
+      'SELECT * FROM annual_leave_log WHERE user_id=$1 AND work_year=$2',
+      [userId, expiredWorkYear]
+    );
+    if (expiredLog.rows[0]) {
+      const expiredLeaveYear = new Date(expiredLog.rows[0].granted_at).getFullYear();
+      // ดึง quota ที่ยังเหลือของปีที่หมดอายุ
+      const oldQ = await pool.query(
+        'SELECT * FROM leave_quotas WHERE user_id=$1 AND leave_year=$2 AND leave_type=$3',
+        [userId, expiredLeaveYear, 'annual']
+      );
+      if (oldQ.rows[0]) {
+        const remaining = parseFloat(oldQ.rows[0].quota) - parseFloat(oldQ.rows[0].used_hours);
+        if (remaining > 0) {
+          // ตัดออก (set quota = used เพื่อให้ remaining = 0)
+          await pool.query(
+            'UPDATE leave_quotas SET quota=used_hours WHERE user_id=$1 AND leave_year=$2 AND leave_type=$3',
+            [userId, expiredLeaveYear, 'annual']
+          );
+          console.log(`Expired annual leave for user ${userId} work_year ${expiredWorkYear}: ${remaining} hrs forfeited`);
+        }
+      }
+    }
+  }
+}
+
+// ดึง quota รวม annual leave (รวมทุกปีที่ยังไม่หมดอายุ)
+async function getAnnualLeaveBalance(userId) {
+  const today = new Date();
+  const r = await pool.query(
+    'SELECT * FROM leave_quotas WHERE user_id=$1 AND leave_type=$2 ORDER BY leave_year',
+    [userId, 'annual']
+  );
+  let totalQuota = 0, totalUsed = 0;
+  for (const row of r.rows) {
+    totalQuota += parseFloat(row.quota);
+    totalUsed  += parseFloat(row.used_hours);
+  }
+  return { quota: totalQuota, used: totalUsed, remaining: totalQuota - totalUsed };
+}
+
+const LEAVE_TYPES = {
+  sick:             { name: 'ลาป่วย',               quota_days: 30,  paid: true  },
+  annual:           { name: 'ลาพักร้อน',             quota_days: 0,   paid: true  },
+  personal:         { name: 'ลากิจจำเป็น',           quota_days: 5,   paid: true  },
+  personal_special: { name: 'ลากิจพิเศษ',            quota_days: 7,   paid: false },
+  maternity:        { name: 'ลาคลอด',                quota_days: 60,  paid: true  },
+  ordain:           { name: 'ลาบวช',                 quota_days: 15,  paid: true  },
+  military:         { name: 'ลาราชการทหาร',          quota_days: 60,  paid: true  },
+  marriage:         { name: 'ลาสมรส',                quota_days: 7,   paid: true  },
+  work_injury:      { name: 'ลาป่วยเนื่องจากงาน',   quota_days: 30,  paid: true  },
+  unpaid:           { name: 'ลาตัดเงิน',             quota_days: 30,  paid: false }
+};
+
+async function generateLeaveNo() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const r = await pool.query(
+    'SELECT COUNT(*) FROM leave_requests WHERE EXTRACT(YEAR FROM created_at)=$1', [year]
+  );
+  const count = parseInt(r.rows[0].count) + 1;
+  return `LV${year}${String(count).padStart(4,'0')}`;
+}
+
+// ======== MIDDLEWARE ========
 function requireLogin(req, res, next) {
   if (req.session && req.session.user) return next();
   res.status(401).json({ error: 'กรุณาเข้าสู่ระบบ' });
@@ -143,30 +329,26 @@ function requireAdmin(req, res, next) {
   res.status(403).json({ error: 'เฉพาะ Admin เท่านั้น' });
 }
 
-// ======== หน้า Login ========
+// ======== AUTH ========
 app.get('/login', (req, res) => {
   if (req.session.user) return res.redirect('/');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
-
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const result = await pool.query('SELECT * FROM users WHERE username=$1', [username]);
   const user = result.rows[0];
-  if (!user || !bcrypt.compareSync(password, user.password)) {
+  if (!user || !bcrypt.compareSync(password, user.password))
     return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-  }
   req.session.user = { id: user.id, username: user.username, name: user.name, dept: user.dept, role: user.role, email: user.email };
   res.json({ ok: true, user: req.session.user });
 });
-
 app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ ok: true }); });
 app.get('/api/me', (req, res) => {
   if (req.session.user) res.json(req.session.user);
   else res.status(401).json({ error: 'ไม่ได้เข้าสู่ระบบ' });
 });
 
-// Static
 app.use((req, res, next) => {
   if (req.path === '/login' || req.path.startsWith('/api/')) return next();
   if (!req.session.user) return res.redirect('/login');
@@ -174,7 +356,7 @@ app.use((req, res, next) => {
 });
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ======== API Users ========
+// ======== API USERS ========
 app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
   const r = await pool.query('SELECT id,username,name,dept,role,email,manager_id,start_date,annual_leave_quota FROM users ORDER BY id');
   res.json(r.rows);
@@ -210,7 +392,7 @@ app.put('/api/users/:id', requireLogin, requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ======== API Posts ========
+// ======== API POSTS ========
 app.get('/api/posts', requireLogin, async (req, res) => {
   const r = await pool.query('SELECT * FROM posts ORDER BY pinned DESC, id DESC');
   res.json(r.rows);
@@ -234,24 +416,21 @@ app.delete('/api/posts/:id', requireLogin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ======== API Employees ========
+// ======== API EMPLOYEES ========
 app.get('/api/employees', requireLogin, async (req, res) => {
   const r = await pool.query(`
     SELECT id, name, dept,
       CASE dept
-        WHEN 'IT' THEN '#1D9E75'
-        WHEN 'HR' THEN '#185FA5'
-        WHEN 'Finance' THEN '#993C1D'
-        WHEN 'Marketing' THEN '#993556'
-        WHEN 'Sales' THEN '#534AB7'
-        ELSE '#888888'
+        WHEN 'IT' THEN '#1D9E75' WHEN 'HR' THEN '#185FA5'
+        WHEN 'Finance' THEN '#993C1D' WHEN 'Marketing' THEN '#993556'
+        WHEN 'Sales' THEN '#534AB7' ELSE '#888888'
       END as color
     FROM users WHERE role != 'admin' ORDER BY name
   `);
   res.json(r.rows);
 });
 
-// ======== API Events ========
+// ======== API EVENTS ========
 app.get('/api/events', requireLogin, async (req, res) => {
   const r = await pool.query('SELECT * FROM events');
   res.json(r.rows);
@@ -269,17 +448,21 @@ app.delete('/api/events/:id', requireLogin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ======== API Bookings ========
+// ======== API BOOKINGS ========
 app.get('/api/bookings', requireLogin, async (req, res) => {
   const r = await pool.query('SELECT * FROM bookings');
   res.json(r.rows);
 });
 app.post('/api/bookings', requireLogin, async (req, res) => {
   const { room_idx, date, slot, name, purpose } = req.body;
-  const existing = await pool.query('SELECT id FROM bookings WHERE room_idx=$1 AND date=$2 AND slot=$3', [room_idx, date, slot]);
+  const existing = await pool.query(
+    'SELECT id FROM bookings WHERE room_idx=$1 AND date=$2 AND slot=$3', [room_idx, date, slot]
+  );
   if (existing.rows.length > 0) return res.status(409).json({ error: 'ช่วงเวลานี้ถูกจองแล้ว' });
-  await pool.query('INSERT INTO bookings (room_idx,date,slot,name,purpose,user_id) VALUES ($1,$2,$3,$4,$5,$6)',
-    [room_idx, date, slot, name, purpose, req.session.user.id]);
+  await pool.query(
+    'INSERT INTO bookings (room_idx,date,slot,name,purpose,user_id) VALUES ($1,$2,$3,$4,$5,$6)',
+    [room_idx, date, slot, name, purpose, req.session.user.id]
+  );
   res.json({ ok: true });
 });
 app.delete('/api/bookings/:id', requireLogin, async (req, res) => {
@@ -287,103 +470,147 @@ app.delete('/api/bookings/:id', requireLogin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ======== API Leave ========
-const LEAVE_TYPES = {
-  sick: { name: 'ลาป่วย', quota: 30, paid: true },
-  annual: { name: 'ลาพักร้อน', quota: 0, paid: true },
-  personal: { name: 'ลากิจจำเป็น', quota: 5, paid: true },
-  personal_special: { name: 'ลากิจพิเศษ', quota: 7, paid: false },
-  maternity: { name: 'ลาคลอด', quota: 60, paid: true },
-  ordain: { name: 'ลาบวช', quota: 15, paid: true },
-  military: { name: 'ลาราชการทหาร', quota: 60, paid: true },
-  marriage: { name: 'ลาสมรส', quota: 7, paid: true },
-  work_injury: { name: 'ลาป่วยเนื่องจากงาน', quota: 30, paid: true },
-  unpaid: { name: 'ลาตัดเงิน', quota: 30, paid: false }
-};
+// ======== API LEAVE ========
 
-// สร้างเลขที่ใบลา
-async function generateLeaveNo() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const r = await pool.query('SELECT COUNT(*) FROM leave_requests WHERE EXTRACT(YEAR FROM created_at)=$1', [year]);
-  const count = parseInt(r.rows[0].count) + 1;
-  return `LV${year}${String(count).padStart(4,'0')}`;
-}
-
-// ดึง quota การลา
+// ดึง quota ทั้งหมดของ user
 app.get('/api/leave/quota/:userId', requireLogin, async (req, res) => {
-  const userId = req.params.userId;
-  const year = new Date().getFullYear();
-  const user = await pool.query('SELECT * FROM users WHERE id=$1', [userId]);
-  if (!user.rows[0]) return res.status(404).json({ error: 'ไม่พบผู้ใช้' });
+  try {
+    const userId = parseInt(req.params.userId);
+    // Grant annual leave ถ้าครบปีแล้ว
+    await grantAnnualLeaveIfDue(userId);
 
-  const result = {};
-  for (const [type, info] of Object.entries(LEAVE_TYPES)) {
-    const q = await pool.query(
-      'SELECT * FROM leave_quotas WHERE user_id=$1 AND year=$2 AND leave_type=$3',
-      [userId, year, type]
-    );
-    let quota = info.quota;
-    if (type === 'annual') quota = user.rows[0].annual_leave_quota || 6;
-    let row = q.rows[0];
-    if (!row) {
-      await pool.query(
-        'INSERT INTO leave_quotas (user_id,year,leave_type,quota,used,carried_over) VALUES ($1,$2,$3,$4,0,0) ON CONFLICT DO NOTHING',
-        [userId, year, type, quota]
-      );
-      row = { quota, used: 0, carried_over: 0 };
+    const userR = await pool.query('SELECT * FROM users WHERE id=$1', [userId]);
+    const user = userR.rows[0];
+    if (!user) return res.status(404).json({ error: 'ไม่พบผู้ใช้' });
+
+    const result = {};
+    const workYears = calcWorkYears(user.start_date, new Date());
+
+    for (const [type, info] of Object.entries(LEAVE_TYPES)) {
+      if (type === 'annual') {
+        const bal = await getAnnualLeaveBalance(userId);
+        result[type] = {
+          name: info.name,
+          quota_hours: bal.quota,
+          used_hours: bal.used,
+          remaining_hours: bal.remaining,
+          quota_days: bal.quota / WORK_HOURS_PER_DAY,
+          used_days: bal.used / WORK_HOURS_PER_DAY,
+          remaining_days: bal.remaining / WORK_HOURS_PER_DAY,
+          work_years: workYears
+        };
+      } else {
+        const quotaHours = info.quota_days * WORK_HOURS_PER_DAY;
+        const leaveYear = new Date().getFullYear();
+        const q = await pool.query(
+          'SELECT * FROM leave_quotas WHERE user_id=$1 AND leave_year=$2 AND leave_type=$3',
+          [userId, leaveYear, type]
+        );
+        let row = q.rows[0];
+        if (!row) {
+          await pool.query(
+            'INSERT INTO leave_quotas (user_id,leave_year,leave_type,quota,used_hours,carried_hours) VALUES ($1,$2,$3,$4,0,0) ON CONFLICT DO NOTHING',
+            [userId, leaveYear, type, quotaHours]
+          );
+          row = { quota: quotaHours, used_hours: 0, carried_hours: 0 };
+        }
+        const quota   = parseFloat(row.quota);
+        const used    = parseFloat(row.used_hours);
+        const remaining = quota - used;
+        result[type] = {
+          name: info.name,
+          quota_hours: quota,
+          used_hours: used,
+          remaining_hours: remaining,
+          quota_days: quota / WORK_HOURS_PER_DAY,
+          used_days: used / WORK_HOURS_PER_DAY,
+          remaining_days: remaining / WORK_HOURS_PER_DAY
+        };
+      }
     }
-    result[type] = {
-      name: info.name,
-      quota: parseFloat(row.quota),
-      used: parseFloat(row.used),
-      carried_over: parseFloat(row.carried_over || 0),
-      remaining: parseFloat(row.quota) + parseFloat(row.carried_over || 0) - parseFloat(row.used)
-    };
+    res.json(result);
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
   }
-  res.json(result);
+});
+
+// คำนวณชั่วโมงลา (preview ก่อนยื่น)
+app.post('/api/leave/calculate', requireLogin, async (req, res) => {
+  try {
+    const { start_datetime, end_datetime } = req.body;
+    if (!start_datetime || !end_datetime)
+      return res.status(400).json({ error: 'กรุณาระบุวันเวลาเริ่มต้นและสิ้นสุด' });
+    const hours = calcWorkHours(start_datetime, end_datetime);
+    if (hours < MIN_LEAVE_HOURS)
+      return res.status(400).json({ error: `ลาขั้นต่ำ ${MIN_LEAVE_HOURS * 60} นาที` });
+    const days = hours / WORK_HOURS_PER_DAY;
+    res.json({ hours: Math.round(hours*100)/100, days: Math.round(days*100)/100 });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ยื่นใบลา
 app.post('/api/leave', requireLogin, async (req, res) => {
   try {
-    const { leave_type, start_date, end_date, days, reason } = req.body;
-    const userId = req.session.user.id;
-    const leaveNo = await generateLeaveNo();
+    const { leave_type, start_datetime, end_datetime, reason } = req.body;
+    if (!LEAVE_TYPES[leave_type]) return res.status(400).json({ error: 'ประเภทการลาไม่ถูกต้อง' });
 
-    // หาผู้อนุมัติ
-    const userResult = await pool.query('SELECT * FROM users WHERE id=$1', [userId]);
-    const user = userResult.rows[0];
+    const hours = calcWorkHours(start_datetime, end_datetime);
+    if (hours < MIN_LEAVE_HOURS)
+      return res.status(400).json({ error: `ลาขั้นต่ำ ${MIN_LEAVE_HOURS * 60} นาที` });
+
+    const days = hours / WORK_HOURS_PER_DAY;
+    const userId = req.session.user.id;
+
+    // ตรวจ quota (ยกเว้น sick, work_injury, military, unpaid ที่ไม่จำกัดเข้มงวด)
+    if (leave_type === 'annual') {
+      await grantAnnualLeaveIfDue(userId);
+      const bal = await getAnnualLeaveBalance(userId);
+      if (bal.remaining < hours)
+        return res.status(400).json({ error: `วันพักร้อนไม่เพียงพอ (คงเหลือ ${(bal.remaining/WORK_HOURS_PER_DAY).toFixed(2)} วัน)` });
+    }
+
+    const leaveNo = await generateLeaveNo();
+    const userR   = await pool.query('SELECT * FROM users WHERE id=$1', [userId]);
+    const user    = userR.rows[0];
     const approverId = user.manager_id;
 
     await pool.query(
-      'INSERT INTO leave_requests (leave_no,user_id,leave_type,start_date,end_date,days,reason,status,approver_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
-      [leaveNo, userId, leave_type, start_date, end_date, days, reason, 'pending', approverId]
+      `INSERT INTO leave_requests
+        (leave_no,user_id,leave_type,start_datetime,end_datetime,hours,days,reason,status,approver_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`,
+      [leaveNo, userId, leave_type, start_datetime, end_datetime, hours, days, reason||'', approverId]
     );
 
-    // ส่ง Email แจ้งหัวหน้า
+    // Email หัวหน้า
     if (approverId) {
-      const approver = await pool.query('SELECT * FROM users WHERE id=$1', [approverId]);
-      if (approver.rows[0] && approver.rows[0].email && process.env.SMTP_USER) {
-        const leaveInfo = LEAVE_TYPES[leave_type];
+      const approverR = await pool.query('SELECT * FROM users WHERE id=$1', [approverId]);
+      const approver  = approverR.rows[0];
+      if (approver && approver.email && process.env.SMTP_USER) {
+        const info = LEAVE_TYPES[leave_type];
         await transporter.sendMail({
           from: process.env.SMTP_USER,
-          to: approver.rows[0].email,
-          subject: `[ใบลา] ${user.name} ขอ${leaveInfo?.name || leave_type} ${days} วัน`,
+          to: approver.email,
+          subject: `[ใบลา] ${user.name} ขอ${info.name} ${hours.toFixed(2)} ชม. (${days.toFixed(2)} วัน)`,
           html: `
             <h3>มีคำขอลาใหม่รอการอนุมัติ</h3>
-            <p><b>ผู้ขอลา:</b> ${user.name} (${user.dept})</p>
-            <p><b>ประเภท:</b> ${leaveInfo?.name || leave_type}</p>
-            <p><b>วันที่:</b> ${new Date(start_date).toLocaleDateString('th-TH')} - ${new Date(end_date).toLocaleDateString('th-TH')}</p>
-            <p><b>จำนวน:</b> ${days} วัน</p>
-            <p><b>เหตุผล:</b> ${reason || '-'}</p>
-            <p>กรุณาเข้าระบบเพื่ออนุมัติ</p>
+            <table style="border-collapse:collapse;width:100%">
+              <tr><td style="padding:6px;font-weight:bold">ผู้ขอลา</td><td>${user.name} (${user.dept})</td></tr>
+              <tr><td style="padding:6px;font-weight:bold">ประเภท</td><td>${info.name}</td></tr>
+              <tr><td style="padding:6px;font-weight:bold">เริ่ม</td><td>${new Date(start_datetime).toLocaleString('th-TH')}</td></tr>
+              <tr><td style="padding:6px;font-weight:bold">สิ้นสุด</td><td>${new Date(end_datetime).toLocaleString('th-TH')}</td></tr>
+              <tr><td style="padding:6px;font-weight:bold">จำนวน</td><td>${hours.toFixed(2)} ชม. (${days.toFixed(2)} วัน)</td></tr>
+              <tr><td style="padding:6px;font-weight:bold">เหตุผล</td><td>${reason||'-'}</td></tr>
+            </table>
+            <p style="margin-top:16px">กรุณาเข้าระบบเพื่ออนุมัติ</p>
           `
         }).catch(e => console.log('Email error:', e.message));
       }
     }
 
-    res.json({ ok: true, leave_no: leaveNo });
+    res.json({ ok: true, leave_no: leaveNo, hours, days });
   } catch(e) {
     console.error(e);
     res.status(500).json({ error: e.message });
@@ -393,7 +620,11 @@ app.post('/api/leave', requireLogin, async (req, res) => {
 // ดูใบลาของตัวเอง
 app.get('/api/leave/my', requireLogin, async (req, res) => {
   const r = await pool.query(
-    'SELECT lr.*, u.name as user_name, u.dept, a.name as approver_name FROM leave_requests lr LEFT JOIN users u ON lr.user_id=u.id LEFT JOIN users a ON lr.approver_id=a.id WHERE lr.user_id=$1 ORDER BY lr.created_at DESC',
+    `SELECT lr.*, u.name as user_name, u.dept, a.name as approver_name
+     FROM leave_requests lr
+     LEFT JOIN users u ON lr.user_id=u.id
+     LEFT JOIN users a ON lr.approver_id=a.id
+     WHERE lr.user_id=$1 ORDER BY lr.created_at DESC`,
     [req.session.user.id]
   );
   res.json(r.rows);
@@ -402,8 +633,12 @@ app.get('/api/leave/my', requireLogin, async (req, res) => {
 // ดูใบลาที่รอฉันอนุมัติ
 app.get('/api/leave/pending', requireLogin, async (req, res) => {
   const r = await pool.query(
-    'SELECT lr.*, u.name as user_name, u.dept, u.email as user_email FROM leave_requests lr LEFT JOIN users u ON lr.user_id=u.id WHERE lr.approver_id=$1 AND lr.status=$2 ORDER BY lr.created_at DESC',
-    [req.session.user.id, 'pending']
+    `SELECT lr.*, u.name as user_name, u.dept, u.email as user_email
+     FROM leave_requests lr
+     LEFT JOIN users u ON lr.user_id=u.id
+     WHERE lr.approver_id=$1 AND lr.status='pending'
+     ORDER BY lr.created_at DESC`,
+    [req.session.user.id]
   );
   res.json(r.rows);
 });
@@ -411,88 +646,117 @@ app.get('/api/leave/pending', requireLogin, async (req, res) => {
 // ดูใบลาทั้งหมด (Admin)
 app.get('/api/leave/all', requireLogin, requireAdmin, async (req, res) => {
   const r = await pool.query(
-    'SELECT lr.*, u.name as user_name, u.dept, a.name as approver_name FROM leave_requests lr LEFT JOIN users u ON lr.user_id=u.id LEFT JOIN users a ON lr.approver_id=a.id ORDER BY lr.created_at DESC LIMIT 200'
+    `SELECT lr.*, u.name as user_name, u.dept, a.name as approver_name
+     FROM leave_requests lr
+     LEFT JOIN users u ON lr.user_id=u.id
+     LEFT JOIN users a ON lr.approver_id=a.id
+     ORDER BY lr.created_at DESC LIMIT 200`
   );
   res.json(r.rows);
 });
 
-// อนุมัติ/ไม่อนุมัติ
+// อนุมัติ / ไม่อนุมัติ
 app.put('/api/leave/:id/approve', requireLogin, async (req, res) => {
-  const { status, reject_reason } = req.body;
-  const lr = await pool.query('SELECT * FROM leave_requests WHERE id=$1', [req.params.id]);
-  const leave = lr.rows[0];
-  if (!leave) return res.status(404).json({ error: 'ไม่พบใบลา' });
-  if (leave.approver_id !== req.session.user.id && req.session.user.role !== 'admin')
-    return res.status(403).json({ error: 'ไม่มีสิทธิ์อนุมัติ' });
+  try {
+    const { status, reject_reason } = req.body;
+    const lr    = await pool.query('SELECT * FROM leave_requests WHERE id=$1', [req.params.id]);
+    const leave = lr.rows[0];
+    if (!leave) return res.status(404).json({ error: 'ไม่พบใบลา' });
+    if (leave.approver_id !== req.session.user.id && req.session.user.role !== 'admin')
+      return res.status(403).json({ error: 'ไม่มีสิทธิ์อนุมัติ' });
 
-  await pool.query(
-    'UPDATE leave_requests SET status=$1, reject_reason=$2, approved_at=NOW() WHERE id=$3',
-    [status, reject_reason||null, req.params.id]
-  );
-
-  // อัปเดต quota ถ้าอนุมัติ
-  if (status === 'approved') {
-    const year = new Date(leave.start_date).getFullYear();
     await pool.query(
-      'INSERT INTO leave_quotas (user_id,year,leave_type,quota,used,carried_over) VALUES ($1,$2,$3,0,$4,0) ON CONFLICT (user_id,year,leave_type) DO UPDATE SET used = leave_quotas.used + $4',
-      [leave.user_id, year, leave.leave_type, leave.days]
+      'UPDATE leave_requests SET status=$1,reject_reason=$2,approved_at=NOW() WHERE id=$3',
+      [status, reject_reason||null, req.params.id]
     );
 
-    // ตรวจสอบ cap 24 วัน สำหรับ annual leave
-    if (leave.leave_type === 'annual') {
-      const quota = await pool.query(
-        'SELECT * FROM leave_quotas WHERE user_id=$1 AND year=$2 AND leave_type=$3',
-        [leave.user_id, year, 'annual']
-      );
-      const q = quota.rows[0];
-      const total = parseFloat(q.quota) + parseFloat(q.carried_over || 0);
-      if (total > 24) {
+    // อัปเดต used_hours เมื่ออนุมัติ
+    if (status === 'approved') {
+      const leaveYear = new Date(leave.start_datetime).getFullYear();
+      if (leave.leave_type === 'annual') {
+        // หักจาก quota ปีเก่าสุดที่ยังเหลือก่อน
+        let remaining = parseFloat(leave.hours);
+        const quotas = await pool.query(
+          'SELECT * FROM leave_quotas WHERE user_id=$1 AND leave_type=$2 AND quota > used_hours ORDER BY leave_year',
+          [leave.user_id, 'annual']
+        );
+        for (const q of quotas.rows) {
+          if (remaining <= 0) break;
+          const avail = parseFloat(q.quota) - parseFloat(q.used_hours);
+          const deduct = Math.min(avail, remaining);
+          await pool.query(
+            'UPDATE leave_quotas SET used_hours=used_hours+$1 WHERE id=$2',
+            [deduct, q.id]
+          );
+          remaining -= deduct;
+        }
+      } else {
         await pool.query(
-          'UPDATE leave_quotas SET carried_over = GREATEST(0, 24 - quota) WHERE user_id=$1 AND year=$2 AND leave_type=$3',
-          [leave.user_id, year, 'annual']
+          `INSERT INTO leave_quotas (user_id,leave_year,leave_type,quota,used_hours,carried_hours)
+           VALUES ($1,$2,$3,$4,$5,0)
+           ON CONFLICT (user_id,leave_year,leave_type)
+           DO UPDATE SET used_hours = leave_quotas.used_hours + $5`,
+          [leave.user_id, leaveYear, leave.leave_type,
+           LEAVE_TYPES[leave.leave_type].quota_days * WORK_HOURS_PER_DAY,
+           leave.hours]
         );
       }
     }
-  }
 
-  // ส่ง Email แจ้งพนักงาน
-  const userResult = await pool.query('SELECT * FROM users WHERE id=$1', [leave.user_id]);
-  const user = userResult.rows[0];
-  if (user && user.email && process.env.SMTP_USER) {
-    const statusText = status === 'approved' ? 'อนุมัติแล้ว ✅' : 'ไม่อนุมัติ ❌';
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to: user.email,
-      subject: `[ใบลา ${leave.leave_no}] ${statusText}`,
-      html: `
-        <h3>ผลการพิจารณาใบลา ${leave.leave_no}</h3>
-        <p><b>สถานะ:</b> ${statusText}</p>
-        <p><b>ประเภท:</b> ${LEAVE_TYPES[leave.leave_type]?.name || leave.leave_type}</p>
-        <p><b>วันที่:</b> ${new Date(leave.start_date).toLocaleDateString('th-TH')} - ${new Date(leave.end_date).toLocaleDateString('th-TH')}</p>
-        ${reject_reason ? `<p><b>เหตุผลที่ไม่อนุมัติ:</b> ${reject_reason}</p>` : ''}
-      `
-    }).catch(e => console.log('Email error:', e.message));
-  }
+    // Email พนักงาน
+    const userR = await pool.query('SELECT * FROM users WHERE id=$1', [leave.user_id]);
+    const user  = userR.rows[0];
+    if (user && user.email && process.env.SMTP_USER) {
+      const statusText = status === 'approved' ? 'อนุมัติแล้ว ✅' : 'ไม่อนุมัติ ❌';
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: user.email,
+        subject: `[ใบลา ${leave.leave_no}] ${statusText}`,
+        html: `
+          <h3>ผลการพิจารณาใบลา ${leave.leave_no}</h3>
+          <p><b>สถานะ:</b> ${statusText}</p>
+          <p><b>ประเภท:</b> ${LEAVE_TYPES[leave.leave_type]?.name || leave.leave_type}</p>
+          <p><b>วันที่:</b> ${new Date(leave.start_datetime).toLocaleString('th-TH')} - ${new Date(leave.end_datetime).toLocaleString('th-TH')}</p>
+          <p><b>จำนวน:</b> ${parseFloat(leave.hours).toFixed(2)} ชม. (${parseFloat(leave.days).toFixed(2)} วัน)</p>
+          ${reject_reason ? `<p><b>เหตุผลที่ไม่อนุมัติ:</b> ${reject_reason}</p>` : ''}
+        `
+      }).catch(e => console.log('Email error:', e.message));
+    }
 
-  res.json({ ok: true });
+    res.json({ ok: true });
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// รายงานสรุปการลาแยกฝ่าย
+// รายงานสรุปการลา (Admin)
 app.get('/api/leave/report', requireLogin, requireAdmin, async (req, res) => {
   const year = req.query.year || new Date().getFullYear();
   const r = await pool.query(`
     SELECT u.dept,
       COUNT(DISTINCT u.id) as emp_count,
       COUNT(lr.id) as total_requests,
-      SUM(CASE WHEN lr.status='approved' THEN lr.days ELSE 0 END) as total_days,
+      SUM(CASE WHEN lr.status='approved' THEN lr.hours ELSE 0 END) as total_hours,
+      SUM(CASE WHEN lr.status='approved' THEN lr.days  ELSE 0 END) as total_days,
       SUM(CASE WHEN lr.status='approved' THEN 1 ELSE 0 END) as approved,
-      SUM(CASE WHEN lr.status='pending' THEN 1 ELSE 0 END) as pending,
+      SUM(CASE WHEN lr.status='pending'  THEN 1 ELSE 0 END) as pending,
       SUM(CASE WHEN lr.status='rejected' THEN 1 ELSE 0 END) as rejected
     FROM users u
-    LEFT JOIN leave_requests lr ON u.id=lr.user_id AND EXTRACT(YEAR FROM lr.created_at)=$1
+    LEFT JOIN leave_requests lr ON u.id=lr.user_id
+      AND EXTRACT(YEAR FROM lr.created_at)=$1
     WHERE u.role != 'admin'
     GROUP BY u.dept ORDER BY u.dept
   `, [year]);
+  res.json(r.rows);
+});
+
+// ดึงข้อมูลอายุงานและ quota สำหรับแสดง
+app.get('/api/leave/annual-log/:userId', requireLogin, async (req, res) => {
+  const r = await pool.query(
+    'SELECT * FROM annual_leave_log WHERE user_id=$1 ORDER BY work_year',
+    [req.params.userId]
+  );
   res.json(r.rows);
 });
 
