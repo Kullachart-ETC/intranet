@@ -240,7 +240,7 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 <!-- TOP NAV -->
 <div class="topnav">
   <a href="/">← หน้าหลัก</a>
-  <h1>จองห้องประชุม</h1>
+  <h1>จองห้องประชุม・会議室予約</h1>
   <div class="nav-actions">
     <button class="top-btn" onclick="goToday()">วันนี้</button>
   </div>
@@ -250,41 +250,42 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
   <!-- SIDEBAR: Room selector -->
   <div class="sidebar">
     <div class="sidebar-section">
-      <div class="sidebar-label">ห้องประชุม</div>
+      <div class="sidebar-label">ห้องประชุม・会議室</div>
       <button class="room-btn active" id="rb0" onclick="selectRoom(0)">
         <div class="room-dot" style="background:#7C3AED"></div>
         <div class="room-info">
           <div class="room-name">VIP</div>
-          <div class="room-cap">8 ที่นั่ง</div>
+          <div class="room-cap">8 ที่นั่ง・8席</div>
         </div>
       </button>
       <button class="room-btn" id="rb1" onclick="selectRoom(1)">
         <div class="room-dot" style="background:#1D5FA5"></div>
         <div class="room-info">
           <div class="room-name">Meeting 1</div>
-          <div class="room-cap">30 ที่นั่ง</div>
+          <div class="room-cap">30 ที่นั่ง・30席</div>
         </div>
       </button>
       <button class="room-btn" id="rb2" onclick="selectRoom(2)">
         <div class="room-dot" style="background:#1D9E75"></div>
         <div class="room-info">
           <div class="room-name">Meeting 2</div>
-          <div class="room-cap">6 ที่นั่ง</div>
+          <div class="room-cap">6 ที่นั่ง・6席</div>
         </div>
       </button>
       <button class="room-btn" id="rb3" onclick="selectRoom(3)">
         <div class="room-dot" style="background:#D97706"></div>
         <div class="room-info">
           <div class="room-name">Meeting 3</div>
-          <div class="room-cap">12 ที่นั่ง</div>
+          <div class="room-cap">12 ที่นั่ง・12席</div>
         </div>
       </button>
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">
-      <div class="sidebar-label">คำอธิบาย</div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.6;">
-        เลือกห้องแล้ว<br>คลิกวันที่ในปฏิทิน<br>เพื่อจองได้เลยครับ
+      <div class="sidebar-label">คำอธิบาย・使い方</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.8;">
+        เลือกห้องแล้ว<br>คลิกวันที่เพื่อจอง<br>
+        <span style="color:#aaa">会議室を選択して<br>日付をクリック</span>
       </div>
     </div>
   </div>
@@ -298,7 +299,7 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
     </div>
     <div class="room-badge-bar" id="roomBadgeBar">
       <div class="room-badge-dot" id="badgeDot" style="background:#7C3AED"></div>
-      <span id="badgeText">VIP (8 ที่นั่ง) — คลิกวันที่เพื่อจอง</span>
+      <span id="badgeText">VIP (8 ที่นั่ง・8席) — คลิกวันที่เพื่อจอง・日付をクリック</span>
     </div>
     <div class="cal-scroll">
       <div class="cal-wrap">
@@ -325,12 +326,11 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
     <div class="mbody">
       <!-- Room tag (read-only display) -->
       <div class="fg">
-        <label>ห้องประชุม</label>
-        <div class="room-tag" id="mRoomTag">VIP</div>
+        <label>ห้องประชุม・会議室</label>
       </div>
       <!-- Time -->
       <div class="fg">
-        <label>เวลา</label>
+        <label>เวลา・時間</label>
         <div class="time-row">
           <input type="time" id="inpStart" value="09:00">
           <span class="time-sep">ถึง</span>
@@ -339,17 +339,17 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
       </div>
       <!-- Name -->
       <div class="fg">
-        <label>ชื่อผู้จอง / หน่วยงาน</label>
-        <input type="text" id="inpName" placeholder="เช่น สมชาย / ฝ่าย IT">
+        <label>ชื่อผู้จอง・氏名/部署</label>
+        <input type="text" id="inpName" placeholder="เช่น สมชาย / ฝ่าย IT・例: 山田 / IT部">
       </div>
       <!-- Purpose -->
       <div class="fg">
-        <label>วัตถุประสงค์</label>
-        <input type="text" id="inpPurpose" placeholder="เช่น ประชุมทีม, สัมภาษณ์งาน">
+        <label>วัตถุประสงค์・目的</label>
+        <input type="text" id="inpPurpose" placeholder="เช่น ประชุมทีม・例: チーム会議">
       </div>
       <!-- Color -->
       <div class="fg">
-        <label>สีการจอง</label>
+        <label>สีการจอง・色</label>
         <div class="color-row" id="colorRow">
           <div class="color-swatch selected" style="background:#1D5FA5" data-color="#1D5FA5" onclick="pickColor(this,'#1D5FA5')"></div>
           <div class="color-swatch" style="background:#7C3AED" data-color="#7C3AED" onclick="pickColor(this,'#7C3AED')"></div>
@@ -393,7 +393,7 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
         <div class="room-tag" id="editRoomTag"></div>
       </div>
       <div class="fg">
-        <label>เวลา</label>
+        <label>เวลา・時間</label>
         <div class="time-row">
           <input type="time" id="editStart">
           <span class="time-sep">ถึง</span>
@@ -401,15 +401,15 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
         </div>
       </div>
       <div class="fg">
-        <label>ชื่อผู้จอง / หน่วยงาน</label>
+        <label>ชื่อผู้จอง・氏名/部署</label>
         <input type="text" id="editName">
       </div>
       <div class="fg">
-        <label>วัตถุประสงค์</label>
+        <label>วัตถุประสงค์・目的</label>
         <input type="text" id="editPurpose">
       </div>
       <div class="fg">
-        <label>สีการจอง</label>
+        <label>สีการจอง・色</label>
         <div class="color-row" id="editColorRow">
           <div class="color-swatch" style="background:#1D5FA5" data-color="#1D5FA5" onclick="pickEditColor(this,'#1D5FA5')"></div>
           <div class="color-swatch" style="background:#7C3AED" data-color="#7C3AED" onclick="pickEditColor(this,'#7C3AED')"></div>
@@ -436,10 +436,10 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 <script>
 // ===== CONFIG =====
 const ROOMS = [
-  { name:'VIP',      seats:8,  color:'#7C3AED' },
-  { name:'Meeting 1',seats:30, color:'#1D5FA5' },
-  { name:'Meeting 2',seats:6,  color:'#1D9E75' },
-  { name:'Meeting 3',seats:12, color:'#D97706' },
+  { name:'VIP',      nameJP:'VIP',       seats:8,  color:'#7C3AED' },
+  { name:'Meeting 1',nameJP:'会議室1',    seats:30, color:'#1D5FA5' },
+  { name:'Meeting 2',nameJP:'会議室2',    seats:6,  color:'#1D9E75' },
+  { name:'Meeting 3',nameJP:'会議室3',    seats:12, color:'#D97706' },
 ];
 
 // ===== STATE =====
@@ -463,7 +463,7 @@ function selectRoom(idx) {
   document.querySelectorAll('.room-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
   const rm = ROOMS[idx];
   document.getElementById('badgeDot').style.background = rm.color;
-  document.getElementById('badgeText').textContent = `${rm.name} (${rm.seats} ที่นั่ง) — คลิกวันที่เพื่อจอง`;
+  document.getElementById('badgeText').textContent = `${rm.name}・${rm.nameJP} (${rm.seats} ที่นั่ง・${rm.seats}席) — คลิกวันที่เพื่อจอง・日付をクリック`;
   renderCalendar();
 }
 
