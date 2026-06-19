@@ -760,5 +760,158 @@ app.get('/api/leave/annual-log/:userId', requireLogin, async (req, res) => {
   res.json(r.rows);
 });
 
+// ============================================================
+// วิธีใช้: เพิ่มโค้ดนี้ใน server.js ก่อนบรรทัด const PORT = ...
+// แล้วรันคำสั่ง: npm install multer xlsx
+// ============================================================
+
+const multer = require('multer');
+const XLSX   = require('xlsx');
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.includes('spreadsheet') || file.originalname.endsWith('.xlsx'))
+      cb(null, true);
+    else
+      cb(new Error('รองรับเฉพาะไฟล์ .xlsx เท่านั้น'));
+  }
+});
+
+// ======== POST /api/users/bulk-upload ========
+app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'ไม่พบไฟล์' });
+
+      const wb = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
+      const ws = wb.Sheets['Employee_Template'];
+      if (!ws)
+        return res.status(400).json({ error: 'ไม่พบ sheet "Employee_Template" — กรุณาใช้ template ที่กำหนด' });
+
+      // อ่านตั้งแต่แถว 5 (index 4) เป็นต้นไป, ข้าม header 4 แถวแรก
+      const rows = XLSX.utils.sheet_to_json(ws, { range: 4, header: 1, defval: '' });
+
+      const WORK_HOURS = 8 + (10 / 60); // 8.1667 ชม./วัน
+      const results = { success: [], errors: [] };
+
+      for (let i = 0; i < rows.length; i++) {
+        const row    = rows[i];
+        const rowNum = i + 5;
+
+        // ข้ามแถวว่าง
+        if (!row[0] && !row[1] && !row[9]) continue;
+
+        const [
+          empId, firstName, lastName, email,
+          dept, position, startDate, empType,
+          supervisorEmpId, username, password, role,
+          annualHours, sickHours, personalHours, notes
+        ] = row;
+
+        // ตรวจ required fields
+        const missing = [];
+        if (!firstName)      missing.push('ชื่อ (B)');
+        if (!lastName)       missing.push('นามสกุล (C)');
+        if (!email)          missing.push('อีเมล (D)');
+        if (!dept)           missing.push('แผนก (E)');
+        if (!username)       missing.push('Username (J)');
+        if (!password)       missing.push('Password (K)');
+        if (!role)           missing.push('Role (L)');
+
+        if (missing.length > 0) {
+          results.errors.push({ row: rowNum, error: `ขาดข้อมูล: ${missing.join(', ')}` });
+          continue;
+        }
+
+        // ตรวจ role ถูกต้อง
+        const roleClean = String(role).toLowerCase().trim();
+        if (!['admin', 'user'].includes(roleClean)) {
+          results.errors.push({ row: rowNum, error: `Role "${role}" ไม่ถูกต้อง (ต้องเป็น admin หรือ user)` });
+          continue;
+        }
+
+        try {
+          // ตรวจซ้ำ username
+          const dupUser = await pool.query('SELECT id FROM users WHERE username=$1', [String(username).trim()]);
+          if (dupUser.rows.length > 0) {
+            results.errors.push({ row: rowNum, error: `Username "${username}" มีในระบบแล้ว` });
+            continue;
+          }
+
+          // ตรวจซ้ำ email
+          const dupEmail = await pool.query('SELECT id FROM users WHERE email=$1', [String(email).trim()]);
+          if (dupEmail.rows.length > 0) {
+            results.errors.push({ row: rowNum, error: `Email "${email}" มีในระบบแล้ว` });
+            continue;
+          }
+
+          const hash = bcrypt.hashSync(String(password), 10);
+          const name = `${String(firstName).trim()} ${String(lastName).trim()}`;
+
+          // แปลงวันที่
+          let parsedDate = null;
+          if (startDate) {
+            if (startDate instanceof Date) {
+              parsedDate = startDate.toISOString().split('T')[0];
+            } else {
+              const d = new Date(startDate);
+              if (!isNaN(d)) parsedDate = d.toISOString().split('T')[0];
+            }
+          }
+
+          // annual_leave_quota เก็บเป็น วัน (ปัดเศษ)
+          const annualH = parseFloat(annualHours) || (6 * WORK_HOURS);
+          const annualDays = Math.round(annualH / WORK_HOURS);
+
+          const newUser = await pool.query(
+            `INSERT INTO users (username,password,name,dept,role,email,start_date,annual_leave_quota)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+            [String(username).trim(), hash, name, String(dept).trim(),
+             roleClean, String(email).trim(), parsedDate, annualDays]
+          );
+
+          const userId    = newUser.rows[0].id;
+          const leaveYear = new Date().getFullYear();
+
+          // ตั้งค่า leave_quotas เริ่มต้น
+          const leaveSetup = [
+            ['annual',   annualH],
+            ['sick',     parseFloat(sickHours)     || 40],
+            ['personal', parseFloat(personalHours) || 16],
+          ];
+
+          for (const [type, hours] of leaveSetup) {
+            await pool.query(
+              `INSERT INTO leave_quotas (user_id,leave_year,leave_type,quota,used_hours,carried_hours)
+               VALUES ($1,$2,$3,$4,0,0) ON CONFLICT DO NOTHING`,
+              [userId, leaveYear, type, hours]
+            );
+          }
+
+          results.success.push({ row: rowNum, username: String(username).trim(), name });
+        } catch (e) {
+          results.errors.push({ row: rowNum, error: e.message });
+        }
+      }
+
+      res.json({
+        ok: true,
+        total:         results.success.length + results.errors.length,
+        success_count: results.success.length,
+        error_count:   results.errors.length,
+        success:       results.success,
+        errors:        results.errors
+      });
+
+    } catch (e) {
+      console.error('Bulk upload error:', e);
+      res.status(500).json({ error: e.message });
+    }
+  }
+);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Intranet running on port', PORT));

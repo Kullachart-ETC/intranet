@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload พนักงาน — EARTH (THAILAND)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; }
+
+  .top-bar {
+    background: #1F4E79; color: white; padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .top-bar a { color: #90cdf4; text-decoration: none; font-size: 13px; }
+  .top-bar a:hover { text-decoration: underline; }
+  .top-bar h1 { font-size: 18px; font-weight: 600; }
+
+  .container { max-width: 800px; margin: 32px auto; padding: 0 16px; }
+
+  .card {
+    background: white; border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08); overflow: hidden; margin-bottom: 24px;
+  }
+  .card-header {
+    background: #2E75B6; color: white;
+    padding: 16px 24px; font-size: 15px; font-weight: 600;
+  }
+  .card-body { padding: 24px; }
+
+  /* Upload zone */
+  .drop-zone {
+    border: 2px dashed #90cdf4; border-radius: 8px;
+    padding: 40px 24px; text-align: center; cursor: pointer;
+    transition: all .2s; background: #f7fbff;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: #1D9E75; background: #f0fff4;
+  }
+  .drop-zone input { display: none; }
+  .drop-zone .icon { font-size: 40px; margin-bottom: 8px; }
+  .drop-zone .label { font-size: 15px; color: #4a5568; }
+  .drop-zone .sub { font-size: 12px; color: #a0aec0; margin-top: 4px; }
+  .file-name {
+    margin-top: 12px; padding: 8px 16px; background: #e6f4f0;
+    border-radius: 6px; font-size: 13px; color: #276749; display: none;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; border-radius: 6px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .btn-primary { background: #1F4E79; color: white; }
+  .btn-primary:hover:not(:disabled) { background: #16395b; }
+  .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+  .btn-secondary { background: #EBF8FF; color: #2B6CB0; border: 1px solid #bee3f8; }
+  .btn-secondary:hover { background: #bee3f8; }
+  .btn-success { background: #276749; color: white; }
+  .btn-success:hover { background: #1e5236; }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+
+  /* Progress */
+  .progress-wrap { display: none; margin-top: 16px; }
+  .progress-bar-bg { background: #e2e8f0; border-radius: 99px; height: 8px; }
+  .progress-bar-fill { background: #1D9E75; height: 8px; border-radius: 99px; width: 0%; transition: width .3s; }
+  .progress-label { font-size: 12px; color: #718096; margin-top: 4px; text-align: center; }
+
+  /* Results */
+  .result-box { display: none; }
+  .stat-row {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .stat-card {
+    flex: 1; min-width: 120px; border-radius: 8px;
+    padding: 16px; text-align: center;
+  }
+  .stat-card.green  { background: #f0fff4; border: 1px solid #9ae6b4; }
+  .stat-card.red    { background: #fff5f5; border: 1px solid #fc8181; }
+  .stat-card.blue   { background: #ebf8ff; border: 1px solid #90cdf4; }
+  .stat-num { font-size: 32px; font-weight: 700; }
+  .stat-card.green .stat-num  { color: #276749; }
+  .stat-card.red .stat-num    { color: #c53030; }
+  .stat-card.blue .stat-num   { color: #2b6cb0; }
+  .stat-lbl { font-size: 12px; color: #718096; margin-top: 4px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: #f7fafc; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+  th { font-weight: 600; color: #4a5568; font-size: 12px; text-transform: uppercase; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 99px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-success { background: #c6f6d5; color: #276749; }
+  .badge-error   { background: #fed7d7; color: #c53030; }
+  .row-num { color: #a0aec0; }
+
+  /* Steps */
+  .steps { counter-reset: step; }
+  .step {
+    display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start;
+    counter-increment: step;
+  }
+  .step-num {
+    width: 28px; height: 28px; background: #1F4E79; color: white;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .step-text { padding-top: 4px; font-size: 14px; line-height: 1.6; }
+  .step-text strong { color: #1F4E79; }
+
+  .alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-top: 16px; }
+  .alert-warn { background: #fefcbf; border: 1px solid #f6e05e; color: #744210; }
+
+  .collapse-btn { background: none; border: none; cursor: pointer; color: #2B6CB0; font-size: 13px; font-weight: 600; padding: 0; }
+  .collapse-content { display: none; margin-top: 12px; }
+  .collapse-content.open { display: block; }
+
+  @media (max-width: 600px) {
+    .stat-num { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/">← กลับหน้าหลัก</a>
+  <span style="opacity:.4">|</span>
+  <h1>🏢 Upload พนักงานเข้าระบบ</h1>
+</div>
+
+<div class="container">
+
+  <!-- วิธีใช้ -->
+  <div class="card">
+    <div class="card-header">📋 วิธีใช้งาน</div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">ดาวน์โหลด <strong>Employee Upload Template</strong> จากปุ่มด้านล่าง</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">กรอกข้อมูลพนักงานใน sheet <strong>Employee_Template</strong> ตั้งแต่แถว 5 เป็นต้นไป<br>
+            <span style="color:#718096">⚠️ อย่าแก้ไขชื่อ sheet หรือ header แถว 1–4</span></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">บันทึกไฟล์ในรูปแบบ <strong>.xlsx</strong> แล้ว upload ที่นี่</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">ตรวจสอบ <strong>ผลลัพธ์</strong> — แถวที่ error จะแสดงสาเหตุให้แก้ไขแล้ว upload ใหม่</div>
+        </div>
+      </div>
+      <div class="alert alert-warn">
+        ⚠️ <strong>ข้อควรระวัง:</strong> Username และ Email ห้ามซ้ำกับที่มีในระบบ — ระบบจะข้ามแถวนั้นและแจ้งให้ทราบ
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="card">
+    <div class="card-header">📤 อัปโหลดไฟล์</div>
+    <div class="card-body">
+
+      <label class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".xlsx">
+        <div class="icon">📂</div>
+        <div class="label">คลิกหรือลากไฟล์ .xlsx มาวางที่นี่</div>
+        <div class="sub">ขนาดไฟล์สูงสุด 5 MB</div>
+      </label>
+      <div class="file-name" id="fileName"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="downloadTemplate()">⬇️ ดาวน์โหลด Template</button>
+        <button class="btn btn-primary" id="uploadBtn" disabled onclick="uploadFile()">⬆️ อัปโหลดและ Import</button>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-label" id="progressLabel">กำลังประมวลผล...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="card result-box" id="resultBox">
+    <div class="card-header" id="resultHeader">ผลลัพธ์</div>
+    <div class="card-body">
+
+      <div class="stat-row" id="statRow"></div>
+
+      <div id="successSection" style="display:none">
+        <button class="collapse-btn" onclick="toggleSection('successList')">
+          ▶ รายการที่สำเร็จ (<span id="successCount">0</span> คน)
+        </button>
+        <div class="collapse-content" id="successList">
+          <table style="margin-top:8px">
+            <thead><tr><th>แถว</th><th>Username</th><th>ชื่อ-นามสกุล</th></tr></thead>
+            <tbody id="successBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="errorSection" style="display:none; margin-top:16px">
+        <button class="collapse-btn" onclick="toggleSection('errorList')">
+          ▶ รายการที่ผิดพลาด (<span id="errorCount">0</span> รายการ)
+        </button>
+        <div class="collapse-content open" id="errorList">
+          <table style="margin-top:8px">
+            <thead><tr><th>แถว</th><th>สาเหตุ</th></tr></thead>
+            <tbody id="errorBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn btn-secondary" onclick="resetForm()">🔄 Upload ไฟล์ใหม่</button>
+        <a href="/admin" class="btn btn-success">👥 ดูรายชื่อพนักงาน</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const dropZone  = document.getElementById('dropZone');
+const fileName  = document.getElementById('fileName');
+const uploadBtn = document.getElementById('uploadBtn');
+
+// Check admin
+fetch('/api/me').then(r => r.json()).then(u => {
+  if (!u || u.role !== 'admin') {
+    alert('เฉพาะ Admin เท่านั้น');
+    location.href = '/';
+  }
+}).catch(() => location.href = '/login');
+
+// File select
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+// Drag-and-drop
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+function handleFile(f) {
+  if (!f) return;
+  if (!f.name.endsWith('.xlsx')) return alert('กรุณาเลือกไฟล์ .xlsx เท่านั้น');
+  fileInput._file = f;
+  fileName.textContent = `📄 ${f.name}  (${(f.size/1024).toFixed(1)} KB)`;
+  fileName.style.display = 'block';
+  uploadBtn.disabled = false;
+  document.getElementById('resultBox').style.display = 'none';
+}
+
+function downloadTemplate() {
+  // ลิงก์ไฟล์ template (วางไฟล์ employee_upload_template.xlsx ใน public/)
+  const a = document.createElement('a');
+  a.href = '/employee_upload_template.xlsx';
+  a.download = 'employee_upload_template.xlsx';
+  a.click();
+}
+
+async function uploadFile() {
+  const file = fileInput._file || fileInput.files[0];
+  if (!file) return alert('กรุณาเลือกไฟล์ก่อน');
+
+  uploadBtn.disabled = true;
+  const prog = document.getElementById('progressWrap');
+  const fill = document.getElementById('progressFill');
+  const lbl  = document.getElementById('progressLabel');
+  prog.style.display = 'block';
+
+  // Animate progress (indeterminate)
+  let p = 0;
+  const timer = setInterval(() => {
+    p = Math.min(p + Math.random() * 8, 85);
+    fill.style.width = p + '%';
+  }, 200);
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  try {
+    const res  = await fetch('/api/users/bulk-upload', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    clearInterval(timer);
+    fill.style.width = '100%';
+    lbl.textContent = 'เสร็จสิ้น';
+
+    showResult(data);
+  } catch(e) {
+    clearInterval(timer);
+    alert('เกิดข้อผิดพลาด: ' + e.message);
+    uploadBtn.disabled = false;
+    prog.style.display = 'none';
+  }
+}
+
+function showResult(data) {
+  const box = document.getElementById('resultBox');
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth' });
+
+  const hdr = document.getElementById('resultHeader');
+  hdr.textContent = data.error_count > 0
+    ? `⚠️ ผลลัพธ์: สำเร็จ ${data.success_count} | ผิดพลาด ${data.error_count}`
+    : `✅ Import สำเร็จทั้งหมด ${data.success_count} คน`;
+
+  // Stats
+  document.getElementById('statRow').innerHTML = `
+    <div class="stat-card blue"><div class="stat-num">${data.total}</div><div class="stat-lbl">รวมทั้งหมด</div></div>
+    <div class="stat-card green"><div class="stat-num">${data.success_count}</div><div class="stat-lbl">สำเร็จ</div></div>
+    <div class="stat-card red"><div class="stat-num">${data.error_count}</div><div class="stat-lbl">ผิดพลาด</div></div>
+  `;
+
+  // Success list
+  if (data.success.length > 0) {
+    document.getElementById('successSection').style.display = 'block';
+    document.getElementById('successCount').textContent = data.success.length;
+    document.getElementById('successBody').innerHTML = data.success.map(r =>
+      `<tr><td class="row-num">${r.row}</td><td><code>${r.username}</code></td><td>${r.name}</td></tr>`
+    ).join('');
+  }
+
+  // Error list
+  if (data.errors.length > 0) {
+    document.getElementById('errorSection').style.display = 'block';
+    document.getElementById('errorCount').textContent = data.errors.length;
+    document.getElementById('errorBody').innerHTML = data.errors.map(r =>
+      `<tr><td class="row-num">${r.row}</td><td><span class="badge badge-error">❌</span> ${r.error}</td></tr>`
+    ).join('');
+  }
+}
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function resetForm() {
+  fileInput.value = '';
+  fileInput._file = null;
+  fileName.style.display = 'none';
+  uploadBtn.disabled = true;
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('resultBox').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
+}
+</script>
+</body>
+</html>
