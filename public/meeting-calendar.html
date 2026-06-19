@@ -511,7 +511,8 @@ function renderCalendar() {
     const isWknd   = dow===0||dow===6;
 
     // Pills: show only selected room's bookings
-    const dayB = bookings.filter(b => b.date===dateStr && parseInt(b.room_idx)===selRoom);
+    const dayB = bookings.filter(b => b.date===dateStr && parseInt(b.room_idx)===selRoom)
+    .sort((a,b) => (a.slot||'').localeCompare(b.slot||''));
 
     const cell = document.createElement('div');
     cell.className = 'dcell'+(other?' other':'')+(isToday?' today':'')+(isWknd&&!other?' wknd-cell':'');
@@ -598,7 +599,8 @@ function pickCustomColor(color) {
 
 // ===== EXISTING =====
 function renderExisting() {
-  const dayB = bookings.filter(b => b.date===modalDate && parseInt(b.room_idx)===selRoom);
+  const dayB = bookings.filter(b => b.date===modalDate && parseInt(b.room_idx)===selRoom)
+    .sort((a,b) => (a.slot||'').localeCompare(b.slot||''));
   const sec = document.getElementById('existSection');
   if (!dayB.length) { sec.innerHTML=''; return; }
   sec.innerHTML = `<div class="exist-label">การจองวันนี้ (${dayB.length} รายการ)</div>` +
@@ -764,12 +766,13 @@ async function delBooking(id) {
 function parseColors() {
   bookings.forEach(b => {
     if (b.purpose && b.purpose.startsWith('COLOR:')) {
-      const parts = b.purpose.substring(6).split('|');
-      b._color   = parts[0] || ROOMS[parseInt(b.room_idx)]?.color;
-      b._purpose = parts.slice(1).join('|');
+      const rest  = b.purpose.substring(6); // "#RRGGBB|purpose text"
+      const pipe  = rest.indexOf('|');
+      b._color    = pipe>=0 ? rest.substring(0,pipe) : rest;
+      b._purpose  = pipe>=0 ? rest.substring(pipe+1) : '';
     } else {
-      b._color   = ROOMS[parseInt(b.room_idx)]?.color;
-      b._purpose = b.purpose;
+      b._color    = ROOMS[parseInt(b.room_idx)]?.color;
+      b._purpose  = b.purpose||'';
     }
   });
 }
