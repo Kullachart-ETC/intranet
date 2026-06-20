@@ -528,11 +528,13 @@ async function loadPendingLeave(){
   $('leave-approve').innerHTML=leaves.map(l=>`<div class="pending-card"><div class="pending-card-head"><div><div class="pending-name">${l.user_name}</div><div class="pending-dept">${l.dept} · ${l.leave_no}</div></div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><div class="pending-detail">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')} (${parseFloat(l.days).toFixed(2)} วัน)<br>${l.reason||'ไม่ระบุเหตุผล'}</div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="approveLeave(${l.id},'approved')">✓ อนุมัติ</button><button class="btn btn-danger btn-sm" onclick="openRejectModal(${l.id})">✗ ไม่อนุมัติ</button></div></div>`).join('');
 }
 
-async function approveLeave(id,status){try{
-  await api('/leave/'+id+'/approve','PUT',{status});
-  loadPendingLeave();
-  const cnt=await api('/leave/pending');
-  $('pending-count').textContent=cnt.length||';} catch(e){alert('อนุมัติไม่สำเร็จ: '+e.message);}
+async function approveLeave(id,status){
+  try{
+    await api('/leave/'+id+'/approve','PUT',{status});
+    loadPendingLeave();
+    const cnt=await api('/leave/pending');
+    $('pending-count').textContent=cnt.length||'';
+  }catch(e){alert('อนุมัติไม่สำเร็จ: '+e.message);}
 }
 
 function openRejectModal(id){$('reject-id').value=id;$('reject-reason').value='';openModal('reject-modal');}
