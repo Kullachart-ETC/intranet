@@ -483,9 +483,11 @@ async function loadLeaveQuota(){
   try{
     const quota=await api('/leave/quota/'+state.me.id);
     $('leave-quota').innerHTML=`<div class="leave-quota-grid">${Object.entries(quota).map(([type,q])=>{
-      const total=q.quota+(q.carried_over||0);
-      const pct=total>0?Math.min(100,q.used/total*100):0;
-      return`<div class="quota-card"><div class="quota-name">${q.name}</div><div style="font-size:20px;font-weight:600;color:#1a1a18">${(total-q.used).toFixed(1)}</div><div style="font-size:11px;color:#888">วันคงเหลือ</div><div class="quota-bar-wrap"><div class="quota-bar" style="width:${pct}%"></div></div><div class="quota-nums"><span>ใช้ไป <span class="quota-used">${q.used}</span> วัน</span><span>ทั้งหมด ${total} วัน</span></div></div>`;
+      const total=parseFloat(q.quota_days||0);
+      const used=parseFloat(q.used_days||0);
+      const remaining=parseFloat(q.remaining_days||0);
+      const pct=total>0?Math.min(100,used/total*100):0;
+      return`<div class="quota-card"><div class="quota-name">${q.name}</div><div style="font-size:20px;font-weight:600;color:#1a1a18">${remaining.toFixed(1)}</div><div style="font-size:11px;color:#888">วันคงเหลือ</div><div class="quota-bar-wrap"><div class="quota-bar" style="width:${pct}%"></div></div><div class="quota-nums"><span>ใช้ไป <span class="quota-used">${used.toFixed(1)}</span> วัน</span><span>ทั้งหมด ${total.toFixed(1)} วัน</span></div></div>`;
     }).join('')}</div>`;
   }catch(e){$('leave-quota').innerHTML=`<div class="loading">${e.message}</div>`;}
 }
