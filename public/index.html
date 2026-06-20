@@ -235,7 +235,6 @@ tr:last-child td{border-bottom:none}
       <div class="form-row" style="margin:0"><label>สิทธิ์</label><select id="new-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
     </div>
     <button class="btn btn-primary" onclick="addUser()">+ เพิ่มผู้ใช้</button>
-    <a href="/upload-employee.html" class="btn" style="background:#1D9E75;color:#fff;margin-left:8px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600">📤 Upload พนักงาน (Bulk)</a>
   </div>
   <div class="admin-section">
     <h3>รายชื่อผู้ใช้ทั้งหมด</h3>
@@ -509,7 +508,7 @@ async function submitLeave(){
   const startDT=start+'T'+$('lv-start-time').value+':00';
   const endDT=end+'T'+$('lv-end-time').value+':00';
   try{
-    const r=await api('/leave','POST',{leave_type,start_date:startDT,end_date:endDT,days:parseFloat(days),reason});
+    const r=await api('/leave','POST',{leave_type,start_datetime:startDT,end_datetime:endDT,reason});
     closeModal('leave-modal');
     alert('ยื่นใบลาเรียบร้อยแล้ว เลขที่: '+r.leave_no);
     loadLeaveQuota();
