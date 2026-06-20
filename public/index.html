@@ -203,7 +203,7 @@ tr:last-child td{border-bottom:none}
 <!-- LEAVE -->
 <div id="page-leave" class="page">
   <div class="page-header"><h2>ระบบลาหยุด</h2>
-    <button class="btn btn-primary" onclick="openModal('leave-modal')">+ ยื่นใบลา</button>
+    <button class="btn btn-primary" onclick="initTimeSelects();openModal('leave-modal')">+ ยื่นใบลา</button>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="showLeaveTab('quota',this)">สิทธิ์การลา</button>
@@ -319,17 +319,17 @@ tr:last-child td{border-bottom:none}
       <div style="display:flex;gap:8px;align-items:center">
         <input id="lv-start" type="date" onchange="calcDays()" style="flex:1">
         <span style="font-size:13px;color:#555">เวลา</span>
-        <select id="lv-start-hour" style="width:60px">${[...Array(24)].map((_,i)=>`<option value="${String(i).padStart(2,'0')}"${i===8?' selected':''}>  ${String(i).padStart(2,'0')}</option>`).join('')}</select>
+        <select id="lv-start-hour" style="width:64px"></select>
         <span>:</span>
-        <select id="lv-start-min" style="width:60px"><option value="00">00</option><option value="10">10</option><option value="20">20</option><option value="30" selected>30</option><option value="40">40</option><option value="50">50</option></select>
+        <select id="lv-start-min" style="width:64px"></select>
       </div>
       <span style="font-size:13px;color:#555">ถึงวันที่</span>
       <div style="display:flex;gap:8px;align-items:center">
         <input id="lv-end" type="date" onchange="calcDays()" style="flex:1">
         <span style="font-size:13px;color:#555">เวลา</span>
-        <select id="lv-end-hour" style="width:60px">${[...Array(24)].map((_,i)=>`<option value="${String(i).padStart(2,'0')}"${i===17?' selected':''}>  ${String(i).padStart(2,'0')}</option>`).join('')}</select>
+        <select id="lv-end-hour" style="width:64px"></select>
         <span>:</span>
-        <select id="lv-end-min" style="width:60px"><option value="00">00</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="40" selected>40</option><option value="50">50</option></select>
+        <select id="lv-end-min" style="width:64px"></select>
       </div>
     </div>
     <div class="form-row" style="margin-top:10px"><label>วัตถุประสงค์ของการลา</label><textarea id="lv-reason" placeholder="ระบุเหตุผล..." rows="2"></textarea></div>
@@ -594,6 +594,17 @@ async function addUser(){
 async function deleteUser(id){if(!confirm('ต้องการลบผู้ใช้นี้?'))return;await api('/users/'+id,'DELETE');loadUsers();}
 function openPwModal(id){$('pw-uid').value=id;$('pw-new').value='';openModal('pw-modal');}
 async function changePassword(){const pw=$('pw-new').value;if(!pw){alert('กรุณากรอกรหัสผ่าน');return;}await api('/users/'+$('pw-uid').value+'/password','PUT',{password:pw});closeModal('pw-modal');alert('เปลี่ยนรหัสผ่านสำเร็จ');}
+
+function initTimeSelects(){
+  const hOpts=Array.from({length:24},(_,i)=>{const h=String(i).padStart(2,'0');return`<option value="${h}"${i===8?' selected':''}>${h}</option>`;}).join('');
+  const hOptsEnd=Array.from({length:24},(_,i)=>{const h=String(i).padStart(2,'0');return`<option value="${h}"${i===17?' selected':''}>${h}</option>`;}).join('');
+  const mOpts=['00','10','20','30','40','50'].map((m,i)=>`<option value="${m}"${i===3?' selected':''}>${m}</option>`).join('');
+  const mOptsEnd=['00','10','20','30','40','50'].map((m,i)=>`<option value="${m}"${i===4?' selected':''}>${m}</option>`).join('');
+  $('lv-start-hour').innerHTML=hOpts;
+  $('lv-end-hour').innerHTML=hOptsEnd;
+  $('lv-start-min').innerHTML=mOpts;
+  $('lv-end-min').innerHTML=mOptsEnd;
+}
 
 // Init
 (async()=>{
