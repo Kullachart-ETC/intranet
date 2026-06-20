@@ -297,28 +297,40 @@ tr:last-child td{border-bottom:none}
 </div>
 
 <div class="overlay" id="leave-modal">
-  <div class="modal" style="max-width:560px;width:95%">
+  <div class="modal" style="max-width:580px;width:95%">
     <h3>ยื่นใบลาหยุดงาน</h3>
     <div class="form-row">
-      <label>ประเภทการลา</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:6px">
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="sick"> ลาป่วย</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="personal_special"> ลากิจพิเศษ</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="unpaid"> ลาตัดเงิน</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="annual"> ลาพักร้อน</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="maternity"> ลาคลอด</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="military"> ลาราชการทหาร</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="work_injury"> ลาป่วยเนื่องจากงาน</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="personal"> ลากิจจำเป็น</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="ordain"> ลาบวช</label>
-        <label style="display:flex;align-items:center;gap:6px;font-weight:400;cursor:pointer"><input type="radio" name="lv-type" value="marriage"> ลาสมรส</label>
+      <label style="margin-bottom:8px;display:block">ประเภทการลา</label>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="sick" style="margin:0"> ลาป่วย</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="personal_special" style="margin:0"> ลากิจพิเศษ</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="annual" style="margin:0"> ลาพักร้อน</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="ordain" style="margin:0"> ลาบวช</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="unpaid" style="margin:0"> ลาตัดเงิน</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="maternity" style="margin:0"> ลาคลอด</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="military" style="margin:0"> ลาราชการทหาร</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="marriage" style="margin:0"> ลาสมรส</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="work_injury" style="margin:0"> ลาป่วยจากงาน</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;cursor:pointer;padding:5px 6px;border:1px solid #e5e5e0;border-radius:6px;white-space:nowrap"><input type="radio" name="lv-type" value="personal" style="margin:0"> ลากิจจำเป็น</label>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-      <div class="form-row" style="margin:0"><label>ตั้งแต่วันที่</label><input id="lv-start" type="date" onchange="calcDays()"></div>
-      <div class="form-row" style="margin:0"><label>เวลา</label><input id="lv-start-time" type="time" value="08:30" step="600"></div>
-      <div class="form-row" style="margin:0"><label>ถึงวันที่</label><input id="lv-end" type="date" onchange="calcDays()"></div>
-      <div class="form-row" style="margin:0"><label>เวลา</label><input id="lv-end-time" type="time" value="17:40" step="600"></div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin-top:12px">
+      <span style="font-size:13px;color:#555">ตั้งแต่วันที่</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="lv-start" type="date" onchange="calcDays()" style="flex:1">
+        <span style="font-size:13px;color:#555">เวลา</span>
+        <select id="lv-start-hour" style="width:60px">${[...Array(24)].map((_,i)=>`<option value="${String(i).padStart(2,'0')}"${i===8?' selected':''}>  ${String(i).padStart(2,'0')}</option>`).join('')}</select>
+        <span>:</span>
+        <select id="lv-start-min" style="width:60px"><option value="00">00</option><option value="10">10</option><option value="20">20</option><option value="30" selected>30</option><option value="40">40</option><option value="50">50</option></select>
+      </div>
+      <span style="font-size:13px;color:#555">ถึงวันที่</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="lv-end" type="date" onchange="calcDays()" style="flex:1">
+        <span style="font-size:13px;color:#555">เวลา</span>
+        <select id="lv-end-hour" style="width:60px">${[...Array(24)].map((_,i)=>`<option value="${String(i).padStart(2,'0')}"${i===17?' selected':''}>  ${String(i).padStart(2,'0')}</option>`).join('')}</select>
+        <span>:</span>
+        <select id="lv-end-min" style="width:60px"><option value="00">00</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="40" selected>40</option><option value="50">50</option></select>
+      </div>
     </div>
     <div class="form-row" style="margin-top:10px"><label>วัตถุประสงค์ของการลา</label><textarea id="lv-reason" placeholder="ระบุเหตุผล..." rows="2"></textarea></div>
     <div class="modal-footer">
@@ -510,8 +522,8 @@ async function submitLeave(){
   const start=$('lv-start').value,end=$('lv-end').value,reason=$('lv-reason').value;
   if(!leave_type){alert('กรุณาเลือกประเภทการลา');return;}
   if(!start||!end){alert('กรุณากรอกวันที่ให้ครบ');return;}
-  const startDT=start+'T'+($('lv-start-time').value||'08:30')+':00';
-  const endDT=end+'T'+($('lv-end-time').value||'17:40')+':00';
+  const startDT=start+'T'+($('lv-start-hour').value||'08')+':'+($('lv-start-min').value||'30')+':00';
+  const endDT=end+'T'+($('lv-end-hour').value||'17')+':'+($('lv-end-min').value||'40')+':00';
   try{
     const r=await api('/leave','POST',{leave_type,start_datetime:startDT,end_datetime:endDT,reason});
     closeModal('leave-modal');
