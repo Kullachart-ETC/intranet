@@ -518,21 +518,21 @@ async function submitLeave(){
 async function loadMyLeave(){
   const leaves=await api('/leave/my');
   if(!leaves.length){$('leave-my').innerHTML='<div class="loading">ยังไม่มีประวัติการลา</div>';return;}
-  $('leave-my').innerHTML=leaves.map(l=>`<div class="leave-card"><div class="leave-card-head"><div><div class="leave-no">${l.leave_no}</div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><span class="status-${l.status}">${l.status==='pending'?'รออนุมัติ':l.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></div><div class="leave-dates">${new Date(l.start_date).toLocaleDateString('th-TH')} — ${new Date(l.end_date).toLocaleDateString('th-TH')}</div><div class="leave-days">${l.days} วัน · ${l.reason||'ไม่ระบุเหตุผล'}</div>${l.reject_reason?`<div style="font-size:12px;color:#A32D2D;margin-top:4px">เหตุผล: ${l.reject_reason}</div>`:''}</div>`).join('');
+  $('leave-my').innerHTML=leaves.map(l=>`<div class="leave-card"><div class="leave-card-head"><div><div class="leave-no">${l.leave_no}</div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><span class="status-${l.status}">${l.status==='pending'?'รออนุมัติ':l.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></div><div class="leave-dates">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')}</div><div class="leave-days">${l.days} วัน · ${l.reason||'ไม่ระบุเหตุผล'}</div>${l.reject_reason?`<div style="font-size:12px;color:#A32D2D;margin-top:4px">เหตุผล: ${l.reject_reason}</div>`:''}</div>`).join('');
 }
 
 async function loadPendingLeave(){
   const leaves=await api('/leave/pending');
   $('pending-count').textContent=leaves.length||''
   if(!leaves.length){$('leave-approve').innerHTML='<div class="loading">ไม่มีใบลารออนุมัติ</div>';return;}
-  $('leave-approve').innerHTML=leaves.map(l=>`<div class="pending-card"><div class="pending-card-head"><div><div class="pending-name">${l.user_name}</div><div class="pending-dept">${l.dept} · ${l.leave_no}</div></div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><div class="pending-detail">${new Date(l.start_date).toLocaleDateString('th-TH')} — ${new Date(l.end_date).toLocaleDateString('th-TH')} (${l.days} วัน)<br>${l.reason||'ไม่ระบุเหตุผล'}</div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="approveLeave(${l.id},'approved')">✓ อนุมัติ</button><button class="btn btn-danger btn-sm" onclick="openRejectModal(${l.id})">✗ ไม่อนุมัติ</button></div></div>`).join('');
+  $('leave-approve').innerHTML=leaves.map(l=>`<div class="pending-card"><div class="pending-card-head"><div><div class="pending-name">${l.user_name}</div><div class="pending-dept">${l.dept} · ${l.leave_no}</div></div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><div class="pending-detail">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')} (${parseFloat(l.days).toFixed(2)} วัน)<br>${l.reason||'ไม่ระบุเหตุผล'}</div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="approveLeave(${l.id},'approved')">✓ อนุมัติ</button><button class="btn btn-danger btn-sm" onclick="openRejectModal(${l.id})">✗ ไม่อนุมัติ</button></div></div>`).join('');
 }
 
-async function approveLeave(id,status){
+async function approveLeave(id,status){try{
   await api('/leave/'+id+'/approve','PUT',{status});
   loadPendingLeave();
   const cnt=await api('/leave/pending');
-  $('pending-count').textContent=cnt.length||'';
+  $('pending-count').textContent=cnt.length||';} catch(e){alert('อนุมัติไม่สำเร็จ: '+e.message);}
 }
 
 function openRejectModal(id){$('reject-id').value=id;$('reject-reason').value='';openModal('reject-modal');}
