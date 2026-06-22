@@ -762,15 +762,27 @@ function toast(msg, type='ok') {
 
 // ===== DELETE =====
 async function delBooking(id) {
-  if(!confirm('ยืนยันยกเลิกการจอง?')) return;
-  const r = await fetch(`/api/bookings/${id}`,{method:'DELETE'});
-  if (r.ok) {
-    toast('ยกเลิกการจองแล้ว','ok');
-    await loadBookings();
-    parseColors();
-    renderCalendar();
-    renderExisting();
-  } else toast('ไม่สามารถลบได้','err');
+  // ลบ element จาก DOM ทันที (optimistic)
+  const el = document.getElementById('ei'+id);
+  if (el) el.style.opacity = '0.3';
+  try {
+    const r = await fetch(`/api/bookings/${id}`,{method:'DELETE'});
+    if (r.ok) {
+      closeModal('bookOverlay');
+      await loadBookings();
+      parseColors();
+      renderCalendar();
+      renderExisting();
+      toast('ยกเลิกการจองแล้ว ✓','ok');
+    } else {
+      if (el) el.style.opacity = '';
+      const e = await r.json().catch(()=>({}));
+      toast(e.error||'ยกเลิกไม่สำเร็จ ('+r.status+')','err');
+    }
+  } catch(e) {
+    if (el) el.style.opacity = '';
+    toast('เกิดข้อผิดพลาด: '+e.message,'err');
+  }
 }
 
 // ===== PARSE COLOR from purpose field =====
