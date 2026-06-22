@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>คลังเอกสาร - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18;min-height:100vh}
+/* NAV */
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo img{height:28px;width:28px;border-radius:50%;object-fit:cover}
+.nav-links{display:flex;gap:4px;flex:1}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.btn-logout:hover{border-color:#aaa;color:#fff}
+/* PAGE */
+.page{max-width:1000px;margin:0 auto;padding:24px 16px}
+h1{font-size:20px;font-weight:700;margin-bottom:20px}
+/* TABS */
+.dept-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tab-btn{padding:7px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s}
+.tab-btn:hover{border-color:#1D9E75;color:#1D9E75}
+.tab-btn.active{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
+/* CARD */
+.section-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:15px;font-weight:600}
+.dept-badge{font-size:11px;padding:2px 10px;border-radius:20px;background:#E8F5F0;color:#1D9E75;font-weight:600}
+/* UPLOAD */
+.upload-area{border:2px dashed #ddd;border-radius:8px;padding:16px;margin-bottom:16px;display:none}
+.upload-area.show{display:block}
+.upload-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:12px;color:#666}
+.form-group select,.form-group input[type="file"]{border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
+.btn-primary{background:#1D9E75;color:#fff}
+.btn-primary:hover{background:#178a63}
+.btn-primary:disabled{background:#9acfbd;cursor:not-allowed}
+.btn-outline{background:#fff;border:1px solid #ddd;color:#444}
+.btn-outline:hover{border-color:#1D9E75;color:#1D9E75}
+.btn-danger{background:#fff;border:1px solid #f5c6c6;color:#dc2626;font-size:12px;padding:4px 10px}
+.btn-danger:hover{background:#fef2f2}
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;background:#f5f5f3;color:#666;font-weight:500;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.file-icon{font-size:18px;margin-right:4px}
+.file-name{font-weight:500;color:#1a1a18}
+.file-meta{font-size:11px;color:#888;margin-top:2px}
+.empty{text-align:center;color:#aaa;padding:32px;font-size:14px}
+/* ALERT */
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
+.alert.show{display:block}
+.alert-ok{background:#e8f5f0;color:#1D9E75}
+.alert-err{background:#fef2f2;color:#dc2626}
+/* LOADING */
+.loading{text-align:center;padding:32px;color:#aaa}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo">
+    <img src="/logo.png" onerror="this.style.display='none'">
+    EARTH (THAILAND)
+  </a>
+  <div class="nav-links">
+    <a href="/index.html">หน้าหลัก</a>
+    <a href="/meeting-calendar.html">จองห้องประชุม</a>
+    <a href="/documents.html" class="active">คลังเอกสาร</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user"></span>
+    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <h1>📁 คลังเอกสาร</h1>
+    <button class="btn btn-primary" id="btn-upload-toggle" style="display:none" onclick="toggleUpload()">+ อัปโหลดเอกสาร</button>
+  </div>
+
+  <div id="upload-area" class="upload-area section-card" style="padding:16px;border-radius:12px;border:2px dashed #1D9E75">
+    <div id="alert" class="alert"></div>
+    <div class="upload-row">
+      <div class="form-group">
+        <label>แผนก</label>
+        <select id="up-dept"></select>
+      </div>
+      <div class="form-group">
+        <label>ไฟล์</label>
+        <input type="file" id="up-file" accept="*/*">
+      </div>
+      <button class="btn btn-primary" id="btn-do-upload" onclick="doUpload()">อัปโหลด</button>
+    </div>
+  </div>
+
+  <div class="dept-tabs" id="dept-tabs">
+    <button class="tab-btn active" data-dept="all" onclick="filterDept('all',this)">ทั้งหมด</button>
+  </div>
+
+  <div id="doc-list"><div class="loading">กำลังโหลด...</div></div>
+</div>
+
+<script>
+let me = null;
+let allDocs = [];
+let canManage = false;
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers:{} };
+  if (body instanceof FormData) opts.body = body;
+  else if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  const r = await fetch('/api'+path, opts);
+  if (!r.ok) { const e = await r.json().catch(()=>({error:r.statusText})); throw new Error(e.error||r.statusText); }
+  return r.json();
+}
+
+function fileIcon(mime='') {
+  if (mime.includes('pdf')) return '📄';
+  if (mime.includes('word')||mime.includes('doc')) return '📝';
+  if (mime.includes('sheet')||mime.includes('excel')||mime.includes('xlsx')) return '📊';
+  if (mime.includes('image')) return '🖼️';
+  if (mime.includes('zip')||mime.includes('rar')) return '🗜️';
+  if (mime.includes('presentation')||mime.includes('pptx')) return '📑';
+  return '📎';
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes+'B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1)+'KB';
+  return (bytes/1024/1024).toFixed(1)+'MB';
+}
+
+function fmtDate(dt) {
+  if (!dt) return '';
+  return new Date(dt).toLocaleDateString('th-TH', {day:'numeric',month:'short',year:'numeric'});
+}
+
+function filterDept(dept, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDocs(dept==='all' ? allDocs : allDocs.filter(d=>d.dept===dept));
+}
+
+function renderDocs(docs) {
+  const el = document.getElementById('doc-list');
+  if (!docs.length) { el.innerHTML='<div class="empty">ไม่พบเอกสาร</div>'; return; }
+
+  // Group by dept
+  const grouped = {};
+  docs.forEach(d => { if(!grouped[d.dept]) grouped[d.dept]=[]; grouped[d.dept].push(d); });
+
+  el.innerHTML = Object.entries(grouped).map(([dept, items]) => `
+    <div class="section-card">
+      <div class="section-header">
+        <span class="section-title">📂 ${dept}</span>
+        <span class="dept-badge">${items.length} เอกสาร</span>
+      </div>
+      <table>
+        <thead><tr><th>ชื่อไฟล์</th><th>ขนาด</th><th>อัปโหลดโดย</th><th>วันที่</th><th></th></tr></thead>
+        <tbody>
+          ${items.map(doc => `
+            <tr>
+              <td>
+                <span class="file-icon">${fileIcon(doc.mime_type)}</span>
+                <span class="file-name">${escHtml(doc.original_name)}</span>
+              </td>
+              <td style="color:#888;font-size:12px">${fmtSize(doc.file_size)}</td>
+              <td style="color:#666;font-size:12px">${escHtml(doc.uploader_name||'-')}</td>
+              <td style="color:#888;font-size:12px;white-space:nowrap">${fmtDate(doc.created_at)}</td>
+              <td style="white-space:nowrap;text-align:right">
+                <a href="/api/documents/${doc.id}/download" class="btn btn-outline" style="font-size:12px;padding:4px 10px;text-decoration:none;display:inline-block">⬇ ดาวน์โหลด</a>
+                ${canManage ? `<button class="btn btn-danger" style="margin-left:4px" onclick="delDoc(${doc.id},'${escHtml(doc.original_name)}')">✕ ลบ</button>` : ''}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function loadDocs() {
+  try {
+    allDocs = await api('/documents');
+    // Build dept tabs
+    const depts = [...new Set(allDocs.map(d=>d.dept))].sort();
+    const tabsEl = document.getElementById('dept-tabs');
+    tabsEl.innerHTML = `<button class="tab-btn active" data-dept="all" onclick="filterDept('all',this)">ทั้งหมด (${allDocs.length})</button>`;
+    depts.forEach(dept => {
+      const cnt = allDocs.filter(d=>d.dept===dept).length;
+      tabsEl.innerHTML += `<button class="tab-btn" data-dept="${escHtml(dept)}" onclick="filterDept('${escHtml(dept)}',this)">${escHtml(dept)} (${cnt})</button>`;
+    });
+    renderDocs(allDocs);
+  } catch(e) { document.getElementById('doc-list').innerHTML=`<div class="empty">เกิดข้อผิดพลาด: ${e.message}</div>`; }
+}
+
+async function populateDeptSelect() {
+  try {
+    const users = await api('/users');
+    const depts = [...new Set(users.map(u=>u.dept).filter(Boolean))].sort();
+    const sel = document.getElementById('up-dept');
+    sel.innerHTML = depts.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  } catch(e) {}
+}
+
+function toggleUpload() {
+  const area = document.getElementById('upload-area');
+  area.classList.toggle('show');
+}
+
+function showAlert(msg, type='ok') {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.className = `alert show alert-${type}`;
+  setTimeout(()=>el.classList.remove('show'), 4000);
+}
+
+async function doUpload() {
+  const dept = document.getElementById('up-dept').value;
+  const file = document.getElementById('up-file').files[0];
+  if (!file) { showAlert('กรุณาเลือกไฟล์','err'); return; }
+  if (!dept) { showAlert('กรุณาเลือกแผนก','err'); return; }
+
+  const btn = document.getElementById('btn-do-upload');
+  btn.disabled = true; btn.textContent = 'กำลังอัปโหลด...';
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('dept', dept);
+    await api('/documents','POST', fd);
+    showAlert('อัปโหลดสำเร็จ','ok');
+    document.getElementById('up-file').value = '';
+    await loadDocs();
+  } catch(e) { showAlert(e.message,'err'); }
+
+  btn.disabled = false; btn.textContent = 'อัปโหลด';
+}
+
+async function delDoc(id, name) {
+  if (!confirm(`ต้องการลบ "${name}" ใช่ไหมครับ?`)) return;
+  try {
+    await api('/documents/'+id,'DELETE');
+    await loadDocs();
+  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
+}
+
+async function logout() {
+  await fetch('/api/logout', {method:'POST'});
+  window.location.href='/login.html';
+}
+
+(async()=>{
+  try {
+    me = await api('/me');
+    document.getElementById('nav-user').textContent = me.name+' ('+me.dept+')';
+
+    // Check if can manage
+    const r = await fetch('/api/documents/can-manage');
+    if (r.ok) { const d = await r.json(); canManage = d.canManage; }
+
+    if (canManage) {
+      document.getElementById('btn-upload-toggle').style.display = '';
+      await populateDeptSelect();
+    }
+  } catch(e) { window.location.href='/login.html'; return; }
+  await loadDocs();
+})();
+</script>
+</body>
+</html>

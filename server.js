@@ -104,6 +104,16 @@ async function initDB() {
       granted_at DATE,
       expires_at DATE
     );
+    CREATE TABLE IF NOT EXISTS documents (
+      id SERIAL PRIMARY KEY,
+      original_name TEXT NOT NULL,
+      dept TEXT NOT NULL,
+      file_data BYTEA NOT NULL,
+      file_size INTEGER,
+      mime_type TEXT,
+      uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
   `);
 
   // Seed Admin
@@ -912,6 +922,73 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
     }
   }
 );
+
+// ======== API DOCUMENTS ========
+const docUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+});
+
+async function isManagerOrAdmin(userId) {
+  const user = await pool.query('SELECT role FROM users WHERE id=$1', [userId]);
+  if (!user.rows.length) return false;
+  if (user.rows[0].role === 'admin') return true;
+  const managed = await pool.query('SELECT COUNT(*) FROM users WHERE manager_id=$1', [userId]);
+  return parseInt(managed.rows[0].count) > 0;
+}
+
+// GET /api/documents/can-manage
+app.get('/api/documents/can-manage', requireLogin, async (req, res) => {
+  const ok = await isManagerOrAdmin(req.session.user.id);
+  res.json({ canManage: ok });
+});
+
+// GET /api/documents - list (no file_data)
+app.get('/api/documents', requireLogin, async (req, res) => {
+  const { dept } = req.query;
+  let q = 'SELECT d.id, d.original_name, d.dept, d.file_size, d.mime_type, d.created_at, u.name AS uploader_name FROM documents d LEFT JOIN users u ON u.id=d.uploaded_by';
+  const params = [];
+  if (dept) { q += ' WHERE d.dept=$1'; params.push(dept); }
+  q += ' ORDER BY d.dept, d.created_at DESC';
+  const r = await pool.query(q, params);
+  res.json(r.rows);
+});
+
+// POST /api/documents - upload
+app.post('/api/documents', requireLogin, docUpload.single('file'), async (req, res) => {
+  try {
+    const canUpload = await isManagerOrAdmin(req.session.user.id);
+    if (!canUpload) return res.status(403).json({ error: 'สิทธิ์ไม่เพียงพอ (admin หรือหัวหน้าแผนกเท่านั้น)' });
+    if (!req.file) return res.status(400).json({ error: 'ไม่พบไฟล์' });
+    const { dept } = req.body;
+    if (!dept) return res.status(400).json({ error: 'กรุณาระบุแผนก' });
+    await pool.query(
+      'INSERT INTO documents (original_name, dept, file_data, file_size, mime_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6)',
+      [req.file.originalname, dept, req.file.buffer, req.file.size, req.file.mimetype, req.session.user.id]
+    );
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/documents/:id/download
+app.get('/api/documents/:id/download', requireLogin, async (req, res) => {
+  const r = await pool.query('SELECT original_name, file_data, mime_type FROM documents WHERE id=$1', [req.params.id]);
+  if (!r.rows.length) return res.status(404).json({ error: 'ไม่พบเอกสาร' });
+  const doc = r.rows[0];
+  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(doc.original_name)}`);
+  res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
+  res.send(doc.file_data);
+});
+
+// DELETE /api/documents/:id
+app.delete('/api/documents/:id', requireLogin, async (req, res) => {
+  try {
+    const canDelete = await isManagerOrAdmin(req.session.user.id);
+    if (!canDelete) return res.status(403).json({ error: 'สิทธิ์ไม่เพียงพอ' });
+    await pool.query('DELETE FROM documents WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Intranet running on port', PORT));
