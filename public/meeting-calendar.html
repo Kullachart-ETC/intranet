@@ -750,6 +750,16 @@ async function submitBooking() {
   btn.disabled=false; btn.textContent='✓ จองห้อง';
 }
 
+// ===== TOAST =====
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type==='ok' ? '#1D9E75' : '#DC2626';
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display='none'; }, 3000);
+}
+
 // ===== DELETE =====
 async function delBooking(id) {
   if(!confirm('ยืนยันยกเลิกการจอง?')) return;
