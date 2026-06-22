@@ -535,10 +535,10 @@ function renderCalendar() {
       // double click → open edit modal (owner only)
       pill.ondblclick = e => {
         e.stopPropagation();
-        if (me && me.id === b.user_id) openEditModal(b);
+        if (me && (parseInt(me.id)===parseInt(b.user_id) || (b.user_id==null && me.name && b.name && b.name.startsWith(me.name)))) openEditModal(b);
       };
       // cursor hint for owner
-      if (me && me.id === b.user_id) pill.style.cursor = 'grab';
+      if (me && (parseInt(me.id)===parseInt(b.user_id) || (b.user_id==null && me.name && b.name && b.name.startsWith(me.name)))) pill.style.cursor = 'grab';
       cell.appendChild(pill);
     });
     if (dayB.length>3) {
@@ -606,8 +606,8 @@ function renderExisting() {
   if (!dayB.length) { sec.innerHTML=''; return; }
   sec.innerHTML = `<div class="exist-label">การจองวันนี้ (${dayB.length} รายการ)</div>` +
     dayB.map(b => {
-      const isOwner = me && me.id===b.user_id;
-      const canDel  = me && (me.id===b.user_id || me.role==='admin');
+      const isOwner = me && (parseInt(me.id)===parseInt(b.user_id) || (b.user_id==null && me.name && b.name && b.name.startsWith(me.name)));
+      const canDel  = me && (parseInt(me.id)===parseInt(b.user_id) || me.role==='admin' || (b.user_id==null && me.name && b.name && b.name.startsWith(me.name)));
       const color   = b._color || ROOMS[selRoom].color;
       const editHint = isOwner ? ' title="ดับเบิลคลิกเพื่อแก้ไข" style="cursor:pointer"' : '';
       return `<div class="exist-item" id="ei${b.id}" ondblclick="${isOwner?`openEditModal(bookings.find(x=>x.id==${b.id}))`:''}">
