@@ -83,6 +83,7 @@ async function initDB() {
       reject_reason TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
+    ALTER TABLE bookings ADD COLUMN IF NOT EXISTS user_id INTEGER;
     ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS start_datetime TIMESTAMP;
     ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS end_datetime TIMESTAMP;
     ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS hours NUMERIC DEFAULT 0;
