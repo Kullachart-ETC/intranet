@@ -576,6 +576,12 @@ function openModal(dateStr) {
     document.getElementById('inpName').value = `${me.name} (${me.dept})`;
 
   renderExisting();
+  // event delegation for cancel buttons (avoid inline onclick issues)
+  const sec = document.getElementById('existSection');
+  sec.onclick = e => {
+    const btn = e.target.closest('[data-del-id]');
+    if (btn) delBooking(parseInt(btn.dataset.delId));
+  };
   document.getElementById('bookOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -616,7 +622,7 @@ function renderExisting() {
           <div class="exist-time">${b.slot} ${isOwner?'<span style="font-size:10px;color:var(--muted)">(ดับเบิลคลิกแก้ไข)</span>':''}</div>
           <div class="exist-name">${b.name} — ${b._purpose||b.purpose||'-'}</div>
         </div>
-        ${canDel?`<button class="exist-del" onclick="delBooking(${b.id})" title="ยกเลิก">✕</button>`:''}
+        ${canDel?`<button class="exist-del" data-del-id="${b.id}" title="ยกเลิกการจอง">✕</button>`:''}
       </div>`;
     }).join('');
 }
