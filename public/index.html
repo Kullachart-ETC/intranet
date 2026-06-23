@@ -174,94 +174,44 @@ tr:last-child td{border-bottom:none}
 </div>
 
 <!-- BOARD -->
-<div id="page-board" class="page active" style="padding:0;position:relative">
-  <div style="position:relative;width:100%;overflow:hidden;border-radius:0 0 16px 16px;margin-bottom:24px">
-    <svg width="100%" viewBox="0 0 680 400" xmlns="http://www.w3.org/2000/svg" style="display:block">
-      <defs>
-        <style>
-          .w1{animation:w1 4s ease-in-out infinite}
-          .w2{animation:w2 4s ease-in-out infinite}
-          .w3{animation:w3 4s ease-in-out infinite}
-          @keyframes w1{0%,100%{d:path("M0 250 Q40 235 80 250 Q120 265 160 250 Q200 235 240 250 Q280 265 320 250 Q360 235 400 250 Q440 265 480 250 Q520 235 560 250 Q600 265 640 250 Q660 245 680 250 L680 400 L0 400 Z")}50%{d:path("M0 258 Q40 243 80 258 Q120 273 160 258 Q200 243 240 258 Q280 273 320 258 Q360 243 400 258 Q440 273 480 258 Q520 243 560 258 Q600 273 640 258 Q660 253 680 258 L680 400 L0 400 Z")}}
-          @keyframes w2{0%,100%{d:path("M0 270 Q50 255 100 270 Q150 285 200 270 Q250 255 300 270 Q350 285 400 270 Q450 255 500 270 Q550 285 600 270 Q640 260 680 270 L680 400 L0 400 Z")}50%{d:path("M0 278 Q50 263 100 278 Q150 293 200 278 Q250 263 300 278 Q350 293 400 278 Q450 263 500 278 Q550 293 600 278 Q640 268 680 278 L680 400 L0 400 Z")}}
-          @keyframes w3{0%,100%{d:path("M0 300 Q60 285 120 300 Q180 315 240 300 Q300 285 360 300 Q420 315 480 300 Q540 285 600 300 Q640 292 680 300 L680 400 L0 400 Z")}50%{d:path("M0 308 Q60 293 120 308 Q180 323 240 308 Q300 293 360 308 Q420 323 480 308 Q540 293 600 308 Q640 300 680 308 L680 400 L0 400 Z")}}
-          .bd1{animation:bd1 8s linear infinite}
-          .bd2{animation:bd2 11s linear infinite 1s}
-          .bd3{animation:bd3 14s linear infinite 3s}
-          @keyframes bd1{0%{transform:translate(-60px,0)}100%{transform:translate(740px,-30px)}}
-          @keyframes bd2{0%{transform:translate(-60px,0)}100%{transform:translate(740px,20px)}}
-          @keyframes bd3{0%{transform:translate(-60px,0)}100%{transform:translate(740px,-10px)}}
-          .wl{animation:wlf 0.35s ease-in-out infinite alternate}.wr{animation:wlf 0.35s ease-in-out infinite alternate-reverse}
-          .wl2{animation:wlf2 0.4s ease-in-out infinite alternate}.wr2{animation:wlf2 0.4s ease-in-out infinite alternate-reverse}
-          .wl3{animation:wlf3 0.45s ease-in-out infinite alternate}.wr3{animation:wlf3 0.45s ease-in-out infinite alternate-reverse}
-          @keyframes wlf{0%{d:path("M0 0 Q8 -6 16 0")}100%{d:path("M0 0 Q8 6 16 0")}}
-          @keyframes wlf2{0%{d:path("M0 0 Q7 -5 14 0")}100%{d:path("M0 0 Q7 5 14 0")}}
-          @keyframes wlf3{0%{d:path("M0 0 Q6 -5 12 0")}100%{d:path("M0 0 Q6 5 12 0")}}
-          .bt{animation:bob 3s ease-in-out infinite}
-          @keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(6px) rotate(1deg)}}
-          .fm{animation:fm 4s ease-in-out infinite}.fm2{animation:fm 4s ease-in-out infinite 1s}.fm3{animation:fm 4s ease-in-out infinite 2s}
-          @keyframes fm{0%,100%{opacity:0.7}50%{opacity:0.2}}
-          .cl1{animation:cmv 20s linear infinite}.cl2{animation:cmv2 26s linear infinite}
-          @keyframes cmv{0%{transform:translateX(-300px)}100%{transform:translateX(700px)}}
-          @keyframes cmv2{0%{transform:translateX(-500px)}100%{transform:translateX(700px)}}
-          .bb{animation:bb 5s ease-in infinite}.bb2{animation:bb 5s ease-in infinite 2s}.bb3{animation:bb 6s ease-in infinite 1s}
-          @keyframes bb{0%{transform:translateY(0);opacity:0.7}100%{transform:translateY(-60px);opacity:0}}
-        </style>
-      </defs>
-      <rect x="0" y="0" width="680" height="260" fill="#87CEEB"/>
-      <rect x="0" y="180" width="680" height="80" fill="#B8E8F5" opacity="0.5"/>
-      <circle cx="580" cy="70" r="44" fill="#FFD93D"/>
-      <circle cx="580" cy="70" r="36" fill="#FFE566"/>
-      <g stroke="#FFD93D" stroke-width="4" stroke-linecap="round">
-        <line x1="580" y1="14" x2="580" y2="4"/><line x1="619" y1="31" x2="626" y2="24"/>
-        <line x1="636" y1="70" x2="646" y2="70"/><line x1="619" y1="109" x2="626" y2="116"/>
-        <line x1="580" y1="126" x2="580" y2="136"/><line x1="541" y1="109" x2="534" y2="116"/>
-        <line x1="524" y1="70" x2="514" y2="70"/><line x1="541" y1="31" x2="534" y2="24"/>
-      </g>
-      <g class="cl1"><g fill="#fff"><circle cx="120" cy="80" r="28"/><circle cx="155" cy="68" r="34"/><circle cx="195" cy="76" r="26"/><rect x="92" y="80" width="130" height="28"/></g></g>
-      <g class="cl2"><g fill="#fff"><circle cx="300" cy="50" r="22"/><circle cx="328" cy="40" r="28"/><circle cx="360" cy="47" r="20"/><rect x="278" y="50" width="104" height="22"/></g></g>
-      <g fill="#fff" opacity="0.85"><circle cx="60" cy="140" r="16"/><circle cx="82" cy="132" r="20"/><circle cx="106" cy="138" r="15"/><rect x="44" y="140" width="78" height="16"/></g>
-      <!-- Birds -->
-      <g class="bd1"><g transform="translate(100,108)" stroke="#37474F" stroke-width="2.5" fill="none" stroke-linecap="round"><path class="wl" d="M0 0 Q8 -6 16 0"/><path class="wr" d="M0 0 Q-8 -6 -16 0"/></g></g>
-      <g class="bd2"><g transform="translate(60,135)" stroke="#37474F" stroke-width="2.2" fill="none" stroke-linecap="round"><path class="wl2" d="M0 0 Q7 -5 14 0"/><path class="wr2" d="M0 0 Q-7 -5 -14 0"/></g></g>
-      <g class="bd3"><g transform="translate(80,155)" stroke="#455A64" stroke-width="2" fill="none" stroke-linecap="round"><path class="wl3" d="M0 0 Q6 -5 12 0"/><path class="wr3" d="M0 0 Q-6 -5 -12 0"/></g></g>
-      <g stroke="#546E7A" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"><path d="M460 120 Q466 115 472 120"/><path d="M472 120 Q478 115 484 120"/><path d="M420 140 Q425 136 430 140"/><path d="M430 140 Q435 136 440 140"/></g>
-      <rect x="0" y="220" width="680" height="180" fill="#1E90FF"/>
-      <ellipse cx="340" cy="232" rx="380" ry="24" fill="#1A7FE0"/>
-      <path class="w1" d="M0 250 Q40 235 80 250 Q120 265 160 250 Q200 235 240 250 Q280 265 320 250 Q360 235 400 250 Q440 265 480 250 Q520 235 560 250 Q600 265 640 250 Q660 245 680 250 L680 400 L0 400 Z" fill="#1565C0"/>
-      <path class="w2" d="M0 270 Q50 255 100 270 Q150 285 200 270 Q250 255 300 270 Q350 285 400 270 Q450 255 500 270 Q550 285 600 270 Q640 260 680 270 L680 400 L0 400 Z" fill="#1E88E5"/>
-      <path class="w3" d="M0 300 Q60 285 120 300 Q180 315 240 300 Q300 285 360 300 Q420 315 480 300 Q540 285 600 300 Q640 292 680 300 L680 400 L0 400 Z" fill="#42A5F5"/>
-      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="3">
-        <path class="fm" d="M10 272 Q30 268 50 272"/><path class="fm2" d="M130 268 Q155 264 180 268"/>
-        <path class="fm3" d="M320 272 Q345 268 370 272"/><path class="fm" d="M500 270 Q525 266 550 270"/>
-        <path class="fm2" d="M60 303 Q90 298 120 303"/><path class="fm3" d="M240 300 Q275 295 310 300"/>
-        <path class="fm" d="M430 302 Q465 297 500 302"/>
-      </g>
-      <g class="bt" style="transform-origin:270px 215px">
-        <g transform="translate(270,190)">
-          <path d="M-36 30 Q0 44 36 30 L28 20 L-28 20 Z" fill="#E53935"/>
-          <rect x="-28" y="18" width="56" height="4" fill="#C62828"/>
-          <line x1="0" y1="20" x2="0" y2="-45" stroke="#795548" stroke-width="3" stroke-linecap="round"/>
-          <path d="M0 -42 L34 10 L0 16 Z" fill="#fff" opacity="0.95"/>
-          <path d="M0 -30 L-22 8 L0 14 Z" fill="#FFF9C4" opacity="0.9"/>
-        </g>
-      </g>
-      <g transform="translate(80,318)"><ellipse cx="0" cy="0" rx="18" ry="10" fill="#FF7043"/><path d="M18 0 L28 -8 L28 8 Z" fill="#FF7043"/><circle cx="-8" cy="-3" r="3" fill="#fff"/><circle cx="-8" cy="-3" r="1.5" fill="#222"/></g>
-      <g transform="translate(560,328)"><ellipse cx="0" cy="0" rx="14" ry="8" fill="#FFD54F"/><path d="M14 0 L22 -6 L22 6 Z" fill="#FFD54F"/><circle cx="-6" cy="-2" r="2.5" fill="#fff"/><circle cx="-6" cy="-2" r="1.2" fill="#222"/></g>
-      <circle class="bb" cx="150" cy="370" r="4" fill="none" stroke="#90CAF9" stroke-width="1.5"/>
-      <circle class="bb2" cx="162" cy="380" r="3" fill="none" stroke="#90CAF9" stroke-width="1.5"/>
-      <circle class="bb3" cx="440" cy="375" r="5" fill="none" stroke="#90CAF9" stroke-width="1.5"/>
-      <!-- Overlay text -->
-      <text x="50%" y="200" text-anchor="middle" font-family="Sarabun,sans-serif" font-size="28" font-weight="700" fill="#fff" filter="drop-shadow(0 2px 4px rgba(0,0,0,.3))">EARTH (THAILAND) Intranet</text>
-      <text x="50%" y="232" text-anchor="middle" font-family="Sarabun,sans-serif" font-size="16" fill="rgba(255,255,255,.85)">ยินดีต้อนรับสู่ระบบภายใน</text>
-    </svg>
-  </div>
-  <div style="padding:0 1.5rem 1.5rem">
-    <div class="page-header" style="margin-top:0"><h2>Board ประชาสัมพันธ์</h2>
-      <button class="btn btn-primary" onclick="openModal('post-modal')">+ โพสต์ใหม่</button>
+<div id="page-board" class="page active" style="position:relative">
+  <div style="position:relative;background:linear-gradient(135deg,#0f2c6f 0%,#1a5fa8 40%,#2196c4 70%,#1a8a6e 100%);border-radius:0 0 16px 16px;margin:-1.5rem -1.5rem 24px -1.5rem;padding:40px 32px 48px;overflow:hidden">
+    <!-- Globe background -->
+    <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">
+      <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <g id="gb">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
+            <ellipse cx="60" cy="60" rx="54" ry="18" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+            <ellipse cx="60" cy="60" rx="54" ry="36" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+            <line x1="6" y1="60" x2="114" y2="60" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+            <ellipse cx="60" cy="60" rx="18" ry="54" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+            <ellipse cx="60" cy="60" rx="36" ry="54" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
+            <line x1="60" y1="6" x2="60" y2="114" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+          </g>
+        </defs>
+        <use href="#gb" transform="translate(-30,−20) scale(2.2)" opacity="0.8"/>
+        <use href="#gb" transform="translate(700,−30) scale(2.4)" opacity="0.7"/>
+        <use href="#gb" transform="translate(500,20) scale(1.6)" opacity="0.7"/>
+        <use href="#gb" transform="translate(200,−40) scale(1.4)" opacity="0.6"/>
+        <use href="#gb" transform="translate(800,150) scale(1.8)" opacity="0.6"/>
+        <use href="#gb" transform="translate(50,80) scale(1.2)" opacity="0.5"/>
+        <use href="#gb" transform="translate(350,−10) scale(1.0)" opacity="0.5"/>
+      </svg>
     </div>
-    <div class="posts-grid" id="posts-list"><div class="loading">กำลังโหลด...</div></div>
+    <!-- Decorative circles like login -->
+    <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:rgba(255,255,255,0.04);top:-150px;right:-100px"></div>
+    <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.04);bottom:-100px;left:-80px"></div>
+    <!-- Content -->
+    <div style="position:relative;z-index:1;text-align:center">
+      <h1 style="font-size:26px;font-weight:700;color:#fff;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,0.3)">EARTH (THAILAND) Intranet</h1>
+      <p style="font-size:14px;color:rgba(255,255,255,0.8)">ระบบ Intranet ภายในองค์กร</p>
+    </div>
   </div>
+  <div class="page-header" style="margin-top:0"><h2>Board ประชาสัมพันธ์</h2>
+    <button class="btn btn-primary" onclick="openModal('post-modal')">+ โพสต์ใหม่</button>
+  </div>
+  <div class="posts-grid" id="posts-list"><div class="loading">กำลังโหลด...</div></div>
 </div>
 
 <!-- CALENDAR -->
