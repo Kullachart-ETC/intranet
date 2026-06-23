@@ -641,6 +641,20 @@ function initTimeSelects(){
   $('lv-end-min').innerHTML=mOptsEnd;
 }
 
+async function loadBoard(){
+  state.posts=await api('/posts');
+  renderBoard();
+}
+async function loadCalendar(){
+  state.employees=await api('/users');
+  state.events=await api('/events');
+  renderCalendar();
+}
+async function loadLeave(){
+  await loadMyLeave();
+  if(state.me&&state.me.role==='admin'){await loadPendingLeave();}
+}
+
 // Init
 (async()=>{
   try{
