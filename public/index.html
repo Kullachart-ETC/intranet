@@ -8,19 +8,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size:15px}
-.topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:52px;position:sticky;top:0;z-index:10}
+.topbar{background:#1a1a18;border-bottom:none;padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:52px;position:sticky;top:0;z-index:10}
 .logo{display:flex;align-items:center;gap:8px}
 .logo img{height:32px;object-fit:contain}
-.logo-text{font-size:15px;font-weight:600;color:#0f2c6f}
+.logo-text{font-size:15px;font-weight:600;color:#fff}
 .nav{display:flex;gap:4px;margin-left:auto}
-.nav button{background:none;border:none;padding:7px 12px;border-radius:8px;font-size:13px;cursor:pointer;color:#666;font-family:'Sarabun',sans-serif;white-space:nowrap}
-.nav button:hover{background:#f0f0ec}
-.nav button.active{background:#f0f0ec;color:#1a1a18;font-weight:500}
-.user-area{display:flex;align-items:center;gap:8px;margin-left:8px;padding-left:8px;border-left:1px solid #eee;flex-shrink:0}
-.user-name{font-size:12px;color:#444;white-space:nowrap}
+.nav button{background:none;border:none;padding:7px 12px;border-radius:8px;font-size:13px;cursor:pointer;color:#aaa;font-family:'Sarabun',sans-serif;white-space:nowrap}
+.nav button:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav button.active{background:rgba(255,255,255,.1);color:#fff;font-weight:500}
+.user-area{display:flex;align-items:center;gap:8px;margin-left:8px;padding-left:8px;border-left:1px solid #444;flex-shrink:0}
+.user-name{font-size:12px;color:#ccc;white-space:nowrap}
 .user-badge{font-size:10px;background:#E1F5EE;color:#0F6E56;padding:2px 7px;border-radius:20px}
 .user-badge.admin{background:#EEEDFE;color:#534AB7}
-.btn-logout{background:none;border:1px solid #ddd;padding:4px 10px;border-radius:8px;font-size:12px;cursor:pointer;color:#666;font-family:'Sarabun',sans-serif;white-space:nowrap}
+.btn-logout{background:none;border:1px solid #444;padding:4px 10px;border-radius:8px;font-size:12px;cursor:pointer;color:#aaa;font-family:'Sarabun',sans-serif;white-space:nowrap}
+.btn-logout:hover{border-color:#aaa;color:#fff}
 .page{display:none;padding:1.5rem;max-width:1100px;margin:0 auto}
 .page.active{display:block}
 .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
