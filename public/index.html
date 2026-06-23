@@ -159,6 +159,7 @@ tr:last-child td{border-bottom:none}
         <button onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
     <button onclick="showPage('leave',this)">📋 ระบบลาหยุด</button>
     <button id="admin-btn" onclick="showPage('admin',this)" style="display:none">⚙️ จัดการผู้ใช้</button>
+    <button id="report-btn" onclick="window.location.href='/leave-report.html'" style="display:none">📊 รายงานการลา</button>
   </nav>
   <div class="user-area">
     <span class="user-name" id="user-name">-</span>
@@ -236,6 +237,16 @@ tr:last-child td{border-bottom:none}
       <div class="form-row" style="margin:0"><label>สิทธิ์</label><select id="new-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
     </div>
     <button class="btn btn-primary" onclick="addUser()">+ เพิ่มผู้ใช้</button>
+  </div>
+  <div class="admin-section">
+    <h3>นำเข้าพนักงานจาก Excel</h3>
+    <div id="bulk-alert"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <a href="/api/users/template" class="btn btn-primary" style="text-decoration:none">⬇ ดาวน์โหลด Template</a>
+      <input type="file" id="bulk-file" accept=".xlsx,.xls" style="flex:1;min-width:200px">
+      <button class="btn btn-primary" onclick="bulkUpload()">⬆ อัปโหลด Excel</button>
+    </div>
+    <div id="bulk-result" style="margin-top:10px;font-size:13px;color:#555"></div>
   </div>
   <div class="admin-section">
     <h3>รายชื่อผู้ใช้ทั้งหมด</h3>
@@ -593,6 +604,24 @@ async function addUser(){
   }catch(e){alertEl.className='alert alert-err';alertEl.textContent=e.message;}
 }
 async function deleteUser(id){if(!confirm('ต้องการลบผู้ใช้นี้?'))return;await api('/users/'+id,'DELETE');loadUsers();}
+async function bulkUpload(){
+  const file=$('bulk-file').files[0];
+  const alertEl=$('bulk-alert');
+  alertEl.className='alert';alertEl.textContent='';
+  if(!file){alertEl.className='alert alert-err';alertEl.textContent='กรุณาเลือกไฟล์ Excel';return;}
+  const fd=new FormData();fd.append('file',file);
+  try{
+    const r=await fetch('/api/users/bulk',{method:'POST',body:fd});
+    const d=await r.json();
+    if(r.ok){
+      alertEl.className='alert alert-ok';
+      alertEl.textContent=`นำเข้าสำเร็จ ${d.added} คน${d.skipped?` (ข้ามซ้ำ ${d.skipped} คน)`:''}`;
+      $('bulk-result').textContent=d.details||'';
+      $('bulk-file').value='';
+      loadUsers();loadUsersForSelect();
+    }else{alertEl.className='alert alert-err';alertEl.textContent=d.error||'เกิดข้อผิดพลาด';}
+  }catch(e){alertEl.className='alert alert-err';alertEl.textContent=e.message;}
+}
 function openPwModal(id){$('pw-uid').value=id;$('pw-new').value='';openModal('pw-modal');}
 async function changePassword(){const pw=$('pw-new').value;if(!pw){alert('กรุณากรอกรหัสผ่าน');return;}await api('/users/'+$('pw-uid').value+'/password','PUT',{password:pw});closeModal('pw-modal');alert('เปลี่ยนรหัสผ่านสำเร็จ');}
 
@@ -613,7 +642,7 @@ function initTimeSelects(){
     state.me=await api('/me');
     $('user-name').textContent=state.me.name+' ('+state.me.dept+')';
     $('user-badge').textContent=state.me.role;
-    if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-tab').style.display='';}
+    if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-btn').style.display='';$('report-tab').style.display='';}
     $('approve-tab').style.display='';
     const[posts,employees,events,bookings]=await Promise.all([api('/posts'),api('/employees'),api('/events'),api('/bookings')]);
     state.posts=posts;state.employees=employees;state.events=events;state.bookings=bookings;

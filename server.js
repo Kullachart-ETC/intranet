@@ -669,6 +669,30 @@ app.get('/api/leave/all', requireLogin, requireAdmin, async (req, res) => {
   res.json(r.rows);
 });
 
+app.get('/api/leave/report-list', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const { leave_type, date_from, date_to, status, dept } = req.query;
+    const conds = [], params = [];
+    if (leave_type) { params.push(leave_type); conds.push(`lr.leave_type=$${params.length}`); }
+    if (status)     { params.push(status);     conds.push(`lr.status=$${params.length}`); }
+    if (dept)       { params.push(dept);       conds.push(`u.dept=$${params.length}`); }
+    if (date_from)  { params.push(date_from);  conds.push(`lr.start_datetime::date >= $${params.length}::date`); }
+    if (date_to)    { params.push(date_to);    conds.push(`lr.end_datetime::date <= $${params.length}::date`); }
+    const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
+    const r = await pool.query(
+      `SELECT lr.leave_no, lr.created_at, lr.leave_type, lr.start_datetime, lr.end_datetime,
+              lr.days, lr.hours, lr.status, lr.reject_reason, lr.approved_at,
+              u.name as user_name, u.dept, a.name as approver_name
+       FROM leave_requests lr
+       LEFT JOIN users u ON lr.user_id=u.id
+       LEFT JOIN users a ON lr.approver_id=a.id
+       ${where}
+       ORDER BY lr.created_at DESC`, params
+    );
+    res.json(r.rows);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // อนุมัติ / ไม่อนุมัติ
 app.put('/api/leave/:id/approve', requireLogin, async (req, res) => {
   try {
