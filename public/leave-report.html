@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>รายงานสรุปการลา - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18;min-height:100vh}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo img{height:28px;width:28px;border-radius:50%;object-fit:cover}
+.nav-links{display:flex;gap:4px;flex:1}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.btn-logout:hover{border-color:#aaa;color:#fff}
+
+.page{max-width:1200px;margin:0 auto;padding:24px 16px}
+h1{font-size:20px;font-weight:700;margin-bottom:20px}
+
+/* FILTER */
+.filter-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;align-items:end}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:12px;color:#666;font-weight:500}
+.fg select,.fg input{border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:#fff}
+.fg select:focus,.fg input:focus{outline:none;border-color:#1D9E75}
+.filter-btns{display:flex;gap:8px;align-items:flex-end}
+.btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
+.btn-primary{background:#1D9E75;color:#fff}
+.btn-primary:hover{background:#178a63}
+.btn-outline{background:#fff;border:1px solid #ddd;color:#444}
+.btn-outline:hover{border-color:#1D9E75;color:#1D9E75}
+
+/* TABLE CARD */
+.table-card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f0f0ec}
+.table-title{font-size:15px;font-weight:600}
+.result-count{font-size:13px;color:#888}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;background:#f8f8f6;color:#555;font-weight:600;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid #f0f0ec;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+
+/* STATUS BADGE */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-pending{background:#FEF3C7;color:#92400E}
+.badge-approved{background:#D1FAE5;color:#065F46}
+.badge-rejected{background:#FEE2E2;color:#991B1B}
+
+/* LEAVE TYPE */
+.leave-type-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#EEF2FF;color:#3730A3}
+
+.empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
+.loading{text-align:center;padding:48px;color:#aaa}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo">
+    <img src="/logo.png" onerror="this.style.display='none'">
+    EARTH (THAILAND)
+  </a>
+  <div class="nav-links">
+    <a href="/index.html">หน้าหลัก</a>
+    <a href="/meeting-calendar.html">จองห้องประชุม</a>
+    <a href="/documents.html">คลังเอกสาร</a>
+    <a href="/leave-report.html" class="active">รายงานการลา</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user"></span>
+    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+  </div>
+</nav>
+
+<div class="page">
+  <h1>📋 รายงานสรุปการลา</h1>
+
+  <!-- FILTERS -->
+  <div class="filter-card">
+    <div class="filter-grid">
+      <div class="fg">
+        <label>ประเภทการลา</label>
+        <select id="f-type">
+          <option value="">ทั้งหมด</option>
+          <option value="sick">ลาป่วย</option>
+          <option value="personal_special">ลากิจพิเศษ</option>
+          <option value="annual">ลาพักร้อน</option>
+          <option value="ordain">ลาบวช</option>
+          <option value="unpaid">ลาตัดเงิน</option>
+          <option value="maternity">ลาคลอด</option>
+          <option value="military">ลาราชการทหาร</option>
+          <option value="marriage">ลาสมรส</option>
+          <option value="work_injury">ลาป่วยจากงาน</option>
+          <option value="personal">ลากิจจำเป็น</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>วันที่เริ่มลา (ตั้งแต่)</label>
+        <input type="date" id="f-from">
+      </div>
+      <div class="fg">
+        <label>วันที่สิ้นสุดลา (ถึง)</label>
+        <input type="date" id="f-to">
+      </div>
+      <div class="fg">
+        <label>สถานะการอนุมัติ</label>
+        <select id="f-status">
+          <option value="">ทั้งหมด</option>
+          <option value="pending">รออนุมัติ</option>
+          <option value="approved">อนุมัติแล้ว</option>
+          <option value="rejected">ไม่อนุมัติ</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>แผนก</label>
+        <select id="f-dept">
+          <option value="">ทั้งหมด</option>
+        </select>
+      </div>
+      <div class="filter-btns">
+        <button class="btn btn-primary" onclick="loadReport()">🔍 ค้นหา</button>
+        <button class="btn btn-outline" onclick="clearFilter()">ล้าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="table-header">
+      <span class="table-title">รายการการลา</span>
+      <span class="result-count" id="result-count"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>เลขที่ใบลา</th>
+            <th>วันที่ทำเอกสาร</th>
+            <th>ชื่อผู้ลา</th>
+            <th>แผนก</th>
+            <th>ประเภทการลา</th>
+            <th>วันที่เริ่ม</th>
+            <th>วันที่สิ้นสุด</th>
+            <th>จำนวน</th>
+            <th>สถานะ</th>
+            <th>ผู้อนุมัติ</th>
+          </tr>
+        </thead>
+        <tbody id="report-body">
+          <tr><td colspan="10" class="loading">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const LEAVE_NAMES = {
+  sick:'ลาป่วย', personal_special:'ลากิจพิเศษ', annual:'ลาพักร้อน',
+  ordain:'ลาบวช', unpaid:'ลาตัดเงิน', maternity:'ลาคลอด',
+  military:'ลาราชการทหาร', marriage:'ลาสมรส', work_injury:'ลาป่วยจากงาน', personal:'ลากิจจำเป็น'
+};
+
+function fmtDate(dt) {
+  if (!dt) return '-';
+  const d = new Date(dt);
+  return d.toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'numeric'});
+}
+function fmtDateTime(dt) {
+  if (!dt) return '-';
+  const d = new Date(dt);
+  return d.toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'numeric'})
+    + ' ' + d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+}
+function statusBadge(s) {
+  if (s==='approved') return '<span class="badge badge-approved">✓ อนุมัติแล้ว</span>';
+  if (s==='rejected') return '<span class="badge badge-rejected">✗ ไม่อนุมัติ</span>';
+  return '<span class="badge badge-pending">⏳ รออนุมัติ</span>';
+}
+
+async function loadReport() {
+  const params = new URLSearchParams();
+  const type   = document.getElementById('f-type').value;
+  const from   = document.getElementById('f-from').value;
+  const to     = document.getElementById('f-to').value;
+  const status = document.getElementById('f-status').value;
+  const dept   = document.getElementById('f-dept').value;
+  if (type)   params.set('leave_type', type);
+  if (from)   params.set('date_from', from);
+  if (to)     params.set('date_to', to);
+  if (status) params.set('status', status);
+  if (dept)   params.set('dept', dept);
+
+  const tbody = document.getElementById('report-body');
+  tbody.innerHTML = '<tr><td colspan="10" class="loading">กำลังโหลด...</td></tr>';
+  document.getElementById('result-count').textContent = '';
+
+  try {
+    const r = await fetch('/api/leave/report-list?' + params);
+    if (!r.ok) { const e=await r.json(); throw new Error(e.error||r.statusText); }
+    const rows = await r.json();
+    document.getElementById('result-count').textContent = `พบ ${rows.length} รายการ`;
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td style="font-family:monospace;font-weight:600">${r.leave_no||'-'}</td>
+        <td style="white-space:nowrap">${fmtDate(r.created_at)}</td>
+        <td style="font-weight:500">${r.user_name||'-'}</td>
+        <td>${r.dept||'-'}</td>
+        <td><span class="leave-type-tag">${LEAVE_NAMES[r.leave_type]||r.leave_type}</span></td>
+        <td style="white-space:nowrap">${fmtDateTime(r.start_datetime)}</td>
+        <td style="white-space:nowrap">${fmtDateTime(r.end_datetime)}</td>
+        <td style="white-space:nowrap">${r.days>0?r.days+' วัน':r.hours+' ชม.'}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>${r.approver_name||'-'}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty" style="color:#dc2626">เกิดข้อผิดพลาด: ${e.message}</td></tr>`;
+  }
+}
+
+function clearFilter() {
+  ['f-type','f-from','f-to','f-status','f-dept'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = el.tagName==='SELECT' ? '' : '';
+  });
+  loadReport();
+}
+
+async function logout() {
+  await fetch('/api/logout', {method:'POST'});
+  window.location.href = '/login.html';
+}
+
+(async () => {
+  try {
+    const me = await fetch('/api/me').then(r=>r.json());
+    if (!me || me.error) { window.location.href='/login.html'; return; }
+    document.getElementById('nav-user').textContent = me.name + ' (' + me.dept + ')';
+
+    // Load dept options
+    const users = await fetch('/api/users').then(r=>r.ok?r.json():[]).catch(()=>[]);
+    const depts = [...new Set(users.map(u=>u.dept).filter(Boolean))].sort();
+    const sel = document.getElementById('f-dept');
+    depts.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d;
+      sel.appendChild(o);
+    });
+  } catch(e) { window.location.href='/login.html'; return; }
+
+  loadReport();
+})();
+</script>
+</body>
+</html>
