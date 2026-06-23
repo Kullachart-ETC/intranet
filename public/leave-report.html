@@ -168,6 +168,18 @@ const LEAVE_NAMES = {
   military:'ลาราชการทหาร', marriage:'ลาสมรส', work_injury:'ลาป่วยจากงาน', personal:'ลากิจจำเป็น'
 };
 
+function fmtDuration(hours) {
+  const totalMins = Math.round((hours||0) * 60);
+  if (!totalMins) return '-';
+  const d = Math.floor(totalMins / 480);      // 8 ชม. = 1 วัน
+  const h = Math.floor((totalMins % 480) / 60);
+  const m = totalMins % 60;
+  const parts = [];
+  if (d > 0) parts.push(d + ' วัน');
+  if (h > 0) parts.push(h + ' ชั่วโมง');
+  if (m > 0) parts.push(m + ' นาที');
+  return parts.join(' ') || '-';
+}
 function fmtDate(dt) {
   if (!dt) return '-';
   const d = new Date(dt);
@@ -222,7 +234,7 @@ async function loadReport() {
         <td><span class="leave-type-tag">${LEAVE_NAMES[r.leave_type]||r.leave_type}</span></td>
         <td style="white-space:nowrap">${fmtDateTime(r.start_datetime)}</td>
         <td style="white-space:nowrap">${fmtDateTime(r.end_datetime)}</td>
-        <td style="white-space:nowrap">${r.days>0?r.days+' วัน':r.hours+' ชม.'}</td>
+        <td style="white-space:nowrap">${fmtDuration(r.hours)}</td>
         <td>${statusBadge(r.status)}</td>
         <td>${r.approver_name||'-'}</td>
       </tr>
