@@ -178,9 +178,11 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
   padding:8px 11px; font-size:14px; font-family:inherit; color:var(--text); background:var(--white);
 }
 .fg input:focus, .fg select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,44,111,0.08); }
-.time-row { display:flex; align-items:center; gap:8px; }
-.time-row input { flex:1; }
-.time-sep { color:var(--muted); font-size:13px; flex-shrink:0; }
+.time-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.time-row select { border:1px solid #dde1e8; border-radius:8px; padding:8px 10px; font-size:14px; font-family:inherit; background:#fff; color:var(--text); cursor:pointer; }
+.time-row select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,44,111,0.08); }
+.time-colon { font-size:15px; font-weight:600; color:var(--text); }
+.time-sep { color:var(--muted); font-size:13px; flex-shrink:0; padding:0 4px; }
 
 /* COLOR PICKER */
 .color-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:4px; }
@@ -333,9 +335,9 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
       <div class="fg">
         <label>เวลา・時間</label>
         <div class="time-row">
-          <input type="time" id="inpStart" value="09:00">
+          <select id="inpStartH"></select><span class="time-colon">:</span><select id="inpStartM"></select>
           <span class="time-sep">ถึง</span>
-          <input type="time" id="inpEnd" value="10:00">
+          <select id="inpEndH"></select><span class="time-colon">:</span><select id="inpEndM"></select>
         </div>
       </div>
       <!-- Name -->
@@ -396,9 +398,9 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
       <div class="fg">
         <label>เวลา・時間</label>
         <div class="time-row">
-          <input type="time" id="editStart">
+          <select id="editStartH"></select><span class="time-colon">:</span><select id="editStartM"></select>
           <span class="time-sep">ถึง</span>
-          <input type="time" id="editEnd">
+          <select id="editEndH"></select><span class="time-colon">:</span><select id="editEndM"></select>
         </div>
       </div>
       <div class="fg">
@@ -558,6 +560,32 @@ function same(a,b) {
   return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 }
 
+// ===== TIME SELECT HELPERS =====
+function buildHourOpts(selVal) {
+  return Array.from({length:24},(_,i)=>{const h=String(i).padStart(2,'0');return`<option value="${h}"${h===selVal?' selected':''}>${h}</option>`;}).join('');
+}
+function buildMinOpts(selVal) {
+  return ['00','10','20','30','40','50'].map(m=>`<option value="${m}"${m===selVal?' selected':''}>${m}</option>`).join('');
+}
+function initTimeSelects() {
+  document.getElementById('inpStartH').innerHTML = buildHourOpts('09');
+  document.getElementById('inpStartM').innerHTML = buildMinOpts('00');
+  document.getElementById('inpEndH').innerHTML   = buildHourOpts('10');
+  document.getElementById('inpEndM').innerHTML   = buildMinOpts('00');
+  document.getElementById('editStartH').innerHTML = buildHourOpts('09');
+  document.getElementById('editStartM').innerHTML = buildMinOpts('00');
+  document.getElementById('editEndH').innerHTML   = buildHourOpts('10');
+  document.getElementById('editEndM').innerHTML   = buildMinOpts('00');
+}
+function getTimeStr(hId, mId) {
+  return document.getElementById(hId).value + ':' + document.getElementById(mId).value;
+}
+function setTimeStr(hId, mId, val) {
+  const [h, m] = (val || '09:00').split(':');
+  document.getElementById(hId).value = h || '09';
+  document.getElementById(mId).value = (['00','10','20','30','40','50'].includes(m) ? m : '00');
+}
+
 // ===== MODAL =====
 function openModal(dateStr) {
   modalDate = dateStr;
@@ -643,8 +671,8 @@ function openEditModal(b) {
 
   document.getElementById('editId').value  = b.id;
   const [start,end] = (b.slot||'09:00-10:00').split('-');
-  document.getElementById('editStart').value   = start||'09:00';
-  document.getElementById('editEnd').value     = end||'10:00';
+  setTimeStr('editStartH','editStartM', start||'09:00');
+  setTimeStr('editEndH','editEndM', end||'10:00');
   document.getElementById('editName').value    = b.name||'';
   document.getElementById('editPurpose').value = b._purpose||'';
 
@@ -673,8 +701,8 @@ function pickEditCustomColor(color) {
 
 async function saveEdit() {
   const id    = document.getElementById('editId').value;
-  const start = document.getElementById('editStart').value;
-  const end   = document.getElementById('editEnd').value;
+  const start = getTimeStr('editStartH','editStartM');
+  const end   = getTimeStr('editEndH','editEndM');
   const name  = document.getElementById('editName').value.trim();
   const purp  = document.getElementById('editPurpose').value.trim();
 
@@ -716,8 +744,8 @@ async function saveEdit() {
 
 // ===== SUBMIT =====
 async function submitBooking() {
-  const start = document.getElementById('inpStart').value;
-  const end   = document.getElementById('inpEnd').value;
+  const start = getTimeStr('inpStartH','inpStartM');
+  const end   = getTimeStr('inpEndH','inpEndM');
   const name  = document.getElementById('inpName').value.trim();
   const purp  = document.getElementById('inpPurpose').value.trim();
 
@@ -741,8 +769,8 @@ async function submitBooking() {
     if (r.ok) {
       toast('จองสำเร็จแล้วครับ','ok');
       document.getElementById('inpPurpose').value='';
-      document.getElementById('inpStart').value='09:00';
-      document.getElementById('inpEnd').value='10:00';
+      setTimeStr('inpStartH','inpStartM','09:00');
+      setTimeStr('inpEndH','inpEndM','10:00');
       await loadBookings();
       parseColors();
       renderCalendar();
@@ -759,66 +787,4 @@ async function submitBooking() {
 // ===== TOAST =====
 function toast(msg, type='ok') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.style.background = type==='ok' ? '#1D9E75' : '#DC2626';
-  el.style.display = 'block';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.display='none'; }, 3000);
-}
-
-// ===== DELETE =====
-async function delBooking(id) {
-  // ลบ element จาก DOM ทันที (optimistic)
-  const el = document.getElementById('ei'+id);
-  if (el) el.style.opacity = '0.3';
-  try {
-    const r = await fetch(`/api/bookings/${id}`,{method:'DELETE'});
-    if (r.ok) {
-      closeModal('bookOverlay');
-      await loadBookings();
-      parseColors();
-      renderCalendar();
-      renderExisting();
-      toast('ยกเลิกการจองแล้ว ✓','ok');
-    } else {
-      if (el) el.style.opacity = '';
-      const e = await r.json().catch(()=>({}));
-      toast(e.error||'ยกเลิกไม่สำเร็จ ('+r.status+')','err');
-    }
-  } catch(e) {
-    if (el) el.style.opacity = '';
-    toast('เกิดข้อผิดพลาด: '+e.message,'err');
-  }
-}
-
-// ===== PARSE COLOR from purpose field =====
-function parseColors() {
-  bookings.forEach(b => {
-    if (b.purpose && b.purpose.startsWith('COLOR:')) {
-      const rest  = b.purpose.substring(6); // "#RRGGBB|purpose text"
-      const pipe  = rest.indexOf('|');
-      b._color    = pipe>=0 ? rest.substring(0,pipe) : rest;
-      b._purpose  = pipe>=0 ? rest.substring(pipe+1) : '';
-    } else {
-      b._color    = ROOMS[parseInt(b.room_idx)]?.color;
-      b._purpose  = b.purpose||'';
-    }
-  });
-}
-
-// ===== TOAST =====
-function toast(msg,type='') {
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className=`toast show ${type==='ok'?'ok':type==='err'?'err':''}`;
-  setTimeout(()=>t.className='toast',3000);
-}
-
-// ===== RUN =====
-(async()=>{
-  await init();
-  parseColors();
-  renderCalendar();
-})();
-</script>
-</body>
-</html>
+  el.
