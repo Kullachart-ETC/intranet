@@ -178,11 +178,11 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
   padding:8px 11px; font-size:14px; font-family:inherit; color:var(--text); background:var(--white);
 }
 .fg input:focus, .fg select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,44,111,0.08); }
-.time-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.time-row select { border:1px solid #dde1e8; border-radius:8px; padding:8px 10px; font-size:14px; font-family:inherit; background:#fff; color:var(--text); cursor:pointer; }
+.time-row { display:flex; align-items:center; gap:4px; flex-wrap:nowrap; }
+.time-row select { width:68px; border:1px solid #dde1e8; border-radius:8px; padding:8px 6px; font-size:14px; font-family:inherit; background:#fff; color:var(--text); cursor:pointer; flex-shrink:0; }
 .time-row select:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(15,44,111,0.08); }
-.time-colon { font-size:15px; font-weight:600; color:var(--text); }
-.time-sep { color:var(--muted); font-size:13px; flex-shrink:0; padding:0 4px; }
+.time-colon { font-size:15px; font-weight:600; color:var(--text); flex-shrink:0; }
+.time-sep { color:var(--muted); font-size:13px; flex-shrink:0; padding:0 6px; }
 
 /* COLOR PICKER */
 .color-row { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:4px; }
