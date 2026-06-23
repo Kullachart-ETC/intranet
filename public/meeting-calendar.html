@@ -787,4 +787,67 @@ async function submitBooking() {
 // ===== TOAST =====
 function toast(msg, type='ok') {
   const el = document.getElementById('toast');
-  el.
+  el.textContent = msg;
+  el.style.background = type==='ok' ? '#1D9E75' : '#DC2626';
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display='none'; }, 3000);
+}
+
+// ===== DELETE =====
+async function delBooking(id) {
+  // ลบ element จาก DOM ทันที (optimistic)
+  const el = document.getElementById('ei'+id);
+  if (el) el.style.opacity = '0.3';
+  try {
+    const r = await fetch(`/api/bookings/${id}`,{method:'DELETE'});
+    if (r.ok) {
+      closeModal('bookOverlay');
+      await loadBookings();
+      parseColors();
+      renderCalendar();
+      renderExisting();
+      toast('ยกเลิกการจองแล้ว ✓','ok');
+    } else {
+      if (el) el.style.opacity = '';
+      const e = await r.json().catch(()=>({}));
+      toast(e.error||'ยกเลิกไม่สำเร็จ ('+r.status+')','err');
+    }
+  } catch(e) {
+    if (el) el.style.opacity = '';
+    toast('เกิดข้อผิดพลาด: '+e.message,'err');
+  }
+}
+
+// ===== PARSE COLOR from purpose field =====
+function parseColors() {
+  bookings.forEach(b => {
+    if (b.purpose && b.purpose.startsWith('COLOR:')) {
+      const rest  = b.purpose.substring(6); // "#RRGGBB|purpose text"
+      const pipe  = rest.indexOf('|');
+      b._color    = pipe>=0 ? rest.substring(0,pipe) : rest;
+      b._purpose  = pipe>=0 ? rest.substring(pipe+1) : '';
+    } else {
+      b._color    = ROOMS[parseInt(b.room_idx)]?.color;
+      b._purpose  = b.purpose||'';
+    }
+  });
+}
+
+// ===== TOAST =====
+function toast(msg,type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${type==='ok'?'ok':type==='err'?'err':''}`;
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// ===== RUN =====
+(async()=>{
+  try { initTimeSelects(); } catch(e) { console.error('initTimeSelects error:', e); }
+  await init();
+  parseColors();
+  renderCalendar();
+})();
+</script>
+</body>
+</html>
