@@ -466,10 +466,13 @@ app.get('/api/bookings', requireLogin, async (req, res) => {
 });
 app.post('/api/bookings', requireLogin, async (req, res) => {
   const { room_idx, date, slot, name, purpose } = req.body;
+  const [newStart, newEnd] = slot.split('-');
   const existing = await pool.query(
-    'SELECT id FROM bookings WHERE room_idx=$1 AND date=$2 AND slot=$3', [room_idx, date, slot]
+    `SELECT id FROM bookings WHERE room_idx=$1 AND date=$2
+     AND SPLIT_PART(slot,'-',1) < $4 AND SPLIT_PART(slot,'-',2) > $3`,
+    [room_idx, date, newStart, newEnd]
   );
-  if (existing.rows.length > 0) return res.status(409).json({ error: 'ช่วงเวลานี้ถูกจองแล้ว' });
+  if (existing.rows.length > 0) return res.status(409).json({ error: 'ช่วงเวลานี้ทับซ้อนกับการจองที่มีอยู่' });
   await pool.query(
     'INSERT INTO bookings (room_idx,date,slot,name,purpose,user_id) VALUES ($1,$2,$3,$4,$5,$6)',
     [room_idx, date, slot, name, purpose, req.session.user.id]

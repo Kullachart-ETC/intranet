@@ -648,7 +648,7 @@ function renderExisting() {
         <div class="exist-color" style="background:${color}"></div>
         <div class="exist-info"${editHint}>
           <div class="exist-time">${b.slot} ${isOwner?'<span style="font-size:10px;color:var(--muted)">(ดับเบิลคลิกแก้ไข)</span>':''}</div>
-          <div class="exist-name">${b.name} — ${b._purpose||b.purpose||'-'}</div>
+          <div class="exist-name">${b.name}${(()=>{const p=b._purpose!==undefined?b._purpose:(b.purpose||'').replace(/^COLOR:[^|]*\|/,'');return p?' — '+p:'';})()}</div>
         </div>
         ${canDel?`<button class="exist-del" data-del-id="${b.id}" title="ยกเลิกการจอง">✕</button>`:''}
       </div>`;
@@ -754,6 +754,10 @@ async function submitBooking() {
   if (!name)        { toast('กรอกชื่อผู้จองด้วยครับ','err'); return; }
 
   const slot = `${start}-${end}`;
+  // Client-side overlap check
+  const conflict = bookings.find(b => b.date===modalDate && parseInt(b.room_idx)===selRoom
+    && b.slot.split('-')[0]<end && b.slot.split('-')[1]>start);
+  if (conflict) { toast(`ช่วงเวลาทับซ้อนกับ ${conflict.slot} (${conflict.name})`, 'err'); return; }
   // Encode color into purpose field: "COLOR:#hex|purpose"
   const purposeWithColor = `COLOR:${selColor}|${purp}`;
 
