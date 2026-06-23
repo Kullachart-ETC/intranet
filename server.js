@@ -992,31 +992,4 @@ app.post('/api/documents', requireLogin, docUpload.single('file'), async (req, r
     if (!dept) return res.status(400).json({ error: 'กรุณาระบุแผนก' });
     await pool.query(
       'INSERT INTO documents (original_name, dept, file_data, file_size, mime_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6)',
-      [req.file.originalname, dept, req.file.buffer, req.file.size, req.file.mimetype, req.session.user.id]
-    );
-    res.json({ ok: true });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-// GET /api/documents/:id/download
-app.get('/api/documents/:id/download', requireLogin, async (req, res) => {
-  const r = await pool.query('SELECT original_name, file_data, mime_type FROM documents WHERE id=$1', [req.params.id]);
-  if (!r.rows.length) return res.status(404).json({ error: 'ไม่พบเอกสาร' });
-  const doc = r.rows[0];
-  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(doc.original_name)}`);
-  res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
-  res.send(doc.file_data);
-});
-
-// DELETE /api/documents/:id
-app.delete('/api/documents/:id', requireLogin, async (req, res) => {
-  try {
-    const canDelete = await isManagerOrAdmin(req.session.user.id);
-    if (!canDelete) return res.status(403).json({ error: 'สิทธิ์ไม่เพียงพอ' });
-    await pool.query('DELETE FROM documents WHERE id=$1', [req.params.id]);
-    res.json({ ok: true });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Intranet running on port', PORT));
+      [req.file.originalname, 

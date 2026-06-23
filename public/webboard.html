@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เว็บบอร์ด - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.page{max-width:900px;margin:0 auto;padding:32px 16px}
+.page-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{font-size:22px;font-weight:700}
+.btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500}
+.btn-primary{background:#1D9E75;color:#fff}
+.btn-primary:hover{background:#178a63}
+.post-card{background:#fff;border-radius:12px;padding:18px 20px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:.15s}
+.post-card:hover{box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.post-title{font-size:15px;font-weight:600;margin-bottom:6px}
+.post-meta{font-size:12px;color:#aaa}
+.post-preview{font-size:13px;color:#666;margin-top:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cat-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:#EEF2FF;color:#3730A3;margin-right:6px}
+.empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;width:540px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:16px}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.fg label{font-size:12px;color:#666;font-weight:500}
+.fg input,.fg textarea,.fg select{border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit}
+.fg textarea{resize:vertical;min-height:100px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.btn-ghost{background:#fff;border:1px solid #ddd;color:#444}
+/* THREAD VIEW */
+.thread-body{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.reply-card{background:#F8F8F6;border-radius:8px;padding:14px 16px;margin-top:10px}
+.reply-form{background:#fff;border-radius:12px;padding:16px 20px;margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:#1D9E75;cursor:pointer;font-size:14px;margin-bottom:16px;background:none;border:none;font-family:inherit}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <div class="nav-links">
+    <a href="/index.html">หน้าแรก</a>
+    <a href="/about.html">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html">โครงสร้างองค์กร</a>
+    <a href="/news.html">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html" class="active">เว็บบอร์ด</a>
+    <a href="/regulations.html">ระเบียบบริษัท</a>
+    <a href="/media-center.html">Media Center</a>
+    <a href="/forms.html">แบบฟอร์ม - ARS</a>
+  </div>
+  <div class="nav-right"><span class="nav-user" id="nav-user"></span><button class="btn-logout" onclick="logout()">ออกจากระบบ</button></div>
+</nav>
+<div class="page" id="list-view">
+  <div class="page-top">
+    <h1>💬 เว็บบอร์ด</h1>
+    <button class="btn btn-primary" onclick="openNewPost()">+ ตั้งกระทู้ใหม่</button>
+  </div>
+  <div id="board-list"><div class="empty">กำลังโหลด...</div></div>
+</div>
+<div class="page" id="thread-view" style="display:none">
+  <button class="back-btn" onclick="showList()">← กลับ</button>
+  <div id="thread-content"></div>
+  <div class="reply-form">
+    <div class="fg"><label>ตอบกระทู้</label><textarea id="reply-text" placeholder="พิมพ์ข้อความ..."></textarea></div>
+    <button class="btn btn-primary" onclick="submitReply()">ส่งคำตอบ</button>
+  </div>
+</div>
+
+<div class="overlay" id="new-post-overlay">
+  <div class="modal">
+    <h2>ตั้งกระทู้ใหม่</h2>
+    <div class="fg"><label>หัวข้อ</label><input id="np-title" type="text" placeholder="หัวข้อกระทู้"></div>
+    <div class="fg"><label>หมวดหมู่</label>
+      <select id="np-cat">
+        <option value="general">ทั่วไป</option>
+        <option value="work">การทำงาน</option>
+        <option value="welfare">สวัสดิการ</option>
+        <option value="it">IT</option>
+        <option value="other">อื่นๆ</option>
+      </select>
+    </div>
+    <div class="fg"><label>เนื้อหา</label><textarea id="np-body" placeholder="รายละเอียด..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeNewPost()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitNewPost()">โพสต์</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CAT_LABEL={general:'ทั่วไป',work:'การทำงาน',welfare:'สวัสดิการ',it:'IT',other:'อื่นๆ'};
+let me=null, curThreadId=null;
+function fmtDate(dt){if(!dt)return'';return new Date(dt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function logout(){fetch('/api/logout',{method:'POST'}).then(()=>window.location.href='/login.html');}
+function openNewPost(){document.getElementById('new-post-overlay').classList.add('open');}
+function closeNewPost(){document.getElementById('new-post-overlay').classList.remove('open');}
+function showList(){document.getElementById('list-view').style.display='';document.getElementById('thread-view').style.display='none';loadBoard();}
+async function loadBoard(){
+  const r=await fetch('/api/webboard').catch(()=>null);
+  const posts=r&&r.ok?await r.json():[];
+  const el=document.getElementById('board-list');
+  if(!posts.length){el.innerHTML='<div class="empty">ยังไม่มีกระทู้ เป็นคนแรกที่ตั้งกระทู้!</div>';return;}
+  el.innerHTML=posts.map(p=>`<div class="post-card" onclick="openThread(${p.id})">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span class="cat-badge">${CAT_LABEL[p.category]||p.category}</span>
+      <span class="post-meta">${p.reply_count||0} ตอบ · ${fmtDate(p.created_at)}</span>
+    </div>
+    <div class="post-title">${p.title}</div>
+    <div class="post-preview">${p.body||''}</div>
+    <div class="post-meta" style="margin-top:8px">โดย ${p.author_name||'-'}</div>
+  </div>`).join('');
+}
+async function openThread(id){
+  curThreadId=id;
+  document.getElementById('list-view').style.display='none';
+  document.getElementById('thread-view').style.display='';
+  document.getElementById('thread-content').innerHTML='<div class="empty">กำลังโหลด...</div>';
+  document.getElementById('reply-text').value='';
+  const r=await fetch('/api/webboard/'+id).catch(()=>null);
+  if(!r||!r.ok){document.getElementById('thread-content').innerHTML='<div class="empty">ไม่พบกระทู้</div>';return;}
+  const data=await r.json();
+  const p=data.post; const replies=data.replies||[];
+  document.getElementById('thread-content').innerHTML=`
+    <div class="thread-body">
+      <div style="font-size:12px;color:#888;margin-bottom:8px">${CAT_LABEL[p.category]||p.category} · ${fmtDate(p.created_at)} · โดย ${p.author_name||'-'}</div>
+      <h2 style="font-size:18px;margin-bottom:12px">${p.title}</h2>
+      <p style="font-size:14px;line-height:1.8;color:#333">${p.body||''}</p>
+      ${replies.map(r=>`<div class="reply-card">
+        <div style="font-size:12px;color:#888;margin-bottom:6px">${r.author_name||'-'} · ${fmtDate(r.created_at)}</div>
+        <p style="font-size:14px;line-height:1.7">${r.body||''}</p>
+      </div>`).join('')}
+    </div>`;
+}
+async function submitNewPost(){
+  const title=document.getElementById('np-title').value.trim();
+  const body=document.getElementById('np-body').value.trim();
+  const category=document.getElementById('np-cat').value;
+  if(!title||!body){alert('กรุณากรอกหัวข้อและเนื้อหา');return;}
+  const r=await fetch('/api/webboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,body,category})});
+  if(r.ok){closeNewPost();document.getElementById('np-title').value='';document.getElementById('np-body').value='';loadBoard();}
+  else{const e=await r.json();alert(e.error||'เกิดข้อผิดพลาด');}
+}
+async function submitReply(){
+  const body=document.getElementById('reply-text').value.trim();
+  if(!body){alert('กรุณากรอกข้อความ');return;}
+  const r=await fetch('/api/webboard/'+curThreadId+'/reply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({body})});
+  if(r.ok){openThread(curThreadId);}
+  else{const e=await r.json();alert(e.error||'เกิดข้อผิดพลาด');}
+}
+(async()=>{
+  try{me=await fetch('/api/me').then(r=>r.json());if(me.error){window.location.href='/login.html';return;}
+  document.getElementById('nav-user').textContent=me.name;loadBoard();}
+  catch(e){window.location.href='/login.html';}
+})();
+</script>
+</body></html>

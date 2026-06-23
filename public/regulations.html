@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระเบียบบริษัท - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.page{max-width:900px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;font-weight:700;margin-bottom:24px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tab{padding:7px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s}
+.tab:hover{border-color:#1D9E75;color:#1D9E75}
+.tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
+.empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <div class="nav-links">
+    <a href="/index.html">หน้าแรก</a>
+    <a href="/about.html">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html">โครงสร้างองค์กร</a>
+    <a href="/news.html">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html">เว็บบอร์ด</a>
+    <a href="/regulations.html" class="active">ระเบียบบริษัท</a>
+    <a href="/media-center.html">Media Center</a>
+    <a href="/forms.html">แบบฟอร์ม - ARS</a>
+  </div>
+  <div class="nav-right"><span class="nav-user" id="nav-user"></span><button class="btn-logout" onclick="logout()">ออกจากระบบ</button></div>
+</nav>
+<div class="page">
+  <h1>📜 ระเบียบบริษัท</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="filterDept('ระเบียบ',this)">ระเบียบ</button>
+    <button class="tab" onclick="filterDept('นโยบาย',this)">นโยบาย</button>
+    <button class="tab" onclick="filterDept('ประกาศ',this)">ประกาศ</button>
+    <button class="tab" onclick="filterDept('all',this)">ทั้งหมด</button>
+  </div>
+  <div id="doc-list"><div class="empty">กำลังโหลด...</div></div>
+</div>
+<script>
+let allDocs=[];
+function fmtSize(b){if(!b)return'';if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function fmtDate(dt){if(!dt)return'';return new Date(dt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});}
+function fileIcon(m=''){if(m.includes('pdf'))return'📄';if(m.includes('word')||m.includes('doc'))return'📝';if(m.includes('sheet'))return'📊';if(m.includes('image'))return'🖼️';return'📎';}
+function filterDept(dept,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const docs=dept==='all'?allDocs:allDocs.filter(d=>d.dept===dept);
+  render(docs);
+}
+function render(docs){
+  const el=document.getElementById('doc-list');
+  if(!docs.length){el.innerHTML='<div class="empty">ไม่พบเอกสาร</div>';return;}
+  el.innerHTML=`<div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f8f8f6"><th style="padding:10px 14px;text-align:left;color:#555">ชื่อเอกสาร</th><th style="padding:10px 14px;text-align:left;color:#555">หมวด</th><th style="padding:10px 14px;text-align:left;color:#555">ขนาด</th><th style="padding:10px 14px;text-align:left;color:#555">วันที่</th><th style="padding:10px 14px"></th></tr></thead>
+      <tbody>${docs.map(d=>`<tr style="border-top:1px solid #f0f0ec">
+        <td style="padding:10px 14px"><span style="margin-right:6px">${fileIcon(d.mime_type)}</span><strong>${d.original_name}</strong></td>
+        <td style="padding:10px 14px;color:#888">${d.dept}</td>
+        <td style="padding:10px 14px;color:#888">${fmtSize(d.file_size)}</td>
+        <td style="padding:10px 14px;color:#888;white-space:nowrap">${fmtDate(d.created_at)}</td>
+        <td style="padding:10px 14px"><a href="/api/documents/${d.id}/download" style="color:#1D9E75;font-size:12px;text-decoration:none">⬇ ดาวน์โหลด</a></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
+(async()=>{
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(me.error){window.location.href='/login.html';return;}
+    document.getElementById('nav-user').textContent=me.name;
+    allDocs=await fetch('/api/documents').then(r=>r.ok?r.json():[]).catch(()=>[]);
+    // filter to regulation-related depts
+    const regDepts=['ระเบียบ','นโยบาย','ประกาศ'];
+    const regDocs=allDocs.filter(d=>regDepts.includes(d.dept));
+    if(regDocs.length)allDocs=regDocs;
+    render(allDocs.filter(d=>d.dept==='ระเบียบ')||allDocs);
+  }catch(e){window.location.href='/login.html';}
+})();
+</script>
+</body></html>

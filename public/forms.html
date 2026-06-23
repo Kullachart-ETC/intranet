@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>แบบฟอร์ม - ARS - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.page{max-width:1000px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;font-weight:700;margin-bottom:8px}
+.subtitle{font-size:13px;color:#888;margin-bottom:24px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tab{padding:7px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s}
+.tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
+.section-title{font-size:15px;font-weight:600;margin:20px 0 12px;color:#333}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.form-card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;align-items:center;gap:12px;text-decoration:none;color:#1a1a18;transition:.15s;border:1px solid transparent}
+.form-card:hover{border-color:#1D9E75;box-shadow:0 3px 10px rgba(29,158,117,.12)}
+.form-icon{font-size:28px;flex-shrink:0}
+.form-name{font-size:13px;font-weight:500}
+.form-desc{font-size:11px;color:#888;margin-top:2px}
+.empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
+.doc-table{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 14px;background:#f8f8f6;color:#555;font-weight:600}
+td{padding:10px 14px;border-top:1px solid #f0f0ec}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <div class="nav-links">
+    <a href="/index.html">หน้าแรก</a>
+    <a href="/about.html">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html">โครงสร้างองค์กร</a>
+    <a href="/news.html">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html">เว็บบอร์ด</a>
+    <a href="/regulations.html">ระเบียบบริษัท</a>
+    <a href="/media-center.html">Media Center</a>
+    <a href="/forms.html" class="active">แบบฟอร์ม - ARS</a>
+  </div>
+  <div class="nav-right"><span class="nav-user" id="nav-user"></span><button class="btn-logout" onclick="logout()">ออกจากระบบ</button></div>
+</nav>
+<div class="page">
+  <h1>📋 แบบฟอร์ม - ARS</h1>
+  <p class="subtitle">ดาวน์โหลดแบบฟอร์มต่างๆ สำหรับใช้งานภายในองค์กร</p>
+
+  <!-- System forms (built-in) -->
+  <div class="section-title">แบบฟอร์มระบบ</div>
+  <div class="form-grid">
+    <a href="#" onclick="alert('กรุณาใช้ระบบลาหยุดในหน้าหลัก')" class="form-card">
+      <span class="form-icon">📝</span>
+      <div><div class="form-name">ใบลาหยุด</div><div class="form-desc">ยื่นผ่านระบบออนไลน์</div></div>
+    </a>
+    <a href="/meeting-calendar.html" class="form-card">
+      <span class="form-icon">🚪</span>
+      <div><div class="form-name">จองห้องประชุม</div><div class="form-desc">จองผ่านระบบออนไลน์</div></div>
+    </a>
+  </div>
+
+  <!-- Uploaded forms from document library -->
+  <div class="section-title">แบบฟอร์มดาวน์โหลด</div>
+  <div class="tabs" id="cat-tabs">
+    <button class="tab active" onclick="filterCat('all',this)">ทั้งหมด</button>
+  </div>
+  <div id="form-list"><div class="empty">กำลังโหลด...</div></div>
+</div>
+<script>
+let allDocs=[];
+function fmtDate(dt){if(!dt)return'';return new Date(dt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});}
+function fmtSize(b){if(!b)return'';if(b<1048576)return(b/1024).toFixed(0)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function fileIcon(m=''){if(m.includes('pdf'))return'📄';if(m.includes('word')||m.includes('doc'))return'📝';if(m.includes('sheet'))return'📊';return'📎';}
+function filterCat(dept,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const docs=dept==='all'?allDocs:allDocs.filter(d=>d.dept===dept);
+  renderDocs(docs);
+}
+function renderDocs(docs){
+  const el=document.getElementById('form-list');
+  if(!docs.length){el.innerHTML='<div class="empty">ไม่พบแบบฟอร์ม<br><small>ผู้ดูแลระบบสามารถอัปโหลดแบบฟอร์มได้ที่ <a href="/documents.html">คลังเอกสาร</a></small></div>';return;}
+  el.innerHTML=`<div class="doc-table"><table>
+    <thead><tr><th>ชื่อแบบฟอร์ม</th><th>หมวดหมู่</th><th>ขนาด</th><th>วันที่</th><th></th></tr></thead>
+    <tbody>${docs.map(d=>`<tr>
+      <td>${fileIcon(d.mime_type)} <strong>${d.original_name}</strong></td>
+      <td style="color:#888">${d.dept}</td>
+      <td style="color:#888">${fmtSize(d.file_size)}</td>
+      <td style="color:#888;white-space:nowrap">${fmtDate(d.created_at)}</td>
+      <td><a href="/api/documents/${d.id}/download" style="color:#1D9E75;font-size:12px;text-decoration:none;white-space:nowrap">⬇ ดาวน์โหลด</a></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
+(async()=>{
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(me.error){window.location.href='/login.html';return;}
+    document.getElementById('nav-user').textContent=me.name;
+    allDocs=await fetch('/api/documents').then(r=>r.ok?r.json():[]).catch(()=>[]);
+    // Build dept tabs
+    const depts=[...new Set(allDocs.map(d=>d.dept).filter(Boolean))].sort();
+    const tabsEl=document.getElementById('cat-tabs');
+    tabsEl.innerHTML=`<button class="tab active" onclick="filterCat('all',this)">ทั้งหมด (${allDocs.length})</button>`;
+    depts.forEach(d=>{
+      const c=allDocs.filter(x=>x.dept===d).length;
+      tabsEl.innerHTML+=`<button class="tab" onclick="filterCat('${d}',this)">${d} (${c})</button>`;
+    });
+    renderDocs(allDocs);
+  }catch(e){window.location.href='/login.html';}
+})();
+</script>
+</body></html>

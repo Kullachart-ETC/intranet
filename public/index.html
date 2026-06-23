@@ -156,9 +156,16 @@ tr:last-child td{border-bottom:none}
   <nav class="nav">
     <button class="active" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
     <button onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
-        <button onclick="window.location.href='/meeting-calendar.html'">🚪 จองห้องประชุม</button>
-        <button onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
+    <button onclick="window.location.href='/meeting-calendar.html'">🚪 จองห้องประชุม</button>
+    <button onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
     <button onclick="showPage('leave',this)">📋 ระบบลาหยุด</button>
+    <button onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
+    <button onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
+    <button onclick="window.location.href='/news.html'">📰 ข่าวสารกิจกรรม</button>
+    <button onclick="window.location.href='/webboard.html'">💬 เว็บบอร์ด</button>
+    <button onclick="window.location.href='/regulations.html'">📜 ระเบียบบริษัท</button>
+    <button onclick="window.location.href='/media-center.html'">🎬 Media Center</button>
+    <button onclick="window.location.href='/forms.html'">📋 แบบฟอร์ม - ARS</button>
     <button id="admin-btn" onclick="showPage('admin',this)" style="display:none">⚙️ จัดการผู้ใช้</button>
     <button id="report-btn" onclick="window.location.href='/leave-report.html'" style="display:none">📊 รายงานการลา</button>
   </nav>
@@ -632,27 +639,4 @@ function initTimeSelects(){
   const mOpts=['00','10','20','30','40','50'].map((m,i)=>`<option value="${m}"${i===3?' selected':''}>${m}</option>`).join('');
   const mOptsEnd=['00','10','20','30','40','50'].map((m,i)=>`<option value="${m}"${i===4?' selected':''}>${m}</option>`).join('');
   $('lv-start-hour').innerHTML=hOpts;
-  $('lv-end-hour').innerHTML=hOptsEnd;
-  $('lv-start-min').innerHTML=mOpts;
-  $('lv-end-min').innerHTML=mOptsEnd;
-}
-
-// Init
-(async()=>{
-  try{
-    state.me=await api('/me');
-    $('user-name').textContent=state.me.name+' ('+state.me.dept+')';
-    $('user-badge').textContent=state.me.role;
-    if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-btn').style.display='';$('report-tab').style.display='';}
-    $('approve-tab').style.display='';
-    const[posts,employees,events,bookings]=await Promise.all([api('/posts'),api('/employees'),api('/events'),api('/bookings')]);
-    state.posts=posts;state.employees=employees;state.events=events;state.bookings=bookings;
-    renderBoard();$('room-date').value=todayStr();
-    // โหลดจำนวนรออนุมัติ
-    const pending=await api('/leave/pending');
-    $('pending-count').textContent=pending.length||'';
-  }catch(e){window.location.href='/login';}
-})();
-</script>
-</body>
-</html>
+  $('lv-end-h

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>โครงสร้างองค์กร - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.page{max-width:1100px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;font-weight:700;margin-bottom:24px}
+.org-wrap{overflow-x:auto;padding:20px 0}
+.org-tree{display:flex;flex-direction:column;align-items:center;gap:0}
+.level{display:flex;justify-content:center;gap:24px;position:relative;padding:0 12px}
+.node{background:#fff;border:2px solid #1D9E75;border-radius:10px;padding:12px 20px;text-align:center;min-width:130px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.node.top{border-color:#0f2c6f;background:#0f2c6f;color:#fff}
+.node .title{font-size:11px;color:#888;margin-bottom:2px}
+.node.top .title{color:#aac}
+.node .name{font-size:13px;font-weight:600}
+.connector{height:32px;display:flex;align-items:center;justify-content:center}
+.connector::after{content:'';display:block;width:2px;height:100%;background:#ddd}
+.h-line{height:2px;background:#ddd;margin:0 auto}
+.loading{text-align:center;color:#aaa;padding:48px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <div class="nav-links">
+    <a href="/index.html">หน้าแรก</a>
+    <a href="/about.html">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html" class="active">โครงสร้างองค์กร</a>
+    <a href="/news.html">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html">เว็บบอร์ด</a>
+    <a href="/regulations.html">ระเบียบบริษัท</a>
+    <a href="/media-center.html">Media Center</a>
+    <a href="/forms.html">แบบฟอร์ม - ARS</a>
+  </div>
+  <div class="nav-right"><span class="nav-user" id="nav-user"></span><button class="btn-logout" onclick="logout()">ออกจากระบบ</button></div>
+</nav>
+<div class="page">
+  <h1>🏗 โครงสร้างองค์กร</h1>
+  <div class="org-wrap" id="org-wrap"><div class="loading">กำลังโหลด...</div></div>
+</div>
+<script>
+async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
+
+function buildNode(u, isTop=false){
+  return `<div class="node${isTop?' top':''}">
+    <div class="title">${u.dept||''}</div>
+    <div class="name">${u.name}</div>
+  </div>`;
+}
+
+(async()=>{
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(me.error){window.location.href='/login.html';return;}
+    document.getElementById('nav-user').textContent=me.name;
+
+    const users=await fetch('/api/users').then(r=>r.ok?r.json():[]).catch(()=>[]);
+    if(!users.length){document.getElementById('org-wrap').innerHTML='<div class="loading">ไม่พบข้อมูล</div>';return;}
+
+    // Build tree: group by dept
+    const depts={};
+    const tops=users.filter(u=>!u.manager_id);
+    const rest=users.filter(u=>u.manager_id);
+
+    // Simple view: top-level then by dept
+    const deptMap={};
+    users.forEach(u=>{if(!deptMap[u.dept||'ทั่วไป'])deptMap[u.dept||'ทั่วไป']=[];deptMap[u.dept||'ทั่วไป'].push(u);});
+
+    let html='<div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center">';
+    Object.entries(deptMap).forEach(([dept,members])=>{
+      html+=`<div style="background:#fff;border-radius:12px;padding:16px 20px;min-width:160px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+        <div style="font-size:12px;font-weight:700;color:#1D9E75;margin-bottom:12px;border-bottom:2px solid #E8F5F0;padding-bottom:6px">📂 ${dept}</div>`;
+      members.forEach(u=>{
+        const isMgr=users.some(x=>x.manager_id===u.id);
+        html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f0">
+          <span style="font-size:16px">${isMgr?'👔':'👤'}</span>
+          <div><div style="font-size:13px;font-weight:${isMgr?'600':'400'}">${u.name}</div>
+          ${u.manager_id?'':'<div style="font-size:11px;color:#888">หัวหน้า</div>'}</div></div>`;
+      });
+      html+='</div>';
+    });
+    html+='</div>';
+    document.getElementById('org-wrap').innerHTML=html;
+  }catch(e){window.location.href='/login.html';}
+})();
+</script>
+</body></html>
