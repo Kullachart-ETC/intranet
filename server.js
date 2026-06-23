@@ -992,4 +992,84 @@ app.post('/api/documents', requireLogin, docUpload.single('file'), async (req, r
     if (!dept) return res.status(400).json({ error: 'กรุณาระบุแผนก' });
     await pool.query(
       'INSERT INTO documents (original_name, dept, file_data, file_size, mime_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6)',
-      [req.file.originalname, 
+      [req.file.originalname, dept, req.file.buffer, req.file.size, req.file.mimetype, req.session.user.id]
+    );
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/documents/:id/download
+app.get('/api/documents/:id/download', requireLogin, async (req, res) => {
+  const r = await pool.query('SELECT original_name, file_data, mime_type FROM documents WHERE id=$1', [req.params.id]);
+  if (!r.rows.length) return res.status(404).json({ error: 'ไม่พบเอกสาร' });
+  const doc = r.rows[0];
+  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(doc.original_name)}`);
+  res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
+  res.send(doc.file_data);
+});
+
+// DELETE /api/documents/:id
+app.delete('/api/documents/:id', requireLogin, async (req, res) => {
+  try {
+    const canDelete = await isManagerOrAdmin(req.session.user.id);
+    if (!canDelete) return res.status(403).json({ error: 'สิทธิ์ไม่เพียงพอ' });
+    await pool.query('DELETE FROM documents WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ======== API WEBBOARD ========
+async function initWebboard() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS webboard_posts (
+    id SERIAL PRIMARY KEY, title TEXT NOT NULL, body TEXT,
+    category TEXT DEFAULT 'general', user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS webboard_replies (
+    id SERIAL PRIMARY KEY, post_id INTEGER REFERENCES webboard_posts(id) ON DELETE CASCADE,
+    body TEXT NOT NULL, user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`);
+}
+initWebboard().catch(console.error);
+
+app.get('/api/webboard', requireLogin, async (req, res) => {
+  const r = await pool.query(
+    `SELECT p.*, u.name as author_name,
+     (SELECT COUNT(*) FROM webboard_replies r WHERE r.post_id=p.id) as reply_count
+     FROM webboard_posts p LEFT JOIN users u ON u.id=p.user_id
+     ORDER BY p.created_at DESC LIMIT 100`
+  );
+  res.json(r.rows);
+});
+app.get('/api/webboard/:id', requireLogin, async (req, res) => {
+  const post = await pool.query(
+    `SELECT p.*,u.name as author_name FROM webboard_posts p LEFT JOIN users u ON u.id=p.user_id WHERE p.id=$1`, [req.params.id]
+  );
+  if (!post.rows.length) return res.status(404).json({ error: 'ไม่พบกระทู้' });
+  const replies = await pool.query(
+    `SELECT r.*,u.name as author_name FROM webboard_replies r LEFT JOIN users u ON u.id=r.user_id WHERE r.post_id=$1 ORDER BY r.created_at`, [req.params.id]
+  );
+  res.json({ post: post.rows[0], replies: replies.rows });
+});
+app.post('/api/webboard', requireLogin, async (req, res) => {
+  const { title, body, category } = req.body;
+  if (!title) return res.status(400).json({ error: 'กรุณากรอกหัวข้อ' });
+  await pool.query(
+    'INSERT INTO webboard_posts (title,body,category,user_id) VALUES ($1,$2,$3,$4)',
+    [title, body||'', category||'general', req.session.user.id]
+  );
+  res.json({ ok: true });
+});
+app.post('/api/webboard/:id/reply', requireLogin, async (req, res) => {
+  const { body } = req.body;
+  if (!body) return res.status(400).json({ error: 'กรุณากรอกข้อความ' });
+  await pool.query(
+    'INSERT INTO webboard_replies (post_id,body,user_id) VALUES ($1,$2,$3)',
+    [req.params.id, body, req.session.user.id]
+  );
+  res.json({ ok: true });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('Intranet running on port', PORT));
