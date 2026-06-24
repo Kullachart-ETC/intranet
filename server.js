@@ -817,6 +817,43 @@ const upload = multer({
   }
 });
 
+
+// ======== GET /api/users/template ========
+app.get('/api/users/template', requireLogin, requireAdmin, (req, res) => {
+  const XLSX = require('xlsx');
+  const wb = XLSX.utils.book_new();
+
+  // Header rows (4 rows)
+  const headers = [
+    ['แบบฟอร์มนำเข้าพนักงาน - Employee Import Template'],
+    ['กรุณากรอกข้อมูลตั้งแต่แถวที่ 5 เป็นต้นไป'],
+    ['(*) = จำเป็นต้องกรอก'],
+    [
+      'รหัสพนักงาน', 'ชื่อ(*)', 'นามสกุล(*)', 'Email(*)',
+      'แผนก(*)', 'ตำแหน่ง', 'วันเริ่มงาน (YYYY-MM-DD)', 'ประเภทพนักงาน',
+      'รหัสหัวหน้า', 'Username(*)', 'Password(*)', 'Role(*) (admin/user)',
+      'โควต้าพักร้อน (ชม.)', 'โควต้าลาป่วย (ชม.)', 'โควต้าลากิจ (ชม.)', 'หมายเหตุ'
+    ]
+  ];
+
+  // Example row
+  const example = [
+    ['10001','สมชาย','ใจดี','somchai@earth-th.com',
+     'IT','Developer','2023-01-01','full-time',
+     '','somchai','Pass1234','user',
+     '98','','','']
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
+  ws['!cols'] = Array(16).fill({ wch: 18 });
+  XLSX.utils.book_append_sheet(wb, ws, 'Employee_Template');
+
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', 'attachment; filename="employee_template.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buf);
+});
+
 // ======== POST /api/users/bulk-upload ========
 app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
   upload.single('file'),

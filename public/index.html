@@ -691,7 +691,7 @@ async function bulkUpload(){
   if(!file){alertEl.className='alert alert-err';alertEl.textContent='กรุณาเลือกไฟล์ Excel';return;}
   const fd=new FormData();fd.append('file',file);
   try{
-    const r=await fetch('/api/users/bulk',{method:'POST',body:fd});
+    const r=await fetch('/api/users/bulk-upload',{method:'POST',body:fd});
     const d=await r.json();
     if(r.ok){
       alertEl.className='alert alert-ok';
