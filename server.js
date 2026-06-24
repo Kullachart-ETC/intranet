@@ -1071,5 +1071,84 @@ app.post('/api/webboard/:id/reply', requireLogin, async (req, res) => {
   res.json({ ok: true });
 });
 
+
+// ======== ISMS NEWS FEED ========
+const https = require('https');
+const http  = require('http');
+
+let ismsCache = { data: [], fetchedAt: 0 };
+
+function fetchUrl(url) {
+  return new Promise((resolve, reject) => {
+    const mod = url.startsWith('https') ? https : http;
+    mod.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 IntranetBot/1.0' } }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return fetchUrl(res.headers.location).then(resolve).catch(reject);
+      }
+      let raw = '';
+      res.on('data', d => raw += d);
+      res.on('end', () => resolve(raw));
+    }).on('error', reject);
+  });
+}
+
+function parseRSS(xml, source) {
+  const items = [];
+  const itemRx = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  while ((m = itemRx.exec(xml)) !== null) {
+    const block = m[1];
+    const title   = (block.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/)   || [])[1] || '';
+    const link    = (block.match(/<link>([\s\S]*?)<\/link>/)                                 || [])[1] || '';
+    const pubDate = (block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)                           || [])[1] || '';
+    const desc    = (block.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/) || [])[1] || '';
+    const cleanDesc = desc.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, ' ').trim().slice(0, 160);
+    if (title && link) items.push({
+      title: title.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#\d+;/g,'').trim(),
+      link: link.trim(),
+      pubDate: pubDate.trim(),
+      desc: cleanDesc,
+      source
+    });
+  }
+  return items;
+}
+
+async function refreshIsmsNews() {
+  const feeds = [
+    { url: 'https://feeds.feedburner.com/TheHackersNews', source: 'The Hacker News' },
+    { url: 'https://www.darkreading.com/rss.xml',         source: 'Dark Reading' },
+    { url: 'https://krebsonsecurity.com/feed/',           source: 'Krebs on Security' },
+  ];
+  const ismsKeywords = ['isms','iso 27001','information security','cybersecurity','data breach','ransomware','phishing','vulnerability','compliance','security management','nist','gdpr','pdpa'];
+  let all = [];
+  for (const feed of feeds) {
+    try {
+      const xml = await fetchUrl(feed.url);
+      const items = parseRSS(xml, feed.source);
+      all = all.concat(items);
+    } catch(e) { console.error('RSS fetch error:', feed.source, e.message); }
+  }
+  // Filter by ISMS keywords
+  const filtered = all.filter(item => {
+    const txt = (item.title + ' ' + item.desc).toLowerCase();
+    return ismsKeywords.some(k => txt.includes(k));
+  });
+  // Sort by date desc, take top 8
+  const sorted = filtered
+    .sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate))
+    .slice(0, 8);
+  ismsCache = { data: sorted.length ? sorted : all.slice(0,8), fetchedAt: Date.now() };
+  console.log('ISMS news refreshed:', ismsCache.data.length, 'articles');
+}
+
+// Refresh on startup + every 2 hours
+refreshIsmsNews().catch(console.error);
+setInterval(() => refreshIsmsNews().catch(console.error), 2 * 60 * 60 * 1000);
+
+app.get('/api/isms-news', requireLogin, (req, res) => {
+  res.json({ items: ismsCache.data, fetchedAt: ismsCache.fetchedAt });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Intranet running on port', PORT));

@@ -37,6 +37,15 @@ body:has(#page-board.active){background:#0f3460}
 .btn-warning{background:#e67e22;color:#fff;border-color:#e67e22}
 /* Posts */
 .posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.board-layout{display:grid;grid-template-columns:1fr 320px;gap:1.25rem;align-items:start}
+@media(max-width:900px){.board-layout{grid-template-columns:1fr}}
+.isms-card{background:rgba(255,255,255,0.10);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.18);border-radius:12px;padding:16px;color:#fff}
+.isms-card h3{font-size:14px;font-weight:600;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.isms-item{border-bottom:1px solid rgba(255,255,255,0.12);padding:10px 0;cursor:pointer;text-decoration:none;display:block}
+.isms-item:last-child{border-bottom:none}
+.isms-title{font-size:12px;font-weight:500;color:#fff;line-height:1.4;margin-bottom:3px}
+.isms-meta{font-size:11px;color:rgba(255,255,255,0.55)}
+.isms-item:hover .isms-title{color:#90CAF9}
 .post-card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.1rem 1.25rem}
 .post-card.pinned{border-top:3px solid #1D9E75}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:500}
@@ -208,7 +217,14 @@ tr:last-child td{border-bottom:none}
     <div class="page-header"><h2 style="color:#fff">Board ประชาสัมพันธ์</h2>
       <button class="btn btn-primary" onclick="openModal('post-modal')">+ โพสต์ใหม่</button>
     </div>
-    <div class="posts-grid" id="posts-list"><div class="loading" style="color:#fff">กำลังโหลด...</div></div>
+    <div class="board-layout">
+      <div class="posts-grid" id="posts-list"><div class="loading" style="color:#fff">กำลังโหลด...</div></div>
+      <div class="isms-card">
+        <h3>🔐 ข่าวสาร ISMS &amp; ความปลอดภัย</h3>
+        <div id="isms-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลดข่าว...</div></div>
+        <div id="isms-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -672,6 +688,20 @@ function initTimeSelects(){
   $('lv-end-min').innerHTML=mOptsEnd;
 }
 
+async function loadIsmsNews(){
+  try{
+    const res=await fetch('/api/isms-news');
+    if(!res.ok)return;
+    const {items,fetchedAt}=await res.json();
+    const el=$('isms-list');
+    if(!items||!items.length){el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.5)">ไม่พบข่าว</div>';return;}
+    el.innerHTML=items.map(n=>`<a href="${n.link}" target="_blank" rel="noopener" class="isms-item">
+      <div class="isms-title">${n.title}</div>
+      <div class="isms-meta">${n.source}${n.pubDate?' · '+new Date(n.pubDate).toLocaleDateString('th-TH',{day:'numeric',month:'short'}):''}</div>
+    </a>`).join('');
+    if(fetchedAt){const d=new Date(fetchedAt);$('isms-updated').textContent='อัปเดต '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+  }catch(e){console.error('ISMS news error',e);}
+}
 async function loadBoard(){
   state.posts=await api('/posts');
   renderBoard();
@@ -694,6 +724,7 @@ async function loadLeave(){
     $('user-badge').textContent=state.me.role;
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-btn').style.display='';}
     await loadBoard();
+    loadIsmsNews();
     loadCalendar();
     loadLeave();
     // โหลดจำนวนรออนุมัติ
