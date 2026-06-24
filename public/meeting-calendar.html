@@ -1041,10 +1041,20 @@ function toast(msg,type='') {
 // ===== RUN =====
 (async()=>{
   try { initTimeSelects(); } catch(e) { console.error('initTimeSelects error:', e); }
-  await init();
-  parseColors();
-  renderView();
+  try {
+    await init();
+    parseColors();
+  } catch(e) { console.error('init error:', e); bookings = bookings || []; }
+  try { renderView(); } catch(e) { console.error('renderView error:', e); }
 })();
+
+// Fallback: if calendar still empty after 800ms, render again
+setTimeout(() => {
+  const grid = document.querySelector('.days');
+  if (!grid || grid.children.length === 0) {
+    try { renderView(); } catch(e) {}
+  }
+}, 800);
 </script>
 </body>
 </html>
