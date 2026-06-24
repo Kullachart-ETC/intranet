@@ -492,7 +492,6 @@ let me        = null;
 async function init() {
   try { const r = await fetch('/api/me'); if(r.ok) me = await r.json(); } catch(e){}
   await loadBookings();
-  renderView();
 }
 
 // ===== ROOM SELECT =====
@@ -1039,22 +1038,19 @@ function toast(msg,type='') {
 }
 
 // ===== RUN =====
-(async()=>{
-  try { initTimeSelects(); } catch(e) { console.error('initTimeSelects error:', e); }
+document.addEventListener('DOMContentLoaded', async () => {
+  try { initTimeSelects(); } catch(e) {}
   try {
-    await init();
-    parseColors();
-  } catch(e) { console.error('init error:', e); bookings = bookings || []; }
-  try { renderView(); } catch(e) { console.error('renderView error:', e); }
-})();
-
-// Fallback: if calendar still empty after 800ms, render again
-setTimeout(() => {
-  const grid = document.querySelector('.days');
-  if (!grid || grid.children.length === 0) {
-    try { renderView(); } catch(e) {}
-  }
-}, 800);
+    const r1 = await fetch('/api/me');
+    if (r1.ok) me = await r1.json();
+  } catch(e) {}
+  try {
+    const r2 = await fetch('/api/bookings');
+    if (r2.ok) bookings = await r2.json();
+  } catch(e) { bookings = []; }
+  parseColors();
+  renderCalendar();
+});
 </script>
 </body>
 </html>
