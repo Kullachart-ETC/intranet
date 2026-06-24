@@ -1116,11 +1116,12 @@ function parseRSS(xml, source) {
 
 async function refreshIsmsNews() {
   const feeds = [
+    { url: 'https://www.bangkokbiznews.com/feed/', source: 'กรุงเทพธุรกิจ' },
+    { url: 'https://www.prachachat.net/feed', source: 'ประชาชาติธุรกิจ' },
     { url: 'https://feeds.feedburner.com/TheHackersNews', source: 'The Hacker News' },
-    { url: 'https://www.darkreading.com/rss.xml',         source: 'Dark Reading' },
-    { url: 'https://krebsonsecurity.com/feed/',           source: 'Krebs on Security' },
+    { url: 'https://krebsonsecurity.com/feed/', source: 'Krebs on Security' },
   ];
-  const ismsKeywords = ['isms','iso 27001','information security','cybersecurity','data breach','ransomware','phishing','vulnerability','compliance','security management','nist','gdpr','pdpa'];
+  const ismsKeywords = ['isms','iso 27001','information security','cybersecurity','data breach','ransomware','phishing','vulnerability','pdpa','พรบ.คุ้มครองข้อมูล','ความปลอดภัย','ไซเบอร์','cyber','มาตรฐาน','compliance','ข้อมูลส่วนบุคคล'];
   let all = [];
   for (const feed of feeds) {
     try {
@@ -1155,15 +1156,17 @@ app.get('/api/isms-news', requireLogin, (req, res) => {
 let thaiEconCache = { data: [], fetchedAt: 0 };
 async function refreshThaiEconNews() {
   const feeds = [
-    { url: 'https://www.bangkokpost.com/rss/data/business.xml', source: 'Bangkok Post' },
-    { url: 'https://www.prachachat.net/feed', source: 'ประชาชาติธุรกิจ' },
+    { url: 'https://www.bangkokbiznews.com/feed/', source: 'กรุงเทพธุรกิจ' },
+    { url: 'https://www.prachachat.net/economy/feed', source: 'ประชาชาติธุรกิจ' },
+    { url: 'https://www.thansettakij.com/feed', source: 'ฐานเศรษฐกิจ' },
   ];
   let all = [];
   for (const feed of feeds) {
     try { const xml = await fetchUrl(feed.url); all = all.concat(parseRSS(xml, feed.source)); }
     catch(e) { console.error('Thai econ fetch error:', feed.source, e.message); }
   }
-  thaiEconCache = { data: all.slice(0, 8), fetchedAt: Date.now() };
+  const sorted = all.sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
+  thaiEconCache = { data: sorted.slice(0, 8), fetchedAt: Date.now() };
   console.log('Thai economy news refreshed:', thaiEconCache.data.length);
 }
 refreshThaiEconNews().catch(console.error);
@@ -1177,10 +1180,11 @@ app.get('/api/thai-econ-news', requireLogin, (req, res) => {
 let thaiIndustrialCache = { data: [], fetchedAt: 0 };
 async function refreshThaiIndustrialNews() {
   const feeds = [
-    { url: 'https://www.bangkokpost.com/rss/data/business.xml', source: 'Bangkok Post Business' },
-    { url: 'https://www.thaipbsworld.com/feed/', source: 'Thai PBS World' },
+    { url: 'https://www.bangkokbiznews.com/feed/', source: 'กรุงเทพธุรกิจ' },
+    { url: 'https://www.prachachat.net/d-life/feed', source: 'ประชาชาติธุรกิจ' },
+    { url: 'https://www.thansettakij.com/feed', source: 'ฐานเศรษฐกิจ' },
   ];
-  const keywords = ['industrial','manufacturing','factory','export','import','steel','chemical','automotive','electronics','อุตสาหกรรม','ส่งออก','นำเข้า','โรงงาน','boi','fdi'];
+  const keywords = ['อุตสาหกรรม','ส่งออก','นำเข้า','โรงงาน','boi','การผลิต','ยานยนต์','เหล็ก','เคมี','อิเล็กทรอนิกส์','ฟีโอดี','fdi','สินค้า','manufacturing','industrial','export','import','factory'];
   let all = [];
   for (const feed of feeds) {
     try { const xml = await fetchUrl(feed.url); all = all.concat(parseRSS(xml, feed.source)); }
@@ -1190,7 +1194,8 @@ async function refreshThaiIndustrialNews() {
     const txt = (item.title + ' ' + item.desc).toLowerCase();
     return keywords.some(k => txt.includes(k));
   });
-  thaiIndustrialCache = { data: (filtered.length ? filtered : all).slice(0, 8), fetchedAt: Date.now() };
+  const sorted = (filtered.length >= 3 ? filtered : all).sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
+  thaiIndustrialCache = { data: sorted.slice(0, 8), fetchedAt: Date.now() };
   console.log('Thai industrial news refreshed:', thaiIndustrialCache.data.length);
 }
 refreshThaiIndustrialNews().catch(console.error);
