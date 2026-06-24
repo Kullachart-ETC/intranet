@@ -964,13 +964,13 @@ async function submitBooking() {
     });
     if (r.ok) {
       toast('จองสำเร็จแล้วครับ','ok');
+      closeModal('bookOverlay');
       document.getElementById('inpPurpose').value='';
       setTimeStr('inpStartH','inpStartM','09:00');
       setTimeStr('inpEndH','inpEndM','10:00');
       await loadBookings();
       parseColors();
-      renderView();
-      renderExisting();
+      renderCalendar();
     } else {
       const e = await r.json();
       toast(e.error||'จองไม่สำเร็จ','err');
