@@ -46,6 +46,13 @@ body:has(#page-board.active){background:#0f3460}
 .isms-title{font-size:12px;font-weight:500;color:#fff;line-height:1.4;margin-bottom:3px}
 .isms-meta{font-size:11px;color:rgba(255,255,255,0.55)}
 .isms-item:hover .isms-title{color:#90CAF9}
+.info-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:1.25rem}
+@media(max-width:900px){.info-row{grid-template-columns:1fr}}
+.fx-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px}
+.fx-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.1);font-size:12px}
+.fx-row:last-child{border-bottom:none}
+.fx-cur{color:rgba(255,255,255,0.7);font-weight:500}
+.fx-val{color:#fff;font-weight:600;font-size:13px}
 .post-card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.1rem 1.25rem}
 .post-card.pinned{border-top:3px solid #1D9E75}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:500}
@@ -223,6 +230,27 @@ tr:last-child td{border-bottom:none}
         <h3>🔐 ข่าวสาร ISMS &amp; ความปลอดภัย</h3>
         <div id="isms-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลดข่าว...</div></div>
         <div id="isms-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
+      </div>
+    </div>
+    <!-- Bottom info row -->
+    <div class="info-row">
+      <!-- Thai Economy -->
+      <div class="isms-card">
+        <h3>📈 ข่าวเศรษฐกิจไทย</h3>
+        <div id="econ-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลด...</div></div>
+        <div id="econ-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
+      </div>
+      <!-- Exchange Rate -->
+      <div class="isms-card">
+        <h3>💱 อัตราแลกเปลี่ยน (THB)</h3>
+        <div id="fx-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลด...</div></div>
+        <div id="fx-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
+      </div>
+      <!-- Thai Industrial -->
+      <div class="isms-card">
+        <h3>🏭 ข่าวอุตสาหกรรมไทย</h3>
+        <div id="ind-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลด...</div></div>
+        <div id="ind-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
       </div>
     </div>
   </div>
@@ -688,6 +716,47 @@ function initTimeSelects(){
   $('lv-end-min').innerHTML=mOptsEnd;
 }
 
+async function loadThaiEconNews(){
+  try{
+    const res=await fetch('/api/thai-econ-news');if(!res.ok)return;
+    const {items,fetchedAt}=await res.json();
+    const el=$('econ-list');
+    if(!items||!items.length){el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.5)">ไม่พบข่าว</div>';return;}
+    el.innerHTML=items.slice(0,6).map(n=>`<a href="${n.link}" target="_blank" rel="noopener" class="isms-item">
+      <div class="isms-title">${n.title}</div>
+      <div class="isms-meta">${n.source}${n.pubDate?' · '+new Date(n.pubDate).toLocaleDateString('th-TH',{day:'numeric',month:'short'}):''}</div>
+    </a>`).join('');
+    if(fetchedAt){const d=new Date(fetchedAt);$('econ-updated').textContent='อัปเดต '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+  }catch(e){console.error('Thai econ news error',e);}
+}
+async function loadFxRates(){
+  try{
+    const res=await fetch('/api/fx-rates');if(!res.ok)return;
+    const {data,fetchedAt}=await res.json();
+    const el=$('fx-list');
+    if(!data||!data.rates){el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.5)">ไม่พบข้อมูล</div>';return;}
+    const flags={'USD':'🇺🇸','EUR':'🇪🇺','JPY':'🇯🇵','CNY':'🇨🇳','SGD':'🇸🇬','GBP':'🇬🇧','AUD':'🇦🇺'};
+    const labels={'USD':'ดอลลาร์สหรัฐ','EUR':'ยูโร','JPY':'เยน (×100)','CNY':'หยวน','SGD':'ดอลลาร์สิงคโปร์','GBP':'ปอนด์สเตอร์ลิง','AUD':'ดอลลาร์ออสเตรเลีย'};
+    el.innerHTML='<div class="fx-grid">'+Object.entries(data.rates).map(([cur,rate])=>{
+      const val=cur==='JPY'?(rate*100).toFixed(2):rate.toFixed(4);
+      return`<div class="fx-row"><span class="fx-cur">${flags[cur]||''} ${cur}</span><span class="fx-val">${val}</span></div>`;
+    }).join('')+'</div><div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:6px">1 THB = x หน่วย</div>';
+    if(fetchedAt){const d=new Date(fetchedAt);$('fx-updated').textContent='อัปเดต '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+  }catch(e){console.error('FX error',e);}
+}
+async function loadThaiIndustrialNews(){
+  try{
+    const res=await fetch('/api/thai-industrial-news');if(!res.ok)return;
+    const {items,fetchedAt}=await res.json();
+    const el=$('ind-list');
+    if(!items||!items.length){el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.5)">ไม่พบข่าว</div>';return;}
+    el.innerHTML=items.slice(0,6).map(n=>`<a href="${n.link}" target="_blank" rel="noopener" class="isms-item">
+      <div class="isms-title">${n.title}</div>
+      <div class="isms-meta">${n.source}${n.pubDate?' · '+new Date(n.pubDate).toLocaleDateString('th-TH',{day:'numeric',month:'short'}):''}</div>
+    </a>`).join('');
+    if(fetchedAt){const d=new Date(fetchedAt);$('ind-updated').textContent='อัปเดต '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+  }catch(e){console.error('Thai industrial news error',e);}
+}
 async function loadIsmsNews(){
   try{
     const res=await fetch('/api/isms-news');
@@ -725,6 +794,9 @@ async function loadLeave(){
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-btn').style.display='';}
     await loadBoard();
     loadIsmsNews();
+    loadThaiEconNews();
+    loadFxRates();
+    loadThaiIndustrialNews();
     loadCalendar();
     loadLeave();
     // โหลดจำนวนรออนุมัติ

@@ -1150,5 +1150,71 @@ app.get('/api/isms-news', requireLogin, (req, res) => {
   res.json({ items: ismsCache.data, fetchedAt: ismsCache.fetchedAt });
 });
 
+
+// ======== THAI ECONOMY NEWS ========
+let thaiEconCache = { data: [], fetchedAt: 0 };
+async function refreshThaiEconNews() {
+  const feeds = [
+    { url: 'https://www.bangkokpost.com/rss/data/business.xml', source: 'Bangkok Post' },
+    { url: 'https://www.prachachat.net/feed', source: 'ประชาชาติธุรกิจ' },
+  ];
+  let all = [];
+  for (const feed of feeds) {
+    try { const xml = await fetchUrl(feed.url); all = all.concat(parseRSS(xml, feed.source)); }
+    catch(e) { console.error('Thai econ fetch error:', feed.source, e.message); }
+  }
+  thaiEconCache = { data: all.slice(0, 8), fetchedAt: Date.now() };
+  console.log('Thai economy news refreshed:', thaiEconCache.data.length);
+}
+refreshThaiEconNews().catch(console.error);
+setInterval(() => refreshThaiEconNews().catch(console.error), 2 * 60 * 60 * 1000);
+
+app.get('/api/thai-econ-news', requireLogin, (req, res) => {
+  res.json({ items: thaiEconCache.data, fetchedAt: thaiEconCache.fetchedAt });
+});
+
+// ======== THAI INDUSTRIAL NEWS ========
+let thaiIndustrialCache = { data: [], fetchedAt: 0 };
+async function refreshThaiIndustrialNews() {
+  const feeds = [
+    { url: 'https://www.bangkokpost.com/rss/data/business.xml', source: 'Bangkok Post Business' },
+    { url: 'https://www.thaipbsworld.com/feed/', source: 'Thai PBS World' },
+  ];
+  const keywords = ['industrial','manufacturing','factory','export','import','steel','chemical','automotive','electronics','อุตสาหกรรม','ส่งออก','นำเข้า','โรงงาน','boi','fdi'];
+  let all = [];
+  for (const feed of feeds) {
+    try { const xml = await fetchUrl(feed.url); all = all.concat(parseRSS(xml, feed.source)); }
+    catch(e) { console.error('Thai industrial fetch error:', feed.source, e.message); }
+  }
+  const filtered = all.filter(item => {
+    const txt = (item.title + ' ' + item.desc).toLowerCase();
+    return keywords.some(k => txt.includes(k));
+  });
+  thaiIndustrialCache = { data: (filtered.length ? filtered : all).slice(0, 8), fetchedAt: Date.now() };
+  console.log('Thai industrial news refreshed:', thaiIndustrialCache.data.length);
+}
+refreshThaiIndustrialNews().catch(console.error);
+setInterval(() => refreshThaiIndustrialNews().catch(console.error), 2 * 60 * 60 * 1000);
+
+app.get('/api/thai-industrial-news', requireLogin, (req, res) => {
+  res.json({ items: thaiIndustrialCache.data, fetchedAt: thaiIndustrialCache.fetchedAt });
+});
+
+// ======== EXCHANGE RATES ========
+let fxCache = { data: null, fetchedAt: 0 };
+async function refreshFxRates() {
+  try {
+    const json = await fetchUrl('https://api.frankfurter.app/latest?from=THB&to=USD,EUR,JPY,CNY,SGD,GBP,AUD');
+    fxCache = { data: JSON.parse(json), fetchedAt: Date.now() };
+    console.log('FX rates refreshed');
+  } catch(e) { console.error('FX fetch error:', e.message); }
+}
+refreshFxRates().catch(console.error);
+setInterval(() => refreshFxRates().catch(console.error), 60 * 60 * 1000); // every 1hr
+
+app.get('/api/fx-rates', requireLogin, (req, res) => {
+  res.json(fxCache);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Intranet running on port', PORT));
