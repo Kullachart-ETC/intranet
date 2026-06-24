@@ -235,6 +235,36 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
   .room-cap { display:none; }
   .dcell { min-height:60px; }
 }
+
+.top-btn.view-btn { padding: 4px 10px; }
+.top-btn.view-btn.active { background: rgba(255,255,255,0.35); font-weight: 600; }
+
+/* WEEK VIEW */
+.week-grid { display: flex; flex-direction: column; flex: 1; overflow: auto; }
+.week-header { display: grid; grid-template-columns: 60px repeat(7,1fr); border-bottom: 1px solid var(--border); background: var(--white); position: sticky; top: 0; z-index: 2; }
+.week-header-cell { padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 600; border-left: 1px solid var(--border); }
+.week-header-cell.today-col { color: var(--primary); }
+.week-header-cell .wh-day { font-size: 18px; font-weight: 700; }
+.week-body { display: grid; grid-template-columns: 60px repeat(7,1fr); flex: 1; }
+.week-time-col { display: flex; flex-direction: column; }
+.week-time-slot { height: 48px; border-bottom: 1px solid #eee; display: flex; align-items: flex-start; justify-content: flex-end; padding-right: 6px; font-size: 10px; color: var(--muted); padding-top: 2px; }
+.week-col { border-left: 1px solid var(--border); position: relative; }
+.week-col.today-col { background: #f5f8ff; }
+.week-slot { height: 48px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+.week-slot:hover { background: rgba(29,95,165,0.06); }
+.week-event { position: absolute; left: 2px; right: 2px; border-radius: 4px; padding: 2px 5px; font-size: 10px; color: #fff; cursor: pointer; overflow: hidden; z-index: 1; line-height: 1.3; }
+
+/* DAY VIEW */
+.day-grid { display: flex; flex-direction: column; flex: 1; overflow: auto; }
+.day-header { padding: 10px 16px; background: var(--white); border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; }
+.day-body { display: grid; grid-template-columns: 60px 1fr; flex: 1; }
+.day-time-col { display: flex; flex-direction: column; background: var(--white); }
+.day-time-slot { height: 60px; border-bottom: 1px solid #eee; display: flex; align-items: flex-start; justify-content: flex-end; padding-right: 8px; font-size: 11px; color: var(--muted); padding-top: 4px; }
+.day-events-col { border-left: 1px solid var(--border); position: relative; }
+.day-slot { height: 60px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+.day-slot:hover { background: rgba(29,95,165,0.06); }
+.day-event { position: absolute; left: 4px; right: 4px; border-radius: 6px; padding: 4px 8px; font-size: 12px; color: #fff; cursor: pointer; overflow: hidden; z-index: 1; }
+
 </style>
 </head>
 <body>
@@ -244,7 +274,12 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
   <a href="/">← หน้าหลัก</a>
   <h1>จองห้องประชุม</h1>
   <div class="nav-actions">
-    <button class="top-btn" onclick="goToday()">วันนี้</button>
+    <button class="top-btn" onclick="goToday()">Today</button>
+    <div style="display:flex;gap:2px;background:rgba(255,255,255,0.1);border-radius:7px;padding:2px;">
+      <button class="top-btn view-btn active" id="vbMonth" onclick="setView('month')">Month</button>
+      <button class="top-btn view-btn" id="vbWeek" onclick="setView('week')">Week</button>
+      <button class="top-btn view-btn" id="vbDay" onclick="setView('day')">Day</button>
+    </div>
   </div>
 </div>
 
@@ -306,11 +341,11 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
     <div class="cal-scroll">
       <div class="cal-wrap">
         <div class="weekdays">
-          <div class="wday wknd">อา</div>
-          <div class="wday">จ</div><div class="wday">อ</div>
-          <div class="wday">พ</div><div class="wday">พฤ</div>
-          <div class="wday">ศ</div>
-          <div class="wday wknd">ส</div>
+          <div class="wday wknd">Sun</div>
+          <div class="wday">Mon</div><div class="wday">Tue</div>
+          <div class="wday">Wed</div><div class="wday">Thu</div>
+          <div class="wday">Fri</div>
+          <div class="wday wknd">Sat</div>
         </div>
         <div class="days" id="daysGrid"></div>
       </div>
@@ -457,7 +492,7 @@ let me        = null;
 async function init() {
   try { const r = await fetch('/api/me'); if(r.ok) me = await r.json(); } catch(e){}
   await loadBookings();
-  renderCalendar();
+  renderView();
 }
 
 // ===== ROOM SELECT =====
@@ -467,7 +502,7 @@ function selectRoom(idx) {
   const rm = ROOMS[idx];
   document.getElementById('badgeDot').style.background = rm.color;
   document.getElementById('badgeText').textContent = `${rm.name} (${rm.seats} ที่นั่ง) — คลิกวันที่เพื่อจอง`;
-  renderCalendar();
+  renderView();
 }
 
 // ===== LOAD =====
@@ -478,20 +513,164 @@ async function loadBookings() {
 
 // ===== CALENDAR =====
 function changeMonth(d) {
-  curDate = new Date(curDate.getFullYear(), curDate.getMonth()+d, 1);
-  renderCalendar();
+  if(curView==='month') { curDate = new Date(curDate.getFullYear(), curDate.getMonth()+d, 1); }
+  else if(curView==='week') { curDate.setDate(curDate.getDate()+d*7); }
+  else { curDate.setDate(curDate.getDate()+d); }
+  renderView();
 }
 function goToday() {
   curDate = new Date();
-  renderCalendar();
+  renderView();
+}
+
+function setView(v) {
+  curView = v;
+  ['Month','Week','Day'].forEach(x => {
+    const b = document.getElementById('vb'+x);
+    if(b) b.classList.toggle('active', x.toLowerCase()===v);
+  });
+  renderView();
+}
+
+function renderView() {
+  if (curView==='month') { renderView(); }
+  else if (curView==='week') { renderWeek(); }
+  else { renderDay(); }
+}
+
+const HOURS = Array.from({length:15},(_,i)=>i+7); // 07:00-21:00
+const ENG_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const ENG_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function renderWeek() {
+  const y = curDate.getFullYear(), m = curDate.getMonth(), d = curDate.getDate();
+  const base = new Date(y,m,d);
+  const dow = base.getDay();
+  const weekStart = new Date(base); weekStart.setDate(d - dow);
+  const today = new Date();
+
+  // Title
+  const we = new Date(weekStart); we.setDate(we.getDate()+6);
+  document.getElementById('monthTitle').textContent =
+    `${ENG_MONTHS[weekStart.getMonth()]} ${weekStart.getDate()} – ${ENG_MONTHS[we.getMonth()]} ${we.getDate()}, ${weekStart.getFullYear()}`;
+
+  const calScroll = document.querySelector('.cal-scroll');
+  calScroll.innerHTML = '';
+
+  const grid = document.createElement('div');
+  grid.className = 'week-grid';
+
+  // Header
+  const hdr = document.createElement('div'); hdr.className = 'week-header';
+  hdr.innerHTML = '<div style="border:none"></div>';
+  for(let i=0;i<7;i++) {
+    const dt = new Date(weekStart); dt.setDate(dt.getDate()+i);
+    const isT = same(dt,today);
+    hdr.innerHTML += `<div class="week-header-cell${isT?' today-col':''}">
+      <div>${ENG_DAYS[dt.getDay()]}</div>
+      <div class="wh-day">${dt.getDate()}</div>
+    </div>`;
+  }
+  grid.appendChild(hdr);
+
+  // Body
+  const body = document.createElement('div'); body.className = 'week-body';
+  // Time col
+  const tc = document.createElement('div'); tc.className = 'week-time-col';
+  HOURS.forEach(h => { tc.innerHTML += `<div class="week-time-slot">${String(h).padStart(2,'0')}:00</div>`; });
+  body.appendChild(tc);
+
+  for(let i=0;i<7;i++) {
+    const dt = new Date(weekStart); dt.setDate(dt.getDate()+i);
+    const dateStr = fmt(dt);
+    const isT = same(dt,today);
+    const col = document.createElement('div');
+    col.className = 'week-col' + (isT?' today-col':'');
+    HOURS.forEach(h => {
+      const sl = document.createElement('div'); sl.className = 'week-slot';
+      sl.onclick = () => { curDate = new Date(dt); openModal(dateStr); };
+      col.appendChild(sl);
+    });
+    // Overlay events
+    const dayB = bookings.filter(b => b.date===dateStr && parseInt(b.room_idx)===selRoom);
+    dayB.forEach(b => {
+      const t = parseSlot(b.slot);
+      if (!t) return;
+      const topPx = (t.sh - 7) * 48 + (t.sm/60)*48;
+      const hPx = Math.max(24, ((t.eh-t.sh)*60+(t.em-t.sm))/60*48);
+      const ev = document.createElement('div');
+      ev.className = 'week-event';
+      ev.style.cssText = `top:${topPx}px;height:${hPx}px;background:${b._color||ROOMS[selRoom].color}`;
+      ev.title = `${b.slot} | ${b.name}`;
+      ev.textContent = `${b.slot.split('-')[0]||''} ${b.name.split(' ')[0]}`;
+      ev.onclick = e => { e.stopPropagation(); curDate=new Date(dt); openModal(dateStr); };
+      col.appendChild(ev);
+    });
+    body.appendChild(col);
+  }
+  grid.appendChild(body);
+  calScroll.appendChild(grid);
+}
+
+function renderDay() {
+  const y = curDate.getFullYear(), m = curDate.getMonth(), d = curDate.getDate();
+  const dt = new Date(y,m,d);
+  const dateStr = fmt(dt);
+  const today = new Date();
+  const isT = same(dt,today);
+
+  document.getElementById('monthTitle').textContent =
+    `${ENG_DAYS[dt.getDay()]}, ${ENG_MONTHS[m]} ${d}, ${y}`;
+
+  const calScroll = document.querySelector('.cal-scroll');
+  calScroll.innerHTML = '';
+
+  const grid = document.createElement('div'); grid.className = 'day-grid';
+
+  const body = document.createElement('div'); body.className = 'day-body';
+  const tc = document.createElement('div'); tc.className = 'day-time-col';
+  HOURS.forEach(h => { tc.innerHTML += `<div class="day-time-slot">${String(h).padStart(2,'0')}:00</div>`; });
+  body.appendChild(tc);
+
+  const ec = document.createElement('div'); ec.className = 'day-events-col';
+  if(isT) ec.style.background = '#f5f8ff';
+  HOURS.forEach(h => {
+    const sl = document.createElement('div'); sl.className = 'day-slot';
+    sl.onclick = () => openModal(dateStr);
+    ec.appendChild(sl);
+  });
+  // Overlay events for all rooms (show all rooms in day view)
+  const dayB = bookings.filter(b => b.date===dateStr && parseInt(b.room_idx)===selRoom);
+  dayB.forEach(b => {
+    const t = parseSlot(b.slot);
+    if (!t) return;
+    const topPx = (t.sh - 7) * 60 + (t.sm/60)*60;
+    const hPx = Math.max(30, ((t.eh-t.sh)*60+(t.em-t.sm))/60*60);
+    const ev = document.createElement('div');
+    ev.className = 'day-event';
+    ev.style.cssText = `top:${topPx}px;height:${hPx}px;background:${b._color||ROOMS[selRoom].color}`;
+    ev.textContent = `${b.slot} — ${b.name}${b.purpose?' | '+b.purpose:''}`;
+    ev.title = ev.textContent;
+    ev.onclick = e => { e.stopPropagation(); openModal(dateStr); };
+    ec.appendChild(ev);
+  });
+  body.appendChild(ec);
+  grid.appendChild(body);
+  calScroll.appendChild(grid);
+}
+
+function parseSlot(slot) {
+  if (!slot) return null;
+  const m = slot.match(/(\d+):(\d+)\s*-\s*(\d+):(\d+)/);
+  if (!m) return null;
+  return { sh:+m[1], sm:+m[2], eh:+m[3], em:+m[4] };
 }
 
 function renderCalendar() {
   const y = curDate.getFullYear(), m = curDate.getMonth();
   const today = new Date();
-  const thaiM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
-                 'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  document.getElementById('monthTitle').textContent = `${thaiM[m]} ${y+543}`;
+  const engM = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('monthTitle').textContent = `${engM[m]} ${y}`;
 
   const firstDow = new Date(y,m,1).getDay();
   const daysInM  = new Date(y,m+1,0).getDate();
@@ -730,12 +909,12 @@ async function saveEdit() {
       closeModal('editOverlay');
       await loadBookings();
       parseColors();
-      renderCalendar();
+      renderView();
     } else {
       const e = await r.json();
       toast(e.error||'บันทึกไม่สำเร็จ','err');
       // คืนข้อมูลเดิม
-      await loadBookings(); parseColors(); renderCalendar();
+      await loadBookings(); parseColors(); renderView();
     }
   } catch(e) { toast('เกิดข้อผิดพลาด','err'); }
 
@@ -777,7 +956,7 @@ async function submitBooking() {
       setTimeStr('inpEndH','inpEndM','10:00');
       await loadBookings();
       parseColors();
-      renderCalendar();
+      renderView();
       renderExisting();
     } else {
       const e = await r.json();
@@ -809,7 +988,7 @@ async function delBooking(id) {
       closeModal('bookOverlay');
       await loadBookings();
       parseColors();
-      renderCalendar();
+      renderView();
       renderExisting();
       toast('ยกเลิกการจองแล้ว ✓','ok');
     } else {
@@ -850,7 +1029,7 @@ function toast(msg,type='') {
   try { initTimeSelects(); } catch(e) { console.error('initTimeSelects error:', e); }
   await init();
   parseColors();
-  renderCalendar();
+  renderView();
 })();
 </script>
 </body>
