@@ -672,6 +672,22 @@ function renderCalendar() {
   const engM = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('monthTitle').textContent = `${engM[m]} ${y}`;
 
+  // Restore cal-wrap structure if week/day view replaced it
+  const calScroll = document.querySelector('.cal-scroll');
+  if (!document.getElementById('daysGrid')) {
+    calScroll.innerHTML = `
+      <div class="cal-wrap">
+        <div class="weekdays">
+          <div class="wday wknd">Sun</div>
+          <div class="wday">Mon</div><div class="wday">Tue</div>
+          <div class="wday">Wed</div><div class="wday">Thu</div>
+          <div class="wday">Fri</div>
+          <div class="wday wknd">Sat</div>
+        </div>
+        <div class="days" id="daysGrid"></div>
+      </div>`;
+  }
+
   const firstDow = new Date(y,m,1).getDay();
   const daysInM  = new Date(y,m+1,0).getDate();
   const daysInP  = new Date(y,m,0).getDate();
