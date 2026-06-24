@@ -1267,6 +1267,15 @@ app.get('/api/fx-rates', requireLogin, (req, res) => {
 
 
 // ======== TEMP: RESET DATA (admin only) ========
+app.post('/api/admin/reset-bookings', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM bookings');
+    res.json({ ok: true, message: 'ล้างข้อมูลการจองห้องประชุมทั้งหมดสำเร็จ' });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.post('/api/admin/reset-data', requireLogin, requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM leave_requests');
