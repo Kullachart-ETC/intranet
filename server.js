@@ -912,22 +912,9 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
         }
 
         try {
-          // ตรวจซ้ำ username
-          const dupUser = await pool.query('SELECT id FROM users WHERE username=$1', [String(username).trim()]);
-          if (dupUser.rows.length > 0) {
-            results.errors.push({ row: rowNum, error: `Username "${username}" มีในระบบแล้ว` });
-            continue;
-          }
-
-          // ตรวจซ้ำ email
-          const dupEmail = await pool.query('SELECT id FROM users WHERE email=$1', [String(email).trim()]);
-          if (dupEmail.rows.length > 0) {
-            results.errors.push({ row: rowNum, error: `Email "${email}" มีในระบบแล้ว` });
-            continue;
-          }
-
           const hash = bcrypt.hashSync(String(password), 10);
           const name = `${String(firstName).trim()} ${String(lastName).trim()}`;
+          const usernameClean = String(username).trim();
 
           // แปลงวันที่
           let parsedDate = null;
@@ -944,17 +931,27 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
           const annualH = parseFloat(annualHours) || (6 * WORK_HOURS);
           const annualDays = Math.round(annualH / WORK_HOURS);
 
-          const newUser = await pool.query(
+          // UPSERT: ถ้ามีอยู่แล้วให้ทับข้อมูล
+          const upsertResult = await pool.query(
             `INSERT INTO users (username,password,name,dept,role,email,start_date,annual_leave_quota)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-            [String(username).trim(), hash, name, String(dept).trim(),
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             ON CONFLICT (username) DO UPDATE SET
+               password = EXCLUDED.password,
+               name = EXCLUDED.name,
+               dept = EXCLUDED.dept,
+               role = EXCLUDED.role,
+               email = EXCLUDED.email,
+               start_date = EXCLUDED.start_date,
+               annual_leave_quota = EXCLUDED.annual_leave_quota
+             RETURNING id`,
+            [usernameClean, hash, name, String(dept).trim(),
              roleClean, String(email).trim(), parsedDate, annualDays]
           );
 
-          const userId    = newUser.rows[0].id;
+          const userId    = upsertResult.rows[0].id;
           const leaveYear = new Date().getFullYear();
 
-          // ตั้งค่า leave_quotas เริ่มต้น
+          // ตั้งค่า leave_quotas (ON CONFLICT DO NOTHING เพื่อไม่ทับข้อมูลการลาที่ใช้ไปแล้ว)
           const leaveSetup = [
             ['annual',   annualH],
             ['sick',     parseFloat(sickHours)     || 40],
@@ -969,7 +966,7 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
             );
           }
 
-          results.success.push({ row: rowNum, username: String(username).trim(), name });
+          results.success.push({ row: rowNum, username: usernameClean, name });
         } catch (e) {
           results.errors.push({ row: rowNum, error: e.message });
         }
