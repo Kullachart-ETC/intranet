@@ -1265,5 +1265,19 @@ app.get('/api/fx-rates', requireLogin, (req, res) => {
   res.json(fxCache);
 });
 
+
+// ======== TEMP: RESET DATA (admin only) ========
+app.post('/api/admin/reset-data', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM leave_requests');
+    await pool.query('DELETE FROM leave_quotas');
+    await pool.query('DELETE FROM annual_leave_log');
+    await pool.query('DELETE FROM users WHERE username != $1', ['admin']);
+    res.json({ ok: true, message: 'ล้างข้อมูลสำเร็จ: ลบพนักงานทั้งหมด (ยกเว้น admin) + ข้อมูลการลาทั้งหมด' });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Intranet running on port', PORT));
