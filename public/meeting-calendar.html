@@ -601,8 +601,8 @@ function renderWeek() {
       const ev = document.createElement('div');
       ev.className = 'week-event';
       ev.style.cssText = `top:${topPx}px;height:${hPx}px;background:${b._color||ROOMS[selRoom].color}`;
-      ev.title = `${b.slot} | ${b.name}`;
-      ev.textContent = `${b.slot.split('-')[0]||''} ${b.name.split(' ')[0]}`;
+      ev.title = `${b.slot} | ${b.name}${b._purpose?' | '+b._purpose:''}`;
+      ev.textContent = `${b.slot.split('-')[0]||''} ${b._purpose||b.name}`;
       ev.onclick = e => { e.stopPropagation(); curDate=new Date(dt); openModal(dateStr); };
       col.appendChild(ev);
     });
@@ -723,8 +723,8 @@ function renderCalendar() {
       const pill = document.createElement('div');
       pill.className = 'epill';
       pill.style.background = b._color || ROOMS[selRoom].color;
-      pill.title = `${b.slot} | ${b.name}` + (me && me.id===b.user_id ? ' (ดับเบิลคลิกเพื่อแก้ไข)' : '');
-      pill.textContent = `${b.slot.split('-')[0] || ''} ${b.name.split(' ')[0]}`;
+      pill.title = `${b.slot} | ${b.name}${b._purpose?' | '+b._purpose:''}` + (me && me.id===b.user_id ? ' (ดับเบิลคลิกเพื่อแก้ไข)' : '');
+      pill.textContent = `${b.slot.split('-')[0]||''} ${b._purpose||b.name}`;
       // single click → open day modal
       pill.onclick = e => { e.stopPropagation(); openModal(dateStr); };
       // double click → open edit modal (owner only)
