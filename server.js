@@ -149,12 +149,18 @@ initDB().catch(console.error);
 
 // ======== LEAVE HELPERS ========
 
-// ชั่วโมงทำงานต่อวัน: 8:30-17:40 หักพัก 12:00-13:00 = 8.17 ชม.
-const WORK_HOURS_PER_DAY = 8 + (10/60); // 8.1667
-const WORK_START = { h: 8, m: 30 };
-const WORK_END   = { h: 17, m: 40 };
-const BREAK_START = { h: 12, m: 0 };
-const BREAK_END   = { h: 13, m: 0 };
+// ตารางเวลาทำงาน 2 แบบ
+const SCHEDULES = {
+  office:  { start:{h:8,m:30}, end:{h:17,m:40}, breakS:{h:12,m:0}, breakE:{h:13,m:0}, hpd: 8 + 10/60 },
+  factory: { start:{h:8,m:0},  end:{h:17,m:0},  breakS:{h:12,m:0}, breakE:{h:13,m:0}, hpd: 8.0 }
+};
+
+// ค่าเริ่มต้น (backward compat)
+const WORK_HOURS_PER_DAY = SCHEDULES.office.hpd;
+const WORK_START  = SCHEDULES.office.start;
+const WORK_END    = SCHEDULES.office.end;
+const BREAK_START = SCHEDULES.office.breakS;
+const BREAK_END   = SCHEDULES.office.breakE;
 const MIN_LEAVE_HOURS = 0.5; // 30 นาที
 
 // คำนวณชั่วโมงทำงานจริง (หักพักเที่ยง)
@@ -563,10 +569,13 @@ app.post('/api/leave/calculate', requireLogin, async (req, res) => {
     const { start_datetime, end_datetime } = req.body;
     if (!start_datetime || !end_datetime)
       return res.status(400).json({ error: 'กรุณาระบุวันเวลาเริ่มต้นและสิ้นสุด' });
-    const hours = calcWorkHours(start_datetime, end_datetime);
+    const userR = await pool.query('SELECT work_schedule FROM users WHERE id=$1', [req.session.user.id]);
+    const userSch = userR.rows[0]?.work_schedule || 'office';
+    const hpd = (SCHEDULES[userSch] || SCHEDULES.office).hpd;
+    const hours = calcWorkHours(start_datetime, end_datetime, userSch);
     if (hours < MIN_LEAVE_HOURS)
       return res.status(400).json({ error: `ลาขั้นต่ำ ${MIN_LEAVE_HOURS * 60} นาที` });
-    const days = hours / WORK_HOURS_PER_DAY;
+    const days = hours / hpd;
     res.json({ hours: Math.round(hours*100)/100, days: Math.round(days*100)/100 });
   } catch(e) {
     res.status(500).json({ error: e.message });
@@ -579,12 +588,16 @@ app.post('/api/leave', requireLogin, async (req, res) => {
     const { leave_type, start_datetime, end_datetime, reason } = req.body;
     if (!LEAVE_TYPES[leave_type]) return res.status(400).json({ error: 'ประเภทการลาไม่ถูกต้อง' });
 
-    const hours = calcWorkHours(start_datetime, end_datetime);
+    const userId = req.session.user.id;
+    const userSchR = await pool.query('SELECT work_schedule FROM users WHERE id=$1', [userId]);
+    const userSch = userSchR.rows[0]?.work_schedule || 'office';
+    const hpd = (SCHEDULES[userSch] || SCHEDULES.office).hpd;
+
+    const hours = calcWorkHours(start_datetime, end_datetime, userSch);
     if (hours < MIN_LEAVE_HOURS)
       return res.status(400).json({ error: `ลาขั้นต่ำ ${MIN_LEAVE_HOURS * 60} นาที` });
 
-    const days = hours / WORK_HOURS_PER_DAY;
-    const userId = req.session.user.id;
+    const days = hours / hpd;
 
     // ตรวจ quota (ยกเว้น sick, work_injury, military, unpaid ที่ไม่จำกัดเข้มงวด)
     if (leave_type === 'annual') {
@@ -732,10 +745,13 @@ app.put('/api/leave/:id', requireLogin, async (req, res) => {
     if (leave.status !== 'pending')
       return res.status(400).json({ error: 'แก้ไขได้เฉพาะใบลาที่รออนุมัติเท่านั้น' });
     const { leave_type, start_datetime, end_datetime, reason } = req.body;
-    const hours = calcWorkHours(start_datetime, end_datetime);
+    const ownerSchR = await pool.query('SELECT work_schedule FROM users WHERE id=$1', [leave.user_id]);
+    const ownerSch = ownerSchR.rows[0]?.work_schedule || 'office';
+    const ownerHpd = (SCHEDULES[ownerSch] || SCHEDULES.office).hpd;
+    const hours = calcWorkHours(start_datetime, end_datetime, ownerSch);
     if (hours < MIN_LEAVE_HOURS)
       return res.status(400).json({ error: `ระยะเวลาลาน้อยเกินไป (ขั้นต่ำ ${MIN_LEAVE_HOURS} ชม.)` });
-    const days = hours / WORK_HOURS_PER_DAY;
+    const days = hours / ownerHpd;
     await pool.query(
       `UPDATE leave_requests SET leave_type=$1,start_datetime=$2,end_datetime=$3,hours=$4,days=$5,reason=$6 WHERE id=$7`,
       [leave_type, start_datetime, end_datetime,
@@ -1390,8 +1406,9 @@ app.post('/api/admin/seed-leave-test', requireLogin, requireAdmin, async (req, r
           ? workday(c.offsetE, c.eh, c.em)
           : workday(c.offsetS, c.eh, c.em);
 
-        const hours = calcWorkHours(startDT, endDT);
-        const days  = hours / WORK_HOURS_PER_DAY;
+        const seedSch = user.work_schedule || 'office';
+        const hours = calcWorkHours(startDT, endDT, seedSch);
+        const days  = hours / (SCHEDULES[seedSch]||SCHEDULES.office).hpd;
         const leaveNo = 'TST' + (seqNo++);
 
         try {
