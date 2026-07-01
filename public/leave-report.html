@@ -22,6 +22,27 @@ body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18;min-heigh
 .page{max-width:1200px;margin:0 auto;padding:24px 16px}
 h1{font-size:20px;font-weight:700;margin-bottom:20px}
 
+
+/* REPORT DOWNLOAD CARDS */
+.report-section { margin-bottom: 24px; }
+.report-section-title { font-size: 13px; font-weight: 700; color: #888; letter-spacing: .6px; text-transform: uppercase; margin-bottom: 12px; }
+.report-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.report-dl-card {
+  background: #fff; border-radius: 12px; padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06); border: 1px solid #eee;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: box-shadow .15s, border-color .15s; cursor: pointer;
+  text-decoration: none; color: inherit;
+}
+.report-dl-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); border-color: #1D9E75; }
+.report-dl-card .card-icon { font-size: 26px; }
+.report-dl-card .card-title { font-size: 14px; font-weight: 700; color: #1a1a18; }
+.report-dl-card .card-desc { font-size: 12px; color: #888; line-height: 1.5; }
+.report-dl-card .card-badge {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px; background: #E8F5EF; color: #1D9E75; margin-top: 2px;
+}
+
 /* FILTER */
 .filter-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;align-items:end}
@@ -81,6 +102,35 @@ tr:hover td{background:#fafaf8}
 
 <div class="page">
   <h1>📋 รายงานสรุปการลา</h1>
+
+  <!-- REPORT DOWNLOAD SECTION -->
+  <div class="report-section">
+    <div class="report-section-title">📥 ดาวน์โหลดรายงาน Excel</div>
+    <div class="report-cards">
+
+      <a class="report-dl-card" href="/api/admin/leave-balance-excel" id="card-balance">
+        <div class="card-icon">📊</div>
+        <div class="card-title">วันลาคงเหลือรายบุคคล</div>
+        <div class="card-desc">แสดงโควต้าวันลา, ใช้ไปแล้ว และคงเหลือ ของพนักงานทุกคน แยกตามประเภทการลา</div>
+        <span class="card-badge">Excel · 2 sheets</span>
+      </a>
+
+      <a class="report-dl-card" href="/api/admin/leave-report-excel" id="card-full">
+        <div class="card-icon">📋</div>
+        <div class="card-title">รายงานการลาครบถ้วน</div>
+        <div class="card-desc">สรุปรายบุคคล + รายละเอียดใบลาทุกใบ + เปรียบเทียบก่อน-หลังการลา</div>
+        <span class="card-badge">Excel · 3 sheets</span>
+      </a>
+
+      <a class="report-dl-card" href="#" onclick="downloadLeaveList(); return false;" id="card-list">
+        <div class="card-icon">📑</div>
+        <div class="card-title">รายการใบลาตามตัวกรอง</div>
+        <div class="card-desc">Export ผลลัพธ์จากตัวกรองด้านล่าง (ตามแผนก, ประเภท, สถานะ, ช่วงวันที่)</div>
+        <span class="card-badge">Excel · ตามตัวกรอง</span>
+      </a>
+
+    </div>
+  </div>
 
   <!-- FILTERS -->
   <div class="filter-card">
@@ -276,6 +326,42 @@ async function logout() {
 
   loadReport();
 })();
+
+async function downloadLeaveList() {
+  const params = new URLSearchParams({
+    type:   document.getElementById('f-type')?.value   || '',
+    dept:   document.getElementById('f-dept')?.value   || '',
+    status: document.getElementById('f-status')?.value || '',
+    from:   document.getElementById('f-from')?.value   || '',
+    to:     document.getElementById('f-to')?.value     || '',
+  });
+  const btn = document.getElementById('card-list');
+  btn.style.opacity = '0.6';
+  btn.querySelector('.card-desc').textContent = 'กำลังโหลด...';
+  try {
+    const r = await fetch('/api/admin/leave-list-excel?' + params);
+    if (!r.ok) { alert('ไม่สามารถดาวน์โหลดได้'); return; }
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = 'leave_list_' + new Date().toISOString().split('T')[0] + '.xlsx';
+    a.click(); URL.revokeObjectURL(url);
+  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  btn.style.opacity = '';
+  btn.querySelector('.card-desc').textContent = 'Export ผลลัพธ์จากตัวกรองด้านล่าง (ตามแผนก, ประเภท, สถานะ, ช่วงวันที่)';
+}
+
+
+  // ซ่อน download cards ถ้าไม่ใช่ admin
+  fetch('/api/me').then(r=>r.json()).then(u => {
+    if (u.role !== 'admin') {
+      document.querySelectorAll('#card-balance,#card-full,#card-list').forEach(el => el.style.display='none');
+      const sec = document.querySelector('.report-section');
+      if(sec) sec.style.display='none';
+    }
+  }).catch(()=>{});
+
 </script>
 </body>
 </html>

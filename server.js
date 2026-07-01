@@ -1358,6 +1358,211 @@ app.post('/api/admin/seed-leave-test', requireLogin, requireAdmin, async (req, r
 });
 
 
+
+
+// ======== GET /api/admin/leave-list-excel ========
+app.get('/api/admin/leave-list-excel', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const { type, dept, status, from, to } = req.query;
+    const LEAVE_LABEL = {
+      annual:'ลาพักร้อน', sick:'ลาป่วย', personal:'ลากิจจำเป็น',
+      personal_special:'ลากิจพิเศษ', maternity:'ลาคลอด', ordain:'ลาบวช',
+      military:'ลาราชการทหาร', marriage:'ลาสมรส',
+      work_injury:'ลาป่วยเนื่องจากงาน', unpaid:'ลาตัดเงิน'
+    };
+    const STATUS_LABEL = { pending:'รออนุมัติ', approved:'อนุมัติ', rejected:'ปฏิเสธ' };
+
+    let sql = `SELECT lr.*, u.name as uname, u.dept, u.username,
+                      a.name as approver_name
+               FROM leave_requests lr
+               JOIN users u ON lr.user_id = u.id
+               LEFT JOIN users a ON lr.approver_id = a.id
+               WHERE 1=1`;
+    const params = [];
+    if (type)   { params.push(type);   sql += ` AND lr.leave_type=$${params.length}`; }
+    if (dept)   { params.push(dept);   sql += ` AND u.dept=$${params.length}`; }
+    if (status) { params.push(status); sql += ` AND lr.status=$${params.length}`; }
+    if (from)   { params.push(from);   sql += ` AND lr.start_datetime>=$${params.length}`; }
+    if (to)     { params.push(to);     sql += ` AND lr.end_datetime<=$${params.length}`; }
+    sql += ' ORDER BY u.dept, u.name, lr.start_datetime';
+
+    const r = await pool.query(sql, params);
+    const rows = r.rows;
+    const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+
+    const aoa = [];
+    aoa.push([`รายการใบลา — ออกรายงาน ณ ${today}`]);
+    const filters = [type&&`ประเภท: ${LEAVE_LABEL[type]||type}`, dept&&`แผนก: ${dept}`,
+                     status&&`สถานะ: ${STATUS_LABEL[status]||status}`,
+                     from&&`ตั้งแต่: ${from}`, to&&`ถึง: ${to}`].filter(Boolean);
+    if (filters.length) aoa.push(['ตัวกรอง: ' + filters.join(', ')]);
+    aoa.push([]);
+    aoa.push(['ลำดับ','เลขใบลา','รหัส','ชื่อ-นามสกุล','แผนก','ประเภทการลา','สถานะ',
+              'วันเริ่มลา','เวลาเริ่ม','วันสิ้นสุด','เวลาสิ้นสุด','จำนวน (ชม.)','จำนวน (วัน)','เหตุผล','ผู้อนุมัติ']);
+
+    rows.forEach((l, i) => {
+      const s = new Date(l.start_datetime);
+      const e = new Date(l.end_datetime);
+      aoa.push([
+        i+1, l.leave_no, l.username, l.uname, l.dept,
+        LEAVE_LABEL[l.leave_type]||l.leave_type,
+        STATUS_LABEL[l.status]||l.status,
+        s.toLocaleDateString('th-TH',{timeZone:'Asia/Bangkok'}),
+        s.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'}),
+        e.toLocaleDateString('th-TH',{timeZone:'Asia/Bangkok'}),
+        e.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'}),
+        Math.round(parseFloat(l.hours||0)*100)/100,
+        Math.round(parseFloat(l.days||0)*100)/100,
+        l.reason||'', l.approver_name||'-'
+      ]);
+    });
+    aoa.push([]);
+    aoa.push([`รวมทั้งหมด ${rows.length} รายการ`]);
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [5,14,9,20,12,18,10,12,8,12,8,10,8,28,16].map(w=>({wch:w}));
+    ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:14}}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'รายการใบลา');
+
+    const buf = XLSX.write(wb, {type:'buffer', bookType:'xlsx'});
+    const fname = `leave_list_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
+    res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+// ======== GET /api/admin/leave-balance-excel ========
+app.get('/api/admin/leave-balance-excel', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const WH = WORK_HOURS_PER_DAY;
+    const LEAVE_LABEL = {
+      annual:'ลาพักร้อน', sick:'ลาป่วย', personal:'ลากิจจำเป็น',
+      personal_special:'ลากิจพิเศษ', maternity:'ลาคลอด', ordain:'ลาบวช',
+      military:'ลาราชการทหาร', marriage:'ลาสมรส',
+      work_injury:'ลาป่วยเนื่องจากงาน', unpaid:'ลาตัดเงิน'
+    };
+    const leaveOrder = ['annual','sick','personal','personal_special','maternity','ordain','military','marriage','work_injury','unpaid'];
+
+    const usersR = await pool.query(
+      'SELECT id, username, name, dept, start_date FROM users ORDER BY dept, name'
+    );
+    const users = usersR.rows;
+
+    const year = new Date().getFullYear();
+
+    // ดึง quotas และ used hours
+    const quotasR = await pool.query(
+      `SELECT user_id, leave_type, quota, used_hours FROM leave_quotas WHERE leave_year=$1`, [year]
+    );
+    const quotas = quotasR.rows;
+
+    // ดึง used hours จากใบลาจริง (pending + approved)
+    const usedR = await pool.query(
+      `SELECT user_id, leave_type, SUM(hours) as total_hours
+       FROM leave_requests
+       WHERE status != 'rejected'
+         AND EXTRACT(YEAR FROM start_datetime) = $1
+       GROUP BY user_id, leave_type`, [year]
+    );
+    const usedMap = {};
+    usedR.rows.forEach(r => {
+      if (!usedMap[r.user_id]) usedMap[r.user_id] = {};
+      usedMap[r.user_id][r.leave_type] = parseFloat(r.total_hours||0);
+    });
+
+    const wb = XLSX.utils.book_new();
+
+    // ===== Header rows =====
+    const today = new Date().toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
+    const rows = [];
+
+    rows.push([`รายงานวันลาคงเหลือ ประจำปี ${year + 543}`]);
+    rows.push([`ณ วันที่ ${today}`]);
+    rows.push([]);
+
+    // Column headers
+    const typeHeaders = leaveOrder.map(t => LEAVE_LABEL[t]);
+    rows.push(['ลำดับ','รหัส','ชื่อ-นามสกุล','แผนก', ...typeHeaders.flatMap(h=>[h+' (โควต้า)', h+' (ใช้ไป)', h+' (คงเหลือ)'])]);
+
+    let seq = 1;
+    for (const u of users) {
+      const row = [seq++, u.username, u.name, u.dept];
+      for (const lt of leaveOrder) {
+        const q = quotas.find(q => q.user_id===u.id && q.leave_type===lt);
+        const quotaH  = q ? parseFloat(q.quota) : 0;
+        const usedH   = (usedMap[u.id]||{})[lt] || 0;
+        const remainH = Math.max(0, quotaH - usedH);
+        row.push(
+          Math.round(quotaH /WH*100)/100,
+          Math.round(usedH  /WH*100)/100,
+          Math.round(remainH/WH*100)/100
+        );
+      }
+      rows.push(row);
+    }
+
+    rows.push([]);
+    rows.push(['* หน่วย: วัน  |  เวลาทำงาน 8.17 ชม./วัน  |  ข้อมูล ณ วันที่ออกรายงาน']);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Column widths
+    ws['!cols'] = [
+      {wch:6},{wch:10},{wch:22},{wch:12},
+      ...leaveOrder.flatMap(()=>[{wch:12},{wch:10},{wch:10}])
+    ];
+
+    // Merge title rows
+    const lastCol = 3 + leaveOrder.length * 3;
+    ws['!merges'] = [
+      { s:{r:0,c:0}, e:{r:0,c:lastCol} },
+      { s:{r:1,c:0}, e:{r:1,c:lastCol} },
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'วันลาคงเหลือ');
+
+    // ===== Sheet 2: ตารางสรุปสั้น (คงเหลืออย่างเดียว) =====
+    const shortRows = [];
+    shortRows.push([`สรุปวันลาคงเหลือ ปี ${year + 543}`]);
+    shortRows.push([]);
+    shortRows.push(['ลำดับ','รหัส','ชื่อ-นามสกุล','แผนก',
+      'พักร้อน (วัน)','ลาป่วย (วัน)','ลากิจ (วัน)','รวมคงเหลือ (วัน)']);
+
+    let seq2 = 1;
+    for (const u of users) {
+      const getRemain = (lt) => {
+        const q = quotas.find(q => q.user_id===u.id && q.leave_type===lt);
+        const quotaH = q ? parseFloat(q.quota) : 0;
+        const usedH  = (usedMap[u.id]||{})[lt] || 0;
+        return Math.max(0, Math.round((quotaH - usedH)/WH*100)/100);
+      };
+      const ann  = getRemain('annual');
+      const sick = getRemain('sick');
+      const pers = getRemain('personal');
+      shortRows.push([seq2++, u.username, u.name, u.dept, ann, sick, pers, ann+sick+pers]);
+    }
+    shortRows.push([]);
+    shortRows.push(['* หน่วย: วัน (1 วัน = 8.17 ชม.)']);
+
+    const ws2 = XLSX.utils.aoa_to_sheet(shortRows);
+    ws2['!cols'] = [{wch:6},{wch:10},{wch:22},{wch:12},{wch:14},{wch:14},{wch:12},{wch:16}];
+    ws2['!merges'] = [{ s:{r:0,c:0}, e:{r:0,c:7} }];
+    XLSX.utils.book_append_sheet(wb, ws2, 'สรุปสั้น');
+
+    const buf = XLSX.write(wb, { type:'buffer', bookType:'xlsx' });
+    const filename = `leave_balance_${year}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ======== GET /api/admin/leave-report-excel ========
 app.get('/api/admin/leave-report-excel', requireLogin, requireAdmin, async (req, res) => {
   try {
