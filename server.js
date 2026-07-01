@@ -1745,6 +1745,17 @@ app.get('/api/admin/leave-report-excel', requireLogin, requireAdmin, async (req,
 });
 
 // ======== TEMP: RESET DATA (admin only) ========
+app.post('/api/admin/reset-leave', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM leave_requests');
+    await pool.query('DELETE FROM leave_quotas');
+    await pool.query('DELETE FROM annual_leave_log');
+    res.json({ ok: true, message: 'ล้างข้อมูลการลาทั้งหมดสำเร็จ (พนักงานยังอยู่)' });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.post('/api/admin/reset-bookings', requireLogin, requireAdmin, async (req, res) =>  {
   try {
     await pool.query('DELETE FROM bookings');

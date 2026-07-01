@@ -329,6 +329,16 @@ tr:last-child td{border-bottom:none}
     <div id="bulk-result" style="margin-top:10px;font-size:13px;color:#555"></div>
   </div>
   <div class="admin-section">
+    <h3>🛠 จัดการข้อมูลระบบ</h3>
+    <div id="sys-alert" style="margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="seedLeaveTest()">🧪 สร้างข้อมูลทดสอบการลา</button>
+      <button class="btn btn-danger" onclick="resetLeave()">🗑 ล้างข้อมูลการลาทั้งหมด</button>
+      <button class="btn btn-danger" onclick="resetBookings()">🗑 ล้างข้อมูลการจองห้องประชุม</button>
+      <button class="btn btn-danger" onclick="resetAll()" style="background:#7f1d1d">⚠️ ล้างข้อมูลทั้งหมด (รวมพนักงาน)</button>
+    </div>
+  </div>
+  <div class="admin-section">
     <h3>รายชื่อผู้ใช้ทั้งหมด</h3>
     <table>
       <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>ฝ่าย</th><th>Email</th><th>หัวหน้า</th><th>โควต้าลา</th><th>สิทธิ์</th><th>จัดการ</th></tr></thead>
@@ -658,6 +668,13 @@ async function loadLeaveReport(){
   const r=await api('/leave/report');
   $('leave-report').innerHTML=`<div class="report-grid">${r.map(d=>`<div class="report-card"><div class="report-dept">🏢 ${d.dept}</div><div class="report-row"><span>จำนวนพนักงาน</span><span>${d.emp_count} คน</span></div><div class="report-row"><span>จำนวนใบลา</span><span>${d.total_requests} ใบ</span></div><div class="report-row"><span>อนุมัติแล้ว</span><span style="color:#0F6E56">${d.approved} ใบ (${d.total_days||0} วัน)</span></div><div class="report-row"><span>รออนุมัติ</span><span style="color:#BA7517">${d.pending} ใบ</span></div><div class="report-row"><span>ไม่อนุมัติ</span><span style="color:#A32D2D">${d.rejected} ใบ</span></div></div>`).join('')}</div>`;
 }
+
+// System management
+function sysAlert(msg,ok){const el=$('sys-alert');el.textContent=msg;el.style.cssText=`padding:8px 12px;border-radius:6px;font-size:13px;background:${ok?'#d1fae5':'#fee2e2'};color:${ok?'#065f46':'#991b1b'}`;}
+async function seedLeaveTest(){if(!confirm('สร้างข้อมูลทดสอบการลาสำหรับทุกคน?'))return;try{const r=await api('/admin/seed-leave-test','POST');sysAlert(`สร้างสำเร็จ ${r.รวม} รายการ`,true);}catch(e){sysAlert('เกิดข้อผิดพลาด: '+e.message,false);}}
+async function resetLeave(){if(!confirm('ลบข้อมูลการลาทั้งหมด?\n(ไม่ลบรายชื่อพนักงาน)'))return;try{const r=await api('/admin/reset-leave','POST');sysAlert(r.message,true);}catch(e){sysAlert('เกิดข้อผิดพลาด: '+e.message,false);}}
+async function resetBookings(){if(!confirm('ลบข้อมูลการจองห้องประชุมทั้งหมด?'))return;try{const r=await api('/admin/reset-bookings','POST');sysAlert(r.message,true);}catch(e){sysAlert('เกิดข้อผิดพลาด: '+e.message,false);}}
+async function resetAll(){if(!confirm('⚠️ ลบข้อมูลทั้งหมด รวมถึงพนักงาน?\nไม่สามารถกู้คืนได้!'))return;try{const r=await api('/admin/reset-data','POST');sysAlert(r.message,true);await loadUsers();}catch(e){sysAlert('เกิดข้อผิดพลาด: '+e.message,false);}}
 
 // Admin
 async function loadUsersForSelect(){
