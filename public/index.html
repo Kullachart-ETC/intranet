@@ -810,8 +810,8 @@ async function loadLeave(){
     $('user-name').textContent=state.me.name+' ('+state.me.dept+')';
     $('user-badge').textContent=state.me.role;
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-btn').style.display='';}
-    // แสดง tab รออนุมัติสำหรับทุกคน (ถ้ามีใบลารออนุมัติจะแสดงจำนวน)
-    $('approve-tab').style.display='';
+    // แสดง tab รออนุมัติเฉพาะหัวหน้า (is_manager) หรือ admin
+    if(state.me.is_manager||state.me.role==='admin') $('approve-tab').style.display='';
     await loadBoard();
     loadIsmsNews();
     loadThaiEconNews();

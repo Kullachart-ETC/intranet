@@ -355,9 +355,15 @@ app.post('/api/login', async (req, res) => {
   res.json({ ok: true, user: req.session.user });
 });
 app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ ok: true }); });
-app.get('/api/me', (req, res) => {
-  if (req.session.user) res.json(req.session.user);
-  else res.status(401).json({ error: 'ไม่ได้เข้าสู่ระบบ' });
+app.get('/api/me', async (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'ไม่ได้เข้าสู่ระบบ' });
+  try {
+    const r = await pool.query('SELECT COUNT(*) FROM users WHERE manager_id=$1', [req.session.user.id]);
+    const is_manager = parseInt(r.rows[0].count) > 0;
+    res.json({ ...req.session.user, is_manager });
+  } catch(e) {
+    res.json(req.session.user);
+  }
 });
 
 app.use((req, res, next) => {
@@ -589,7 +595,12 @@ app.post('/api/leave', requireLogin, async (req, res) => {
     const leaveNo = await generateLeaveNo();
     const userR   = await pool.query('SELECT * FROM users WHERE id=$1', [userId]);
     const user    = userR.rows[0];
-    const approverId = user.manager_id;
+    // ถ้าไม่มีหัวหน้า (เช่น Director) → ส่งให้ admin อนุมัติ
+    let approverId = user.manager_id;
+    if (!approverId) {
+      const adminR = await pool.query("SELECT id FROM users WHERE role='admin' ORDER BY id LIMIT 1");
+      if (adminR.rows.length > 0) approverId = adminR.rows[0].id;
+    }
 
     await pool.query(
       `INSERT INTO leave_requests
