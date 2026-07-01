@@ -1454,19 +1454,20 @@ app.get('/api/admin/leave-balance-excel', requireLogin, requireAdmin, async (req
 
     const year = new Date().getFullYear();
 
-    // ดึง quotas และ used hours
+    // ดึง quotas ทุกปี (annual leave สะสมข้ามปีได้ ต้องรวมทุก leave_year)
     const quotasR = await pool.query(
-      `SELECT user_id, leave_type, quota, used_hours FROM leave_quotas WHERE leave_year=$1`, [year]
+      `SELECT user_id, leave_type, SUM(quota) as quota, SUM(used_hours) as used_hours
+       FROM leave_quotas
+       GROUP BY user_id, leave_type`
     );
     const quotas = quotasR.rows;
 
-    // ดึง used hours จากใบลาจริง (pending + approved)
+    // ดึง used hours จากใบลาจริง (pending + approved) ทุกปี เพื่อให้ตรงกับ web
     const usedR = await pool.query(
       `SELECT user_id, leave_type, SUM(hours) as total_hours
        FROM leave_requests
        WHERE status != 'rejected'
-         AND EXTRACT(YEAR FROM start_datetime) = $1
-       GROUP BY user_id, leave_type`, [year]
+       GROUP BY user_id, leave_type`
     );
     const usedMap = {};
     usedR.rows.forEach(r => {
