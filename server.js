@@ -1462,11 +1462,11 @@ app.get('/api/admin/leave-balance-excel', requireLogin, requireAdmin, async (req
     );
     const quotas = quotasR.rows;
 
-    // ดึง used hours จากใบลาจริง (pending + approved) ทุกปี เพื่อให้ตรงกับ web
+    // ดึง used hours เฉพาะที่ "อนุมัติแล้ว" เท่านั้น
     const usedR = await pool.query(
       `SELECT user_id, leave_type, SUM(hours) as total_hours
        FROM leave_requests
-       WHERE status != 'rejected'
+       WHERE status = 'approved'
        GROUP BY user_id, leave_type`
     );
     const usedMap = {};
