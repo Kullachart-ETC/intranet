@@ -704,6 +704,45 @@ app.get('/api/leave/report-list', requireLogin, requireAdmin, async (req, res) =
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// ยกเลิกใบลา (เฉพาะ pending + เจ้าของ)
+app.delete('/api/leave/:id', requireLogin, async (req, res) => {
+  try {
+    const lr = await pool.query('SELECT * FROM leave_requests WHERE id=$1', [req.params.id]);
+    const leave = lr.rows[0];
+    if (!leave) return res.status(404).json({ error: 'ไม่พบใบลา' });
+    if (leave.user_id !== req.session.user.id && req.session.user.role !== 'admin')
+      return res.status(403).json({ error: 'ไม่มีสิทธิ์' });
+    if (leave.status !== 'pending')
+      return res.status(400).json({ error: 'ยกเลิกได้เฉพาะใบลาที่รออนุมัติเท่านั้น' });
+    await pool.query('DELETE FROM leave_requests WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// แก้ไขใบลา (เฉพาะ pending + เจ้าของ)
+app.put('/api/leave/:id', requireLogin, async (req, res) => {
+  try {
+    const lr = await pool.query('SELECT * FROM leave_requests WHERE id=$1', [req.params.id]);
+    const leave = lr.rows[0];
+    if (!leave) return res.status(404).json({ error: 'ไม่พบใบลา' });
+    if (leave.user_id !== req.session.user.id && req.session.user.role !== 'admin')
+      return res.status(403).json({ error: 'ไม่มีสิทธิ์' });
+    if (leave.status !== 'pending')
+      return res.status(400).json({ error: 'แก้ไขได้เฉพาะใบลาที่รออนุมัติเท่านั้น' });
+    const { leave_type, start_datetime, end_datetime, reason } = req.body;
+    const hours = calcWorkHours(start_datetime, end_datetime);
+    if (hours < MIN_LEAVE_HOURS)
+      return res.status(400).json({ error: `ระยะเวลาลาน้อยเกินไป (ขั้นต่ำ ${MIN_LEAVE_HOURS} ชม.)` });
+    const days = hours / WORK_HOURS_PER_DAY;
+    await pool.query(
+      `UPDATE leave_requests SET leave_type=$1,start_datetime=$2,end_datetime=$3,hours=$4,days=$5,reason=$6 WHERE id=$7`,
+      [leave_type, start_datetime, end_datetime,
+       Math.round(hours*100)/100, Math.round(days*100)/100, reason||'', req.params.id]
+    );
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // อนุมัติ / ไม่อนุมัติ
 app.put('/api/leave/:id/approve', requireLogin, async (req, res) => {
   try {

@@ -454,6 +454,33 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="overlay" id="edit-leave-modal">
+  <div class="modal">
+    <h3>✏️ แก้ไขใบลา</h3>
+    <div class="form-row"><label>ประเภทการลา</label>
+      <select id="edit-leave-type">
+        <option value="sick">ลาป่วย</option>
+        <option value="annual">ลาพักร้อน</option>
+        <option value="personal">ลากิจจำเป็น</option>
+        <option value="personal_special">ลากิจพิเศษ</option>
+        <option value="maternity">ลาคลอด</option>
+        <option value="ordain">ลาบวช</option>
+        <option value="military">ลาราชการทหาร</option>
+        <option value="marriage">ลาสมรส</option>
+        <option value="work_injury">ลาป่วยเนื่องจากงาน</option>
+        <option value="unpaid">ลาตัดเงิน</option>
+      </select>
+    </div>
+    <div class="form-row"><label>วันเริ่มลา</label><input type="datetime-local" id="edit-leave-start"></div>
+    <div class="form-row"><label>วันสิ้นสุด</label><input type="datetime-local" id="edit-leave-end"></div>
+    <div class="form-row"><label>เหตุผล</label><textarea id="edit-leave-reason" placeholder="ระบุเหตุผล..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('edit-leave-modal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitEditLeave()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="pw-modal">
   <div class="modal">
     <h3>เปลี่ยนรหัสผ่าน</h3>
@@ -637,7 +664,8 @@ async function submitLeave(){
 async function loadMyLeave(){
   const leaves=await api('/leave/my');
   if(!leaves.length){$('leave-my').innerHTML='<div class="loading">ยังไม่มีประวัติการลา</div>';return;}
-  $('leave-my').innerHTML=leaves.map(l=>`<div class="leave-card"><div class="leave-card-head"><div><div class="leave-no">${l.leave_no}</div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><span class="status-${l.status}">${l.status==='pending'?'รออนุมัติ':l.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></div><div class="leave-dates">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')}</div><div class="leave-days">${l.days} วัน · ${l.reason||'ไม่ระบุเหตุผล'}</div>${l.reject_reason?`<div style="font-size:12px;color:#A32D2D;margin-top:4px">เหตุผล: ${l.reject_reason}</div>`:''}</div>`).join('');
+  $('leave-my').innerHTML=leaves.map(l=>`<div class="leave-card"><div class="leave-card-head"><div><div class="leave-no">${l.leave_no}</div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><span class="status-${l.status}">${l.status==='pending'?'รออนุมัติ':l.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></div><div class="leave-dates">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')}</div><div class="leave-days">${parseFloat(l.days).toFixed(2)} วัน · ${l.reason||'ไม่ระบุเหตุผล'}</div>${l.reject_reason?`<div style="font-size:12px;color:#A32D2D;margin-top:4px">เหตุผล: ${l.reject_reason}</div>`:''
+}${l.status==='pending'?`<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="openEditLeave(${JSON.stringify(l).split('"').join('&quot;')})">✏️ แก้ไข</button><button class="btn btn-danger btn-sm" onclick="cancelLeave(${l.id})">✕ ยกเลิก</button></div>`:''}</div>`).join('');
 }
 
 async function loadPendingLeave(){
@@ -667,6 +695,28 @@ async function confirmReject(){
 async function loadLeaveReport(){
   const r=await api('/leave/report');
   $('leave-report').innerHTML=`<div class="report-grid">${r.map(d=>`<div class="report-card"><div class="report-dept">🏢 ${d.dept}</div><div class="report-row"><span>จำนวนพนักงาน</span><span>${d.emp_count} คน</span></div><div class="report-row"><span>จำนวนใบลา</span><span>${d.total_requests} ใบ</span></div><div class="report-row"><span>อนุมัติแล้ว</span><span style="color:#0F6E56">${d.approved} ใบ (${d.total_days||0} วัน)</span></div><div class="report-row"><span>รออนุมัติ</span><span style="color:#BA7517">${d.pending} ใบ</span></div><div class="report-row"><span>ไม่อนุมัติ</span><span style="color:#A32D2D">${d.rejected} ใบ</span></div></div>`).join('')}</div>`;
+}
+
+// Cancel / Edit leave
+async function cancelLeave(id){
+  if(!confirm('ยืนยันยกเลิกใบลานี้?'))return;
+  try{await api('/leave/'+id,'DELETE');await loadMyLeave();}
+  catch(e){alert('ไม่สามารถยกเลิกได้: '+e.message);}
+}
+let _editLeaveId=null;
+function openEditLeave(l){
+  _editLeaveId=l.id;
+  $('edit-leave-type').value=l.leave_type;
+  $('edit-leave-start').value=l.start_datetime?l.start_datetime.slice(0,16):'';
+  $('edit-leave-end').value=l.end_datetime?l.end_datetime.slice(0,16):'';
+  $('edit-leave-reason').value=l.reason||'';
+  openModal('edit-leave-modal');
+}
+async function submitEditLeave(){
+  const body={leave_type:$('edit-leave-type').value,start_datetime:$('edit-leave-start').value,end_datetime:$('edit-leave-end').value,reason:$('edit-leave-reason').value};
+  if(!body.start_datetime||!body.end_datetime){alert('กรุณาระบุวันที่');return;}
+  try{await api('/leave/'+_editLeaveId,'PUT',body);closeModal('edit-leave-modal');await loadMyLeave();}
+  catch(e){alert('แก้ไขไม่สำเร็จ: '+e.message);}
 }
 
 // System management
