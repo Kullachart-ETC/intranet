@@ -40,7 +40,8 @@ async function initDB() {
       email TEXT,
       manager_id INTEGER,
       start_date DATE,
-      annual_leave_quota INTEGER DEFAULT 6
+      annual_leave_quota INTEGER DEFAULT 6,
+      work_schedule VARCHAR(10) DEFAULT 'office'
     );
     CREATE TABLE IF NOT EXISTS posts (
       id SERIAL PRIMARY KEY,
@@ -157,7 +158,8 @@ const BREAK_END   = { h: 13, m: 0 };
 const MIN_LEAVE_HOURS = 0.5; // 30 นาที
 
 // คำนวณชั่วโมงทำงานจริง (หักพักเที่ยง)
-function calcWorkHours(startDT, endDT) {
+function calcWorkHours(startDT, endDT, scheduleKey) {
+  const sch = SCHEDULES[scheduleKey] || SCHEDULES.office;
   const s = new Date(startDT);
   const e = new Date(endDT);
   if (e <= s) return 0;
@@ -167,13 +169,13 @@ function calcWorkHours(startDT, endDT) {
 
   while (cur < e) {
     const dayEnd = new Date(cur);
-    dayEnd.setHours(WORK_END.h, WORK_END.m, 0, 0);
+    dayEnd.setHours(sch.end.h, sch.end.m, 0, 0);
     const dayStart = new Date(cur);
-    dayStart.setHours(WORK_START.h, WORK_START.m, 0, 0);
+    dayStart.setHours(sch.start.h, sch.start.m, 0, 0);
     const breakS = new Date(cur);
-    breakS.setHours(BREAK_START.h, BREAK_START.m, 0, 0);
+    breakS.setHours(sch.breakS.h, sch.breakS.m, 0, 0);
     const breakE = new Date(cur);
-    breakE.setHours(BREAK_END.h, BREAK_END.m, 0, 0);
+    breakE.setHours(sch.breakE.h, sch.breakE.m, 0, 0);
 
     const segStart = cur < dayStart ? dayStart : cur;
     const segEnd   = e < dayEnd ? e : dayEnd;
@@ -191,7 +193,7 @@ function calcWorkHours(startDT, endDT) {
 
     // ไปวันถัดไป
     cur.setDate(cur.getDate() + 1);
-    cur.setHours(WORK_START.h, WORK_START.m, 0, 0);
+    cur.setHours(sch.start.h, sch.start.m, 0, 0);
     if (cur.getDay() === 0) cur.setDate(cur.getDate() + 1); // ข้ามอาทิตย์
     if (cur.getDay() === 6) cur.setDate(cur.getDate() + 2); // ข้ามเสาร์
   }
@@ -379,14 +381,14 @@ app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
   res.json(r.rows);
 });
 app.post('/api/users', requireLogin, requireAdmin, async (req, res) => {
-  const { username, password, name, dept, role, email, manager_id, start_date, annual_leave_quota } = req.body;
+  const { username, password, name, dept, role, email, manager_id, start_date, annual_leave_quota, work_schedule } = req.body;
   if (!username || !password || !name) return res.status(400).json({ error: 'กรอกข้อมูลให้ครบ' });
   const exists = await pool.query('SELECT id FROM users WHERE username=$1', [username]);
   if (exists.rows.length > 0) return res.status(409).json({ error: 'ชื่อผู้ใช้นี้มีแล้ว' });
   const hash = bcrypt.hashSync(password, 10);
   await pool.query(
-    'INSERT INTO users (username,password,name,dept,role,email,manager_id,start_date,annual_leave_quota) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
-    [username, hash, name, dept, role||'user', email, manager_id||null, start_date||null, annual_leave_quota||6]
+    'INSERT INTO users (username,password,name,dept,role,email,manager_id,start_date,annual_leave_quota,work_schedule) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
+    [username, hash, name, dept, role||'user', email, manager_id||null, start_date||null, annual_leave_quota||6, work_schedule||'office']
   );
   res.json({ ok: true });
 });
@@ -983,9 +985,12 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
           const annualDays = Math.round(annualH / WORK_HOURS);
 
           // UPSERT: ถ้ามีอยู่แล้วให้ทับข้อมูล
+          // ประเภทพนักงาน: พนักงานประจำ+โรงงาน → factory, อื่นๆ → office
+          const workSch = String(empType||'').includes('โรงงาน') ? 'factory' : 'office';
+
           const upsertResult = await pool.query(
-            `INSERT INTO users (username,password,name,dept,role,email,start_date,annual_leave_quota)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+            `INSERT INTO users (username,password,name,dept,role,email,start_date,annual_leave_quota,work_schedule)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
              ON CONFLICT (username) DO UPDATE SET
                password = EXCLUDED.password,
                name = EXCLUDED.name,
@@ -993,10 +998,11 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
                role = EXCLUDED.role,
                email = EXCLUDED.email,
                start_date = EXCLUDED.start_date,
-               annual_leave_quota = EXCLUDED.annual_leave_quota
+               annual_leave_quota = EXCLUDED.annual_leave_quota,
+               work_schedule = EXCLUDED.work_schedule
              RETURNING id`,
             [usernameClean, hash, name, String(dept).trim(),
-             roleClean, String(email).trim(), parsedDate, annualDays]
+             roleClean, String(email).trim(), parsedDate, annualDays, workSch]
           );
 
           const userId    = upsertResult.rows[0].id;

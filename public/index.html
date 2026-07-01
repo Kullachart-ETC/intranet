@@ -314,6 +314,7 @@ tr:last-child td{border-bottom:none}
       <div class="form-row" style="margin:0"><label>วันที่เริ่มงาน</label><input id="new-start-date" type="date"></div>
       <div class="form-row" style="margin:0"><label>หัวหน้า</label><select id="new-manager"></select></div>
       <div class="form-row" style="margin:0"><label>โควต้าลาพักร้อน (วัน/ปี)</label><input id="new-quota" type="number" value="6" min="0" max="30"></div>
+      <div class="form-row" style="margin:0"><label>รูปแบบเวลาทำงาน</label><select id="new-schedule"><option value="office">สำนักงาน (8:30-17:40)</option><option value="factory">โรงงาน (8:00-17:00)</option></select></div>
       <div class="form-row" style="margin:0"><label>สิทธิ์</label><select id="new-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
     </div>
     <button class="btn btn-primary" onclick="addUser()">+ เพิ่มผู้ใช้</button>
@@ -744,7 +745,7 @@ async function loadUsers(){
 async function addUser(){
   const alertEl=$('admin-alert');alertEl.className='alert';alertEl.textContent='';
   try{
-    await api('/users','POST',{username:$('new-username').value.trim(),password:$('new-password').value,name:$('new-name').value.trim(),dept:$('new-dept').value.trim(),role:$('new-role').value,email:$('new-email').value.trim(),manager_id:$('new-manager').value||null,start_date:$('new-start-date').value||null,annual_leave_quota:$('new-quota').value||6});
+    await api('/users','POST',{username:$('new-username').value.trim(),password:$('new-password').value,name:$('new-name').value.trim(),dept:$('new-dept').value.trim(),role:$('new-role').value,email:$('new-email').value.trim(),manager_id:$('new-manager').value||null,start_date:$('new-start-date').value||null,annual_leave_quota:$('new-quota').value||6,work_schedule:$('new-schedule').value||'office'});
     alertEl.className='alert alert-ok';alertEl.textContent='เพิ่มผู้ใช้สำเร็จ';
     ['new-username','new-password','new-name','new-dept','new-email','new-start-date'].forEach(id=>$(id).value='');
     loadUsers();loadUsersForSelect();

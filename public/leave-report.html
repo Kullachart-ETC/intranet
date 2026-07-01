@@ -218,17 +218,22 @@ const LEAVE_NAMES = {
   military:'ลาราชการทหาร', marriage:'ลาสมรส', work_injury:'ลาป่วยจากงาน', personal:'ลากิจจำเป็น'
 };
 
-function fmtDuration(hours) {
-  const totalMins = Math.round((hours||0) * 60);
-  if (!totalMins) return '-';
-  const d = Math.floor(totalMins / 480);      // 8 ชม. = 1 วัน
-  const h = Math.floor((totalMins % 480) / 60);
-  const m = totalMins % 60;
+function fmtDuration(hours, days) {
+  // ใช้ days ที่คำนวณจาก schedule ของพนักงานโดยตรง (แม่นยำกว่าแปลงจาก hours)
+  const d = parseFloat(days || 0);
+  if (!d) return '-';
+  const wholeDays = Math.floor(d);
+  const fracHours = Math.round((d - wholeDays) * 60 * 10) / 10; // เศษเป็นนาที (approx)
+  const fracMins  = Math.round((d - wholeDays) * 60 * (8 + 10/60)); // เศษชม. × นาที/วัน
   const parts = [];
-  if (d > 0) parts.push(d + ' วัน');
-  if (h > 0) parts.push(h + ' ชั่วโมง');
-  if (m > 0) parts.push(m + ' นาที');
-  return parts.join(' ') || '-';
+  if (wholeDays > 0) parts.push(wholeDays + ' วัน');
+  if (fracMins > 0) {
+    const fh = Math.floor(fracMins / 60);
+    const fm = Math.round(fracMins % 60);
+    if (fh > 0) parts.push(fh + ' ชั่วโมง');
+    if (fm > 0) parts.push(fm + ' นาที');
+  }
+  return parts.join(' ') || (d.toFixed(2) + ' วัน');
 }
 function fmtDate(dt) {
   if (!dt) return '-';
@@ -284,7 +289,7 @@ async function loadReport() {
         <td><span class="leave-type-tag">${LEAVE_NAMES[r.leave_type]||r.leave_type}</span></td>
         <td style="white-space:nowrap">${fmtDateTime(r.start_datetime)}</td>
         <td style="white-space:nowrap">${fmtDateTime(r.end_datetime)}</td>
-        <td style="white-space:nowrap">${fmtDuration(r.hours)}</td>
+        <td style="white-space:nowrap">${fmtDuration(r.hours, r.days)}</td>
         <td>${statusBadge(r.status)}</td>
         <td>${r.approver_name||'-'}</td>
       </tr>
