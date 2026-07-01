@@ -88,6 +88,8 @@ async function initDB() {
     ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS start_datetime TIMESTAMP;
     ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS end_datetime TIMESTAMP;
     ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS hours NUMERIC DEFAULT 0;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS work_schedule VARCHAR(10) DEFAULT 'office';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id INTEGER;
     CREATE TABLE IF NOT EXISTS leave_quotas (
       id SERIAL PRIMARY KEY,
       user_id INTEGER,
