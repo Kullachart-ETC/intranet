@@ -1288,7 +1288,7 @@ app.get('/api/fx-rates', requireLogin, (req, res) => {
 app.post('/api/admin/seed-leave-test', requireLogin, requireAdmin, async (req, res) => {
   try {
     // ดึงรายชื่อ user ทั้งหมด
-    const usersR = await pool.query('SELECT id, name, dept FROM users ORDER BY id');
+    const usersR = await pool.query('SELECT id, name, dept, manager_id FROM users ORDER BY id');
     const users  = usersR.rows;
 
     const today = new Date();
@@ -1342,9 +1342,10 @@ app.post('/api/admin/seed-leave-test', requireLogin, requireAdmin, async (req, r
           await pool.query(
             `INSERT INTO leave_requests
               (leave_no,user_id,leave_type,start_datetime,end_datetime,hours,days,reason,status,approver_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',NULL)`,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`,
             [leaveNo, user.id, c.type, startDT, endDT,
-             Math.round(hours*100)/100, Math.round(days*100)/100, c.reason]
+             Math.round(hours*100)/100, Math.round(days*100)/100, c.reason,
+             user.manager_id || null]
           );
           userResults.push({
             กรณี: c.label, ประเภท: c.type,
