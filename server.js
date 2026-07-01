@@ -1263,6 +1263,260 @@ app.get('/api/fx-rates', requireLogin, (req, res) => {
 });
 
 
+
+// ======== TEMP: SEED LEAVE TEST DATA ========
+app.post('/api/admin/seed-leave-test', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    // ดึงรายชื่อ user ทั้งหมด
+    const usersR = await pool.query('SELECT id, name, dept FROM users ORDER BY id');
+    const users  = usersR.rows;
+
+    const today = new Date();
+    const y = today.getFullYear();
+    const results = [];
+    let seqNo = Date.now();
+
+    // helper: หาวันทำงาน offset จากวันนี้ (ข้ามเสาร์-อาทิตย์)
+    function workday(offsetDays, h, min) {
+      const d = new Date(today);
+      let step = offsetDays < 0 ? -1 : 1;
+      let remaining = Math.abs(offsetDays);
+      while (remaining > 0) {
+        d.setDate(d.getDate() + step);
+        if (d.getDay() !== 0 && d.getDay() !== 6) remaining--;
+      }
+      d.setHours(h, min, 0, 0);
+      return d.toISOString();
+    }
+
+    // กรณีทดสอบต่างๆ (แต่ละ user จะได้คนละวัน ไม่ซ้ำกัน)
+    const caseTemplates = [
+      { label:'ลาป่วย ครึ่งเช้า',        type:'sick',     sh:8,  sm:30, eh:12, em:0,  offsetS:-14, reason:'ไม่สบาย ครึ่งวันเช้า' },
+      { label:'ลาป่วย ครึ่งบ่าย',        type:'sick',     sh:13, sm:0,  eh:17, em:40, offsetS:-13, reason:'หมอนัด บ่าย' },
+      { label:'ลาป่วย 1 วันเต็ม',        type:'sick',     sh:8,  sm:30, eh:17, em:40, offsetS:-12, reason:'ไข้หวัด' },
+      { label:'ลากิจ 30 นาที (ขั้นต่ำ)', type:'personal', sh:8,  sm:30, eh:9,  em:0,  offsetS:-11, reason:'ติดธุระเช้า' },
+      { label:'ลากิจ 2 ชม. (10-12น.)',   type:'personal', sh:10, sm:0,  eh:12, em:0,  offsetS:-10, reason:'ธุระส่วนตัว' },
+      { label:'ลากิจ ข้ามพักเที่ยง',     type:'personal', sh:11, sm:0,  eh:14, em:0,  offsetS:-9,  reason:'นัดหมอ (ข้ามพักเที่ยง)' },
+      { label:'ลาพักร้อน 1 วัน',         type:'annual',   sh:8,  sm:30, eh:17, em:40, offsetS:-8,  reason:'พักผ่อน' },
+      { label:'ลาพักร้อน 2 วัน',         type:'annual',   sh:8,  sm:30, eh:17, em:40, offsetS:-20, offsetE:-19, reason:'ท่องเที่ยว' },
+      { label:'ลาสมรส 1 วัน',            type:'marriage', sh:8,  sm:30, eh:17, em:40, offsetS:-7,  reason:'แต่งงาน' },
+      { label:'ลาตัดเงิน 1 วัน',         type:'unpaid',   sh:8,  sm:30, eh:17, em:40, offsetS:-6,  reason:'กิจส่วนตัว' },
+    ];
+
+    for (const user of users) {
+      const userResults = [];
+
+      for (let i = 0; i < caseTemplates.length; i++) {
+        const c = caseTemplates[i];
+        // offset ต่างกันทีละ 1 วัน ไม่ให้ซ้ำกันในคนเดียวกัน (ไม่ใช่แค่ offset แต่ใช้ workday)
+        const startDT = workday(c.offsetS, c.sh, c.sm);
+        const endDT   = c.offsetE !== undefined
+          ? workday(c.offsetE, c.eh, c.em)
+          : workday(c.offsetS, c.eh, c.em);
+
+        const hours = calcWorkHours(startDT, endDT);
+        const days  = hours / WORK_HOURS_PER_DAY;
+        const leaveNo = 'TST' + (seqNo++);
+
+        try {
+          await pool.query(
+            `INSERT INTO leave_requests
+              (leave_no,user_id,leave_type,start_datetime,end_datetime,hours,days,reason,status,approver_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',NULL)`,
+            [leaveNo, user.id, c.type, startDT, endDT,
+             Math.round(hours*100)/100, Math.round(days*100)/100, c.reason]
+          );
+          userResults.push({
+            กรณี: c.label, ประเภท: c.type,
+            ชั่วโมง: Math.round(hours*100)/100,
+            วัน: Math.round(days*100)/100,
+          });
+        } catch(e) {
+          userResults.push({ กรณี: c.label, error: e.message });
+        }
+      }
+
+      results.push({ user: user.name, dept: user.dept, ใบลา: userResults });
+    }
+
+    res.json({
+      ok: true,
+      users: users.length,
+      ใบลาต่อคน: caseTemplates.length,
+      รวม: users.length * caseTemplates.length,
+      ผลลัพธ์: results,
+      การคำนวณ: {
+        เวลาทำงาน: '08:30-17:40',
+        พักเที่ยง: '12:00-13:00',
+        ชม_ต่อวัน: Math.round(WORK_HOURS_PER_DAY*100)/100,
+        ลาขั้นต่ำ: MIN_LEAVE_HOURS + ' ชม.'
+      }
+    });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+// ======== GET /api/admin/leave-report-excel ========
+app.get('/api/admin/leave-report-excel', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const WH = WORK_HOURS_PER_DAY;
+
+    // ดึงข้อมูลทั้งหมด
+    const usersR = await pool.query(
+      'SELECT id, username, name, dept FROM users ORDER BY dept, name'
+    );
+    const users = usersR.rows;
+
+    const leavesR = await pool.query(
+      `SELECT lr.*, u.name as uname, u.dept
+       FROM leave_requests lr
+       JOIN users u ON lr.user_id = u.id
+       ORDER BY u.dept, u.name, lr.start_datetime`
+    );
+    const leaves = leavesR.rows;
+
+    const quotasR = await pool.query(
+      `SELECT * FROM leave_quotas ORDER BY user_id, leave_year, leave_type`
+    );
+    const quotas = quotasR.rows;
+
+    const LEAVE_LABEL = {
+      sick:'ลาป่วย', annual:'ลาพักร้อน', personal:'ลากิจจำเป็น',
+      personal_special:'ลากิจพิเศษ', maternity:'ลาคลอด', ordain:'ลาบวช',
+      military:'ลาราชการทหาร', marriage:'ลาสมรส',
+      work_injury:'ลาป่วยเนื่องจากงาน', unpaid:'ลาตัดเงิน'
+    };
+    const STATUS_LABEL = { pending:'รออนุมัติ', approved:'อนุมัติ', rejected:'ปฏิเสธ' };
+
+    const wb = XLSX.utils.book_new();
+
+    // ===== SHEET 1: สรุปรายบุคคล =====
+    const summaryRows = [];
+    summaryRows.push([
+      'รหัสพนักงาน','ชื่อ-นามสกุล','แผนก','ประเภทการลา',
+      'โควต้า (วัน)','โควต้า (ชม.)',
+      'ใช้ไป (วัน)','ใช้ไป (ชม.)',
+      'คงเหลือ (วัน)','คงเหลือ (ชม.)',
+      'จำนวนใบลา'
+    ]);
+
+    for (const u of users) {
+      const uLeaves = leaves.filter(l => l.user_id === u.id && l.status !== 'rejected');
+      const uQuotas = quotas.filter(q => q.user_id === u.id);
+      const leaveTypes = [...new Set(uLeaves.map(l => l.leave_type))];
+
+      if (leaveTypes.length === 0) {
+        summaryRows.push([u.username, u.name, u.dept, '-', 0,0,0,0,0,0,0]);
+        continue;
+      }
+
+      for (const lt of leaveTypes) {
+        const typeLeaves = uLeaves.filter(l => l.leave_type === lt);
+        const usedHours = typeLeaves.reduce((s,l) => s + parseFloat(l.hours||0), 0);
+        const q = uQuotas.find(q => q.leave_type === lt);
+        const quotaH = q ? parseFloat(q.quota) : 0;
+        const remainH = Math.max(0, quotaH - usedHours);
+
+        summaryRows.push([
+          u.username, u.name, u.dept,
+          LEAVE_LABEL[lt] || lt,
+          Math.round(quotaH/WH*100)/100,
+          Math.round(quotaH*100)/100,
+          Math.round(usedHours/WH*100)/100,
+          Math.round(usedHours*100)/100,
+          Math.round(remainH/WH*100)/100,
+          Math.round(remainH*100)/100,
+          typeLeaves.length
+        ]);
+      }
+    }
+
+    const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
+    ws1['!cols'] = [9,20,12,18,12,12,12,12,12,12,10].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, ws1, 'สรุปรายบุคคล');
+
+    // ===== SHEET 2: รายละเอียดใบลา =====
+    const detailRows = [];
+    detailRows.push([
+      'รหัสพนักงาน','ชื่อ-นามสกุล','แผนก','เลขใบลา','ประเภท','สถานะ',
+      'วันเริ่มลา','เวลาเริ่ม','วันสิ้นสุด','เวลาสิ้นสุด',
+      'จำนวน (ชม.)','จำนวน (วัน)','เหตุผล'
+    ]);
+
+    const userMap = {};
+    users.forEach(u => userMap[u.id] = u);
+
+    for (const l of leaves) {
+      const u = userMap[l.user_id] || {};
+      const s = new Date(l.start_datetime);
+      const e = new Date(l.end_datetime);
+      detailRows.push([
+        u.username||'', l.uname, l.dept,
+        l.leave_no,
+        LEAVE_LABEL[l.leave_type] || l.leave_type,
+        STATUS_LABEL[l.status] || l.status,
+        s.toLocaleDateString('th-TH',{timeZone:'Asia/Bangkok'}),
+        s.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'}),
+        e.toLocaleDateString('th-TH',{timeZone:'Asia/Bangkok'}),
+        e.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'}),
+        Math.round(parseFloat(l.hours||0)*100)/100,
+        Math.round(parseFloat(l.days||0)*100)/100,
+        l.reason||''
+      ]);
+    }
+
+    const ws2 = XLSX.utils.aoa_to_sheet(detailRows);
+    ws2['!cols'] = [9,20,12,14,18,10,12,8,12,8,10,8,30].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, ws2, 'รายละเอียดใบลา');
+
+    // ===== SHEET 3: เปรียบเทียบก่อน-หลัง (จำลอง) =====
+    const compareRows = [];
+    compareRows.push([
+      'ชื่อ-นามสกุล','แผนก','ประเภทการลา',
+      'โควต้าเริ่มต้น (วัน)','ใช้ไปทั้งหมด (วัน)','คงเหลือ (วัน)',
+      '% ที่ใช้ไป'
+    ]);
+
+    for (const u of users) {
+      const uLeaves = leaves.filter(l => l.user_id===u.id && l.status!=='rejected');
+      const uQuotas = quotas.filter(q => q.user_id===u.id);
+      const allTypes = [...new Set([...uQuotas.map(q=>q.leave_type),...uLeaves.map(l=>l.leave_type)])];
+
+      for (const lt of allTypes) {
+        const q = uQuotas.find(q=>q.leave_type===lt);
+        const usedH = uLeaves.filter(l=>l.leave_type===lt).reduce((s,l)=>s+parseFloat(l.hours||0),0);
+        const quotaH = q ? parseFloat(q.quota) : 0;
+        const remainH = Math.max(0, quotaH - usedH);
+        const pct = quotaH > 0 ? Math.round(usedH/quotaH*1000)/10 : 0;
+
+        compareRows.push([
+          u.name, u.dept, LEAVE_LABEL[lt]||lt,
+          Math.round(quotaH/WH*100)/100,
+          Math.round(usedH/WH*100)/100,
+          Math.round(remainH/WH*100)/100,
+          pct + '%'
+        ]);
+      }
+    }
+
+    const ws3 = XLSX.utils.aoa_to_sheet(compareRows);
+    ws3['!cols'] = [20,12,18,16,16,14,10].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, ws3, 'ก่อน-หลังการลา');
+
+    const buf = XLSX.write(wb, { type:'buffer', bookType:'xlsx' });
+    const filename = `leave_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ======== TEMP: RESET DATA (admin only) ========
 app.post('/api/admin/reset-bookings', requireLogin, requireAdmin, async (req, res) => {
   try {
