@@ -871,6 +871,7 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
 
       const WORK_HOURS = 8 + (10 / 60); // 8.1667 ชม./วัน
       const results = { success: [], errors: [] };
+      const supervisorMap = {}; // { empUsername: supervisorEmpId }
 
       for (let i = 0; i < rows.length; i++) {
         const row    = rows[i];
@@ -966,9 +967,28 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
             );
           }
 
+          // เก็บ supervisorEmpId ไว้ทำ pass 2
+          if (supervisorEmpId && String(supervisorEmpId).trim()) {
+            supervisorMap[usernameClean] = String(supervisorEmpId).trim();
+          }
+
           results.success.push({ row: rowNum, username: usernameClean, name });
         } catch (e) {
           results.errors.push({ row: rowNum, error: e.message });
+        }
+      }
+
+      // ===== Pass 2: อัปเดต manager_id =====
+      for (const [empUsername, supEmpId] of Object.entries(supervisorMap)) {
+        try {
+          const supRow = await pool.query('SELECT id FROM users WHERE username=$1', [supEmpId]);
+          if (supRow.rows.length > 0) {
+            await pool.query('UPDATE users SET manager_id=$1 WHERE username=$2', [supRow.rows[0].id, empUsername]);
+          } else {
+            results.errors.push({ row: '-', error: `ไม่พบหัวหน้า "${supEmpId}" สำหรับพนักงาน "${empUsername}"` });
+          }
+        } catch(e) {
+          results.errors.push({ row: '-', error: `update manager_id: ${e.message}` });
         }
       }
 
@@ -1724,7 +1744,7 @@ app.get('/api/admin/leave-report-excel', requireLogin, requireAdmin, async (req,
 });
 
 // ======== TEMP: RESET DATA (admin only) ========
-app.post('/api/admin/reset-bookings', requireLogin, requireAdmin, async (req, res) => {
+app.post('/api/admin/reset-bookings', requireLogin, requireAdmin, async (req, res) =>  {
   try {
     await pool.query('DELETE FROM bookings');
     res.json({ ok: true, message: 'ล้างข้อมูลการจองห้องประชุมทั้งหมดสำเร็จ' });
