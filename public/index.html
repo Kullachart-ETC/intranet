@@ -16,6 +16,14 @@ body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size
 .nav button{background:none;border:none;padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;color:#aaa;font-family:'Sarabun',sans-serif}
 .nav button:hover{background:rgba(255,255,255,.1);color:#fff}
 .nav button.active{background:rgba(255,255,255,.1);color:#fff;font-weight:500}
+.nav-dropdown{position:relative;display:inline-flex}
+.nav-dropdown:hover .dd-menu{display:block}
+.dd-menu{display:none;position:absolute;top:100%;left:0;background:#1D9E75;min-width:210px;border-radius:8px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.2);z-index:100;padding:6px 0}
+.dd-menu a{display:block;padding:9px 16px;color:#fff;font-size:13px;text-decoration:none;font-family:'Sarabun',sans-serif}
+.dd-menu a:hover{background:rgba(255,255,255,.15)}
+.dd-menu a.dd-sub-item{padding-left:30px;font-size:12.5px;color:#eafaf3}
+.dd-header{padding:9px 16px;font-size:12px;font-weight:600;color:#0f2c6f;background:#dbeafe}
+
 .user-area{display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:8px;border-left:1px solid #444;flex-shrink:0}
 .user-name{font-size:12px;color:#ccc;white-space:nowrap}
 .user-badge{font-size:10px;background:#E1F5EE;color:#0F6E56;padding:2px 7px;border-radius:20px}
@@ -178,7 +186,18 @@ tr:last-child td{border-bottom:none}
     <button onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
     <button onclick="showPage('leave',this)">📋 ระบบลาหยุด</button>
     <button onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
-    <button onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
+    <div class="nav-dropdown">
+      <button onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
+      <div class="dd-menu">
+        <a href="/org-docs/board.pdf" target="_blank">คณะกรรมการบริษัท</a>
+        <a href="/org-docs/management.pdf" target="_blank">ทีมผู้บริหาร</a>
+        <div class="dd-header">โครงสร้างบริษัท</div>
+        <a href="/org-docs/structure-head-office.pdf" target="_blank" class="dd-sub-item">Head Office</a>
+        <a href="/org-docs/structure-branch.pdf" target="_blank" class="dd-sub-item">Branch</a>
+        <a href="/org-docs/structure-factory1.pdf" target="_blank" class="dd-sub-item">Factory1</a>
+        <a href="/org-docs/structure-factory2.pdf" target="_blank" class="dd-sub-item">Factory2</a>
+      </div>
+    </div>
     <button onclick="window.location.href='/webboard.html'">💬 เว็บบอร์ด</button>
     <button onclick="window.location.href='/regulations.html'">📜 ระเบียบบริษัท</button>
     <button id="admin-btn" onclick="showPage('admin',this)" style="display:none">⚙️ จัดการผู้ใช้</button>
@@ -901,4 +920,3 @@ async function loadLeave(){
 </footer>
 </body>
 </html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
