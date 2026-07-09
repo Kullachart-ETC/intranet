@@ -319,6 +319,38 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">
+      <div class="sidebar-label">โรงงาน 2</div>
+      <button class="room-btn" id="rb4" onclick="selectRoom(4)">
+        <div class="room-dot" style="background:#DB2777"></div>
+        <div class="room-info">
+          <div class="room-name">โรงงาน 2 - ห้อง 1</div>
+          <div class="room-cap">10 ที่นั่ง</div>
+        </div>
+      </button>
+      <button class="room-btn" id="rb5" onclick="selectRoom(5)">
+        <div class="room-dot" style="background:#0891B2"></div>
+        <div class="room-info">
+          <div class="room-name">โรงงาน 2 - ห้อง 2</div>
+          <div class="room-cap">10 ที่นั่ง</div>
+        </div>
+      </button>
+      <button class="room-btn" id="rb6" onclick="selectRoom(6)">
+        <div class="room-dot" style="background:#65A30D"></div>
+        <div class="room-info">
+          <div class="room-name">โรงงาน 2 - ห้อง 3</div>
+          <div class="room-cap">10 ที่นั่ง</div>
+        </div>
+      </button>
+      <button class="room-btn" id="rb7" onclick="selectRoom(7)">
+        <div class="room-dot" style="background:#9333EA"></div>
+        <div class="room-info">
+          <div class="room-name">โรงงาน 2 - ห้อง 4</div>
+          <div class="room-cap">10 ที่นั่ง</div>
+        </div>
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
       <div class="sidebar-label">คำอธิบาย</div>
       <div style="font-size:11px;color:var(--muted);line-height:1.8;">
         เลือกห้องแล้ว<br>คลิกวันที่เพื่อจอง<br>
@@ -478,6 +510,10 @@ const ROOMS = [
   { name:'Meeting 1', seats:30, color:'#1D5FA5' },
   { name:'Meeting 2', seats:6,  color:'#1D9E75' },
   { name:'Meeting 3', seats:12, color:'#D97706' },
+  { name:'โรงงาน 2 - ห้อง 1', seats:10, color:'#DB2777' },
+  { name:'โรงงาน 2 - ห้อง 2', seats:10, color:'#0891B2' },
+  { name:'โรงงาน 2 - ห้อง 3', seats:10, color:'#65A30D' },
+  { name:'โรงงาน 2 - ห้อง 4', seats:10, color:'#9333EA' },
 ];
 
 // ===== STATE =====
