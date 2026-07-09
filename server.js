@@ -1340,20 +1340,33 @@ app.get('/api/thai-industrial-news', requireLogin, (req, res) => {
   res.json({ items: thaiIndustrialCache.data, fetchedAt: thaiIndustrialCache.fetchedAt });
 });
 
-// ======== EXCHANGE RATES ========
-let fxCache = { data: null, fetchedAt: 0 };
-async function refreshFxRates() {
-  try {
-    const json = await fetchUrl('https://api.frankfurter.app/latest?from=THB&to=USD,EUR,JPY,CNY,SGD,GBP,AUD');
-    fxCache = { data: JSON.parse(json), fetchedAt: Date.now() };
-    console.log('FX rates refreshed');
-  } catch(e) { console.error('FX fetch error:', e.message); }
+// ======== TECHNOLOGY NEWS ========
+let techNewsCache = { data: [], fetchedAt: 0 };
+async function refreshTechNews() {
+  const feeds = [
+    { url: 'https://www.blognone.com/rss.xml', source: 'Blognone' },
+    { url: 'https://feeds.bbci.co.uk/thai/rss.xml', source: 'BBC ไทย' },
+    { url: 'https://thestandard.co/feed/', source: 'The Standard' },
+  ];
+  const keywords = ['เทคโนโลยี','ai','ปัญญาประดิษฐ์','แอป','สมาร์ทโฟน','คอมพิวเตอร์','ซอฟต์แวร์','อินเทอร์เน็ต','ไซเบอร์','startup','สตาร์ทอัพ','นวัตกรรม','เทค','tech','digital','ดิจิทัล','chatgpt','gadget','app','โปรแกรม'];
+  let all = [];
+  for (const feed of feeds) {
+    try { const xml = await fetchUrl(feed.url); all = all.concat(parseRSS(xml, feed.source)); }
+    catch(e) { console.error('Tech news fetch error:', feed.source, e.message); }
+  }
+  const filtered = all.filter(item => {
+    const txt = (item.title + ' ' + item.desc).toLowerCase();
+    return keywords.some(k => txt.includes(k));
+  });
+  const pool2 = (filtered.length >= 3 ? filtered : all).sort((a,b)=>new Date(b.pubDate)-new Date(a.pubDate));
+  techNewsCache = { data: pool2.slice(0, 8), fetchedAt: Date.now() };
+  console.log('Tech news refreshed:', techNewsCache.data.length);
 }
-refreshFxRates().catch(console.error);
-setInterval(() => refreshFxRates().catch(console.error), 60 * 60 * 1000); // every 1hr
+refreshTechNews().catch(console.error);
+setInterval(() => refreshTechNews().catch(console.error), 2 * 60 * 60 * 1000);
 
-app.get('/api/fx-rates', requireLogin, (req, res) => {
-  res.json(fxCache);
+app.get('/api/tech-news', requireLogin, (req, res) => {
+  res.json({ items: techNewsCache.data, fetchedAt: techNewsCache.fetchedAt });
 });
 
 

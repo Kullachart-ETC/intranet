@@ -240,11 +240,11 @@ tr:last-child td{border-bottom:none}
         <div id="econ-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลด...</div></div>
         <div id="econ-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
       </div>
-      <!-- Exchange Rate -->
+      <!-- Technology News -->
       <div class="isms-card">
-        <h3>💱 อัตราแลกเปลี่ยน (THB)</h3>
-        <div id="fx-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลด...</div></div>
-        <div id="fx-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
+        <h3>💻 ข่าวสารเทคโนโลยี</h3>
+        <div id="tech-list"><div style="font-size:12px;color:rgba(255,255,255,.5)">กำลังโหลด...</div></div>
+        <div id="tech-updated" style="font-size:10px;color:rgba(255,255,255,.35);margin-top:10px;text-align:right"></div>
       </div>
       <!-- Thai Industrial -->
       <div class="isms-card">
@@ -797,20 +797,18 @@ async function loadThaiEconNews(){
     if(fetchedAt){const d=new Date(fetchedAt);$('econ-updated').textContent='อัปเดต '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
   }catch(e){console.error('Thai econ news error',e);}
 }
-async function loadFxRates(){
+async function loadTechNews(){
   try{
-    const res=await fetch('/api/fx-rates');if(!res.ok)return;
-    const {data,fetchedAt}=await res.json();
-    const el=$('fx-list');
-    if(!data||!data.rates){el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.5)">ไม่พบข้อมูล</div>';return;}
-    const flags={'USD':'🇺🇸','EUR':'🇪🇺','JPY':'🇯🇵','CNY':'🇨🇳','SGD':'🇸🇬','GBP':'🇬🇧','AUD':'🇦🇺'};
-    const labels={'USD':'ดอลลาร์สหรัฐ','EUR':'ยูโร','JPY':'เยน (×100)','CNY':'หยวน','SGD':'ดอลลาร์สิงคโปร์','GBP':'ปอนด์สเตอร์ลิง','AUD':'ดอลลาร์ออสเตรเลีย'};
-    el.innerHTML='<div class="fx-grid">'+Object.entries(data.rates).map(([cur,rate])=>{
-      const val=cur==='JPY'?(rate*100).toFixed(2):rate.toFixed(4);
-      return`<div class="fx-row"><span class="fx-cur">${flags[cur]||''} ${cur}</span><span class="fx-val">${val}</span></div>`;
-    }).join('')+'</div><div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:6px">1 THB = x หน่วย</div>';
-    if(fetchedAt){const d=new Date(fetchedAt);$('fx-updated').textContent='อัปเดต '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
-  }catch(e){console.error('FX error',e);}
+    const res=await fetch('/api/tech-news');if(!res.ok)return;
+    const {items,fetchedAt}=await res.json();
+    const el=$('tech-list');
+    if(!items||!items.length){el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.5)">ไม่พบข่าว</div>';return;}
+    el.innerHTML=items.slice(0,6).map(n=>`<a href="${n.link}" target="_blank" rel="noopener" class="isms-item">
+      <div class="isms-title">${n.title}</div>
+      <div class="isms-meta">${n.source}${n.pubDate?' · '+new Date(n.pubDate).toLocaleDateString('th-TH',{day:'numeric',month:'short'}):''}</div>
+    </a>`).join('');
+    if(fetchedAt){const d=new Date(fetchedAt);$('tech-updated').textContent='อัปเดต '+d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+  }catch(e){console.error('Tech news error',e);}
 }
 async function loadThaiIndustrialNews(){
   try{
@@ -866,7 +864,7 @@ async function loadLeave(){
     await loadBoard();
     loadIsmsNews();
     loadThaiEconNews();
-    loadFxRates();
+    loadTechNews();
     loadThaiIndustrialNews();
     loadCalendar();
     loadLeave();
@@ -903,3 +901,4 @@ async function loadLeave(){
 </footer>
 </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
