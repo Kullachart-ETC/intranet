@@ -361,7 +361,7 @@ app.post('/api/login', async (req, res) => {
   const user = result.rows[0];
   if (!user || !bcrypt.compareSync(password, user.password))
     return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-  req.session.user = { id: user.id, username: user.username, name: user.name, dept: user.dept, role: user.role, email: user.email };
+  req.session.user = { id: user.id, username: user.username, name: user.name, dept: user.dept, role: user.role, email: user.email, work_schedule: user.work_schedule || 'office' };
   res.json({ ok: true, user: req.session.user });
 });
 app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ ok: true }); });

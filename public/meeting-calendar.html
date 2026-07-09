@@ -57,6 +57,12 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
   letter-spacing: 0.8px; text-transform: uppercase;
   margin-bottom: 8px;
 }
+.site-badge {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  color: #0F6E56; background: #E1F5EE;
+  padding: 1px 6px; border-radius: 20px;
+  letter-spacing: 0; text-transform: none; margin-left: 4px;
+}
 .room-btn {
   display: flex; align-items: center; gap: 8px;
   width: 100%; padding: 9px 10px;
@@ -285,9 +291,9 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 
 <div class="main">
   <!-- SIDEBAR: Room selector -->
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">ห้องประชุม</div>
+  <div class="sidebar" id="roomSidebar">
+    <div class="sidebar-section" id="siteSection-office">
+      <div class="sidebar-label">Office <span class="site-badge" id="siteBadge-office" style="display:none">ฝั่งคุณ</span></div>
       <button class="room-btn active" id="rb0" onclick="selectRoom(0)">
         <div class="room-dot" style="background:#7C3AED"></div>
         <div class="room-info">
@@ -317,9 +323,9 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
         </div>
       </button>
     </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-section">
-      <div class="sidebar-label">โรงงาน 2</div>
+    <div class="sidebar-divider" id="siteDivider"></div>
+    <div class="sidebar-section" id="siteSection-factory">
+      <div class="sidebar-label">โรงงาน 2 <span class="site-badge" id="siteBadge-factory" style="display:none">ฝั่งคุณ</span></div>
       <button class="room-btn" id="rb4" onclick="selectRoom(4)">
         <div class="room-dot" style="background:#DB2777"></div>
         <div class="room-info">
@@ -506,15 +512,16 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 <script>
 // ===== CONFIG =====
 const ROOMS = [
-  { name:'VIP',      nameJP:'VIP',       seats:8,  color:'#7C3AED' },
-  { name:'Meeting 1', seats:30, color:'#1D5FA5' },
-  { name:'Meeting 2', seats:6,  color:'#1D9E75' },
-  { name:'Meeting 3', seats:12, color:'#D97706' },
-  { name:'โรงงาน 2 - ห้อง 1', seats:10, color:'#DB2777' },
-  { name:'โรงงาน 2 - ห้อง 2', seats:10, color:'#0891B2' },
-  { name:'โรงงาน 2 - ห้อง 3', seats:10, color:'#65A30D' },
-  { name:'โรงงาน 2 - ห้อง 4', seats:10, color:'#9333EA' },
+  { name:'VIP',      nameJP:'VIP',       seats:8,  color:'#7C3AED', site:'office' },
+  { name:'Meeting 1', seats:30, color:'#1D5FA5', site:'office' },
+  { name:'Meeting 2', seats:6,  color:'#1D9E75', site:'office' },
+  { name:'Meeting 3', seats:12, color:'#D97706', site:'office' },
+  { name:'โรงงาน 2 - ห้อง 1', seats:10, color:'#DB2777', site:'factory' },
+  { name:'โรงงาน 2 - ห้อง 2', seats:10, color:'#0891B2', site:'factory' },
+  { name:'โรงงาน 2 - ห้อง 3', seats:10, color:'#65A30D', site:'factory' },
+  { name:'โรงงาน 2 - ห้อง 4', seats:10, color:'#9333EA', site:'factory' },
 ];
+const SITE_LABELS = { office:'Office', factory:'โรงงาน 2' };
 
 // ===== STATE =====
 let curDate   = new Date();
@@ -528,7 +535,25 @@ let curView   = 'month';
 // ===== INIT =====
 async function init() {
   try { const r = await fetch('/api/me'); if(r.ok) me = await r.json(); } catch(e){}
+  applyMySiteOrder();
   await loadBookings();
+}
+
+// ===== SITE ORDERING (ป้องกันจองผิดฝั่ง office/โรงงาน 2) =====
+function applyMySiteOrder() {
+  const mySite = me && me.work_schedule === 'factory' ? 'factory' : 'office';
+  const badge = document.getElementById('siteBadge-' + mySite);
+  if (badge) badge.style.display = '';
+  if (mySite === 'factory') {
+    const sidebar  = document.getElementById('roomSidebar');
+    const divider  = document.getElementById('siteDivider');
+    const factory  = document.getElementById('siteSection-factory');
+    const office   = document.getElementById('siteSection-office');
+    if (sidebar && divider && factory && office) {
+      sidebar.insertBefore(factory, office);
+      sidebar.insertBefore(divider, office);
+    }
+  }
 }
 
 // ===== ROOM SELECT =====
@@ -987,6 +1012,13 @@ async function submitBooking() {
   const conflict = bookings.find(b => b.date===modalDate && parseInt(b.room_idx)===selRoom
     && b.slot.split('-')[0]<end && b.slot.split('-')[1]>start);
   if (conflict) { toast(`ช่วงเวลาทับซ้อนกับ ${conflict.slot} (${conflict.name})`, 'err'); return; }
+  // เตือนถ้าจองห้องข้ามฝั่ง (office / โรงงาน 2)
+  const mySite   = me && me.work_schedule === 'factory' ? 'factory' : 'office';
+  const roomSite = ROOMS[selRoom].site || 'office';
+  if (roomSite !== mySite) {
+    const ok = confirm(`ห้องนี้อยู่ฝั่ง "${SITE_LABELS[roomSite]}" แต่คุณสังกัดฝั่ง "${SITE_LABELS[mySite]}"\n\nยืนยันจะจองห้องนี้หรือไม่?`);
+    if (!ok) return;
+  }
   // Encode color into purpose field: "COLOR:#hex|purpose"
   const purposeWithColor = `COLOR:${selColor}|${purp}`;
 
