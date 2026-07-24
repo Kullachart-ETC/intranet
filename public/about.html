@@ -32,6 +32,17 @@ h1{font-size:24px;font-weight:700;margin-bottom:24px}
 .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:16px}
 .info-item label{font-size:12px;color:#888;display:block;margin-bottom:4px}
 .info-item span{font-size:14px;font-weight:500}
+.president-body{display:flex;gap:20px;align-items:flex-start;margin-bottom:16px}
+.president-photo{width:120px;height:auto;border-radius:8px;flex-shrink:0}
+.quote{font-style:italic;color:#333;background:#F5F5F3;border-left:3px solid #1D9E75;padding:12px 16px;border-radius:6px;font-size:13.5px;line-height:1.9}
+.signature{margin-top:12px;font-size:13.5px;color:#444}
+.policy-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.policy-item{display:flex;gap:12px;align-items:flex-start}
+.policy-num{font-size:20px;font-weight:700;color:#1D9E75;flex-shrink:0}
+.policy-item p{font-size:13.5px;line-height:1.6;color:#444}
+.award-list{padding-left:20px}
+.award-list li{font-size:14px;line-height:2;color:#444}
+@media (max-width:600px){.president-body{flex-direction:column}.president-photo{width:100px}}
 </style>
 </head>
 <body>
@@ -62,25 +73,62 @@ h1{font-size:24px;font-weight:700;margin-bottom:24px}
 </nav>
 <div class="page">
   <h1>🏢 เกี่ยวกับเรา</h1>
-  <div class="card">
-    <h2>ประวัติบริษัท</h2>
-    <p>EARTH (THAILAND) CO., LTD. ก่อตั้งขึ้นด้วยเป้าหมายในการพัฒนาและให้บริการด้านวิศวกรรมและเทคโนโลยีชั้นนำ เรามุ่งมั่นที่จะเป็นองค์กรที่ดีที่สุดสำหรับพนักงานและลูกค้าของเรา</p>
+
+  <div class="card president-card">
+    <h2>สาส์นจากประธานบริษัท</h2>
+    <div class="president-body">
+      <img class="president-photo" src="https://www.earth-th.com/wp-content/uploads/2025/01/img-message-president.png" alt="Mr.Kentaro Sato" onerror="this.style.display='none'">
+      <div>
+        <p class="quote">"เราจะใส่ใจต่อสิ่งแวดล้อม สังคม และการกำกับดูแลกิจการให้ดี ภายใต้นโยบายและความรับผิดชอบต่อสังคม"<br>
+        "เราจะสร้างนวัตกรรมใหม่อย่างต่อเนื่อง และท้าทายตัวเองทุกวัน"<br>
+        "เราจะยึดมั่นและให้ความสำคัญกับความปลอดภัยและความมั่นใจ ที่จะทำให้ผู้มีส่วนได้เสียทุกฝ่ายมีความสุขและมีความภาคภูมิใจ"<br>
+        ผมขอขอบคุณในการสนับสนุนที่มีคุณค่า และขอฝากเนื้อฝากตัว</p>
+        <p class="signature"><strong>Mr. Kentaro Sato</strong> (เค็นทาโร ซาโตะ)<br>ประธานบริษัท</p>
+      </div>
+    </div>
+    <p>นับตั้งแต่ก่อตั้งบริษัท เอิร์ธ (ประเทศไทย) เมื่อปี พ.ศ. 2523 ผลิตภัณฑ์ของเราได้มีส่วนช่วยให้คนไทยมีสุขภาพดี และมีชีวิตความเป็นอยู่ที่สะดวกสบายขึ้น ทำให้เราเติบโตขึ้นพร้อมๆ กับสังคมไทย เพื่อผลิตสินค้าให้หลากหลายได้คุณภาพดีและเป็นที่รักของลูกค้า เราจึงใส่ใจและรับฟังความต้องการของลูกค้าเสมอ</p>
+    <p>สำหรับประเทศไทย เราได้ประกาศคำขวัญ "ท้าทายและเปลี่ยนแปลง" (Challenge &amp; Change) โดยเราได้เปลี่ยนแปลงวิธีการทำงาน และทำให้ถึงเป้าหมายที่ท้าทายตนเอง เพื่อให้สามารถตอบสนองความต้องการของลูกค้าได้อย่างฉับไว</p>
   </div>
+
   <div class="card">
-    <h2>วิสัยทัศน์</h2>
-    <p>เป็นองค์กรชั้นนำที่ให้บริการด้านวิศวกรรมและเทคโนโลยีอย่างยั่งยืน ด้วยความเป็นเลิศและความรับผิดชอบต่อสังคม</p>
+    <h2>ปรัชญาการบริหารงานของบริษัท เอิร์ธ (ประเทศไทย) จำกัด</h2>
+    <p class="quote">"เราเข้าถึงชีวิตความเป็นอยู่ของสรรพสิ่ง ด้วยความตระหนักรู้ในความเป็นประเทศไทยและภูมิภาคเอเชียตะวันออกเฉียงใต้"</p>
   </div>
+
   <div class="card">
-    <h2>พันธกิจ</h2>
-    <p>มุ่งมั่นพัฒนาบุคลากร นวัตกรรม และกระบวนการทำงาน เพื่อตอบสนองความต้องการของลูกค้าอย่างมีประสิทธิภาพสูงสุด</p>
+    <h2>นโยบายของบริษัท</h2>
+    <div class="policy-grid">
+      <div class="policy-item"><div class="policy-num">01</div><p>สร้างตลาดใหม่ ให้ตอบสนองความต้องการของลูกค้า</p></div>
+      <div class="policy-item"><div class="policy-num">02</div><p>กำหนดบทบาท หน้าที่ ความรับผิดชอบที่ชัดเจน และบริหารความเสี่ยงอย่างเหมาะสม</p></div>
+      <div class="policy-item"><div class="policy-num">03</div><p>คิดสร้างสรรค์ และลงมือทำทันที</p></div>
+      <div class="policy-item"><div class="policy-num">04</div><p>มีการสื่อสารและประสานงานที่ดีระหว่าง ญี่ปุ่น-ไทย</p></div>
+    </div>
   </div>
+
+  <div class="card">
+    <h2>ธุรกิจของเรา</h2>
+    <p>เริ่มก่อตั้งบริษัทครั้งแรกภายใต้ชื่อ <strong>บริษัท โอเชี่ยน แอนด์ โอซูก้า จำกัด</strong> เมื่อวันที่ 21 พฤษภาคม พ.ศ. 2523 ด้วยทุนจดทะเบียน 10 ล้านบาท เพื่อดำเนินธุรกิจจำหน่ายผลิตภัณฑ์ <strong>"อาท"</strong> จากนั้นได้เปลี่ยนชื่อเป็น <strong>บริษัท อาท (ประเทศไทย) จำกัด</strong> ในปี พ.ศ. 2526 และในปี พ.ศ. 2561 บริษัทได้เปลี่ยนชื่อเพื่อให้สัมพันธ์กับบริษัทแม่ (เอิร์ธ คอร์ปอเรชั่น) เป็น <strong>บริษัท เอิร์ธ (ประเทศไทย) จำกัด</strong> ตลอดระยะเวลากว่า 45 ปี บริษัทฯ ได้แสดงถึงศักยภาพในการเป็นผู้ผลิตและจัดจำหน่ายผลิตภัณฑ์ป้องกันกำจัดยุงและแมลงภายใต้ยี่ห้อ <strong>"อาท"</strong> ผลิตภัณฑ์น้ำหอมปรับอากาศภายใต้ยี่ห้อ <strong>"โอเอซิส"</strong> และ <strong>"เดลี่เฟรช"</strong> ผลิตภัณฑ์น้ำยาบ้วนปากภายใต้ยี่ห้อ <strong>"มอนดามิน"</strong> อีกทั้ง <strong>"แอร์คอน"</strong> สเปรย์ทำความสะอาดเครื่องปรับอากาศ ซึ่งล้วนผลิตโดยใช้เทคโนโลยีชั้นนำจากประเทศญี่ปุ่น</p>
+    <p>ผลิตภัณฑ์ของบริษัทฯ ไม่ได้จัดจำหน่ายแค่เพียงในประเทศไทย แต่ยังขยายตลาดไปสู่ประเทศเพื่อนบ้าน 4 ประเทศ CLMV ได้แก่ กัมพูชา ลาว พม่า และเวียดนาม บริษัทได้รับการรับรองคุณภาพระบบมาตรฐานสำหรับการผลิตผลิตภัณฑ์กำจัดยุงและแมลงที่ใช้ในบ้านเรือนจากสำนักงานคณะกรรมการอาหารและยา (อย.) กระทรวงสาธารณสุข ตั้งแต่ปี 2545 เป็นต้นมา</p>
+  </div>
+
+  <div class="card">
+    <h2>รางวัลและความภาคภูมิใจ (Our Pride)</h2>
+    <ul class="award-list">
+      <li>รางวัลดำเนินการบริหารจัดการด้านสิ่งแวดล้อม</li>
+      <li>ได้รับมาตรฐานการผลิตที่มีคุณภาพ</li>
+      <li>รางวัล อย. Quality Award 2 ปี</li>
+      <li>รางวัล Innovation Package Design Award</li>
+    </ul>
+  </div>
+
   <div class="card">
     <h2>ข้อมูลบริษัท</h2>
     <div class="info-grid">
-      <div class="info-item"><label>ชื่อบริษัท</label><span>EARTH (THAILAND) CO., LTD.</span></div>
-      <div class="info-item"><label>ก่อตั้ง</label><span>-</span></div>
+      <div class="info-item"><label>ชื่อบริษัท</label><span>บริษัท เอิร์ธ (ประเทศไทย) จำกัด</span></div>
+      <div class="info-item"><label>ก่อตั้ง</label><span>21 พฤษภาคม 2523</span></div>
+      <div class="info-item"><label>ทุนจดทะเบียน</label><span>500 ล้านบาท</span></div>
       <div class="info-item"><label>จำนวนพนักงาน</label><span id="emp-count">-</span></div>
-      <div class="info-item"><label>ที่ตั้ง</label><span>ประเทศไทย</span></div>
+      <div class="info-item"><label>ตลาด</label><span>ไทย และ CLMV (กัมพูชา ลาว พม่า เวียดนาม)</span></div>
     </div>
   </div>
 </div>
