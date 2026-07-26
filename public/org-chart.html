@@ -209,6 +209,35 @@ function goTree(siteKey, deptIdx){
   drawConnectors(members);
 }
 
+// เส้นเชื่อมในผังนี้แสดง "ลำดับชั้นตำแหน่ง" (แถวล่างต่อจากแถวบนถัดไปเสมอ ห้ามข้ามระดับ)
+// ซึ่งอาจไม่ใช่คนเดียวกับ "รหัสหัวหน้า" ที่ใช้อนุมัติใบลา (เพราะบางบริษัทให้อนุมัติข้ามระดับได้)
+// "รหัสหัวหน้า" ถูกใช้แค่ช่วยตัดสินใจตอนแถวบนถัดไปมีมากกว่า 1 คน ว่าควรต่อกับใคร
+function visualParentOf(members){
+  const byId = new Map(members.map(u=>[u.id, u]));
+  function managerChain(u){
+    const chain = []; const seen = new Set([u.id]); let cur = u;
+    while(cur.manager_id && byId.has(cur.manager_id) && !seen.has(cur.manager_id)){
+      cur = byId.get(cur.manager_id);
+      chain.push(cur);
+      seen.add(cur.id);
+    }
+    return chain;
+  }
+
+  const parentOf = new Map();
+  members.forEach(u=>{
+    const myRank = rankOf(u);
+    const seniorRanks = members.filter(x=>x.id!==u.id && rankOf(x)<myRank).map(x=>rankOf(x));
+    if(!seniorRanks.length){ parentOf.set(u.id, null); return; }
+    const nearestRank = Math.max(...seniorRanks);
+    const candidates = members.filter(x=>x.id!==u.id && rankOf(x)===nearestRank);
+    if(candidates.length === 1){ parentOf.set(u.id, candidates[0].id); return; }
+    const viaChain = managerChain(u).find(a=>candidates.some(c=>c.id===a.id));
+    parentOf.set(u.id, viaChain ? viaChain.id : candidates[0].id);
+  });
+  return parentOf;
+}
+
 function drawConnectors(members){
   const canvas = document.getElementById('tree-canvas');
   const svg = document.getElementById('tree-svg');
@@ -219,12 +248,13 @@ function drawConnectors(members){
   svg.style.width = w + 'px';
   svg.style.height = h + 'px';
 
-  const idSet = new Set(members.map(u=>u.id));
+  const parentOf = visualParentOf(members);
   let paths = '';
   members.forEach(u=>{
-    if(!u.manager_id || !idSet.has(u.manager_id) || u.manager_id === u.id) return;
+    const parentId = parentOf.get(u.id);
+    if(!parentId) return;
     const childEl  = canvas.querySelector(`[data-id="${u.id}"]`);
-    const parentEl = canvas.querySelector(`[data-id="${u.manager_id}"]`);
+    const parentEl = canvas.querySelector(`[data-id="${parentId}"]`);
     if(!childEl || !parentEl) return;
     const c = childEl.getBoundingClientRect();
     const p = parentEl.getBoundingClientRect();
