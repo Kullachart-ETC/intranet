@@ -781,9 +781,10 @@ async function bulkUpload(){
     const r=await fetch('/api/users/bulk-upload',{method:'POST',body:fd});
     const d=await r.json();
     if(r.ok){
-      alertEl.className='alert alert-ok';
-      alertEl.textContent=`นำเข้าสำเร็จ ${d.added} คน${d.skipped?` (ข้ามซ้ำ ${d.skipped} คน)`:''}`;
-      $('bulk-result').textContent=d.details||'';
+      alertEl.className=d.error_count?'alert alert-err':'alert alert-ok';
+      alertEl.textContent=`นำเข้าสำเร็จ ${d.success_count} คน${d.error_count?` (ผิดพลาด ${d.error_count} แถว)`:''}`;
+      $('bulk-result').textContent=(d.errors&&d.errors.length)?d.errors.map(e=>`แถว ${e.row}: ${e.error}`).join('\n'):'';
+      $('bulk-result').style.whiteSpace='pre-line';
       $('bulk-file').value='';
       loadUsers();loadUsersForSelect();
     }else{alertEl.className='alert alert-err';alertEl.textContent=d.error||'เกิดข้อผิดพลาด';}
