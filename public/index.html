@@ -17,13 +17,6 @@ body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size
 .nav button{background:none;border:none;padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;color:#aaa;font-family:'Sarabun',sans-serif}
 .nav button:hover{background:rgba(255,255,255,.1);color:#fff}
 .nav button.active{background:rgba(255,255,255,.1);color:#fff;font-weight:500}
-.nav-dropdown{position:relative;display:inline-flex}
-.nav-dropdown:hover .dd-menu{display:block}
-.dd-menu{display:none;position:absolute;top:100%;left:0;background:#1D9E75;min-width:210px;border-radius:8px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.2);z-index:100;padding:6px 0}
-.dd-menu a{display:block;padding:9px 16px;color:#fff;font-size:13px;text-decoration:none;font-family:'Sarabun',sans-serif}
-.dd-menu a:hover{background:rgba(255,255,255,.15)}
-.dd-menu a.dd-sub-item{padding-left:30px;font-size:12.5px;color:#eafaf3}
-.dd-header{padding:9px 16px;font-size:12px;font-weight:600;color:#0f2c6f;background:#dbeafe}
 
 .user-area{display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:8px;border-left:1px solid #444;flex-shrink:0}
 .user-name{font-size:12px;color:#ccc;white-space:nowrap}
@@ -193,18 +186,7 @@ tr:last-child td{border-bottom:none}
     <button onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
     <button onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
     <button onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
-    <div class="nav-dropdown">
-      <button onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
-      <div class="dd-menu">
-        <a href="/org-docs/board.pdf" target="_blank">คณะกรรมการบริษัท</a>
-        <a href="/org-docs/management.pdf" target="_blank">ทีมผู้บริหาร</a>
-        <div class="dd-header">โครงสร้างบริษัท</div>
-        <a href="/org-docs/structure-head-office.pdf" target="_blank" class="dd-sub-item">Head Office</a>
-        <a href="/org-docs/structure-branch.pdf" target="_blank" class="dd-sub-item">Branch</a>
-        <a href="/org-docs/structure-factory1.pdf" target="_blank" class="dd-sub-item">Factory1</a>
-        <a href="/org-docs/structure-factory2.pdf" target="_blank" class="dd-sub-item">Factory2</a>
-      </div>
-    </div>
+    <button onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
     <button onclick="window.location.href='/webboard.html'">💬 เว็บบอร์ด</button>
     <button onclick="window.location.href='/regulations.html'">📜 ระเบียบบริษัท</button>
     <button id="admin-btn" onclick="showPage('admin',this)" style="display:none">⚙️ จัดการผู้ใช้</button>
@@ -347,6 +329,9 @@ tr:last-child td{border-bottom:none}
       <div class="form-row" style="margin:0"><label>โควต้าลาพักร้อน (วัน/ปี)</label><input id="new-quota" type="number" value="6" min="0" max="30"></div>
       <div class="form-row" style="margin:0"><label>รูปแบบเวลาทำงาน</label><select id="new-schedule"><option value="office">สำนักงาน (8:30-17:40)</option><option value="factory">โรงงาน (8:00-17:00)</option></select></div>
       <div class="form-row" style="margin:0"><label>สิทธิ์</label><select id="new-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+      <div class="form-row" style="margin:0"><label>ตำแหน่ง</label><input id="new-position" type="text" placeholder="Developer"></div>
+      <div class="form-row" style="margin:0"><label>เบอร์โทรภายใน</label><input id="new-tel-ext" type="text" placeholder="109"></div>
+      <div class="form-row" style="margin:0"><label>Site (โครงสร้างองค์กร)</label><select id="new-org-site"><option value="">— ไม่ระบุ —</option><option value="head_office">Head Office</option><option value="branch">Branch</option><option value="factory1">Factory1</option><option value="factory2">Factory2</option></select></div>
     </div>
     <button class="btn btn-primary" onclick="addUser()">+ เพิ่มผู้ใช้</button>
   </div>
@@ -779,9 +764,9 @@ async function loadUsers(){
 async function addUser(){
   const alertEl=$('admin-alert');alertEl.className='alert';alertEl.textContent='';
   try{
-    await api('/users','POST',{username:$('new-username').value.trim(),password:$('new-password').value,name:$('new-name').value.trim(),dept:$('new-dept').value.trim(),role:$('new-role').value,email:$('new-email').value.trim(),manager_id:$('new-manager').value||null,start_date:$('new-start-date').value||null,annual_leave_quota:$('new-quota').value||6,work_schedule:$('new-schedule').value||'office'});
+    await api('/users','POST',{username:$('new-username').value.trim(),password:$('new-password').value,name:$('new-name').value.trim(),dept:$('new-dept').value.trim(),role:$('new-role').value,email:$('new-email').value.trim(),manager_id:$('new-manager').value||null,start_date:$('new-start-date').value||null,annual_leave_quota:$('new-quota').value||6,work_schedule:$('new-schedule').value||'office',position:$('new-position').value.trim()||null,tel_ext:$('new-tel-ext').value.trim()||null,org_site:$('new-org-site').value||null});
     alertEl.className='alert alert-ok';alertEl.textContent='เพิ่มผู้ใช้สำเร็จ';
-    ['new-username','new-password','new-name','new-dept','new-email','new-start-date'].forEach(id=>$(id).value='');
+    ['new-username','new-password','new-name','new-dept','new-email','new-start-date','new-position','new-tel-ext'].forEach(id=>$(id).value='');
     loadUsers();loadUsersForSelect();
   }catch(e){alertEl.className='alert alert-err';alertEl.textContent=e.message;}
 }

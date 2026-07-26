@@ -15,33 +15,54 @@
 .nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
 a.nav-home{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#1D9E75;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
 a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
-.nav-dropdown{position:relative}
-.nav-dropdown>.dd-trigger{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s;display:inline-block}
-.nav-dropdown:hover>.dd-trigger,.nav-dropdown>.dd-trigger.active{color:#fff;background:rgba(255,255,255,.1)}
-.dd-menu{display:none;position:absolute;top:100%;left:0;background:#1D9E75;min-width:210px;border-radius:8px;overflow:hidden;box-shadow:0 6px 16px rgba(0,0,0,.25);z-index:200;padding:6px 0}
-.nav-dropdown:hover .dd-menu{display:block}
-.dd-menu a{display:block;padding:9px 16px;color:#fff;font-size:13px;text-decoration:none}
-.dd-menu a:hover{background:rgba(255,255,255,.15)}
-.dd-menu a.dd-sub-item{padding-left:30px;font-size:12.5px;color:#e8f5ee}
-.dd-header{padding:9px 16px;font-size:12px;font-weight:700;color:#0f2c6f;background:#dbeafe;margin-top:2px}
-
 .nav-right{display:flex;align-items:center;gap:8px}
 .nav-user{color:#ccc;font-size:12px}
 .btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
 .page{max-width:1100px;margin:0 auto;padding:32px 16px}
-h1{font-size:22px;font-weight:700;margin-bottom:24px}
-.org-wrap{overflow-x:auto;padding:20px 0}
-.org-tree{display:flex;flex-direction:column;align-items:center;gap:0}
-.level{display:flex;justify-content:center;gap:24px;position:relative;padding:0 12px}
-.node{background:#fff;border:2px solid #1D9E75;border-radius:10px;padding:12px 20px;text-align:center;min-width:130px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
-.node.top{border-color:#0f2c6f;background:#0f2c6f;color:#fff}
-.node .title{font-size:11px;color:#888;margin-bottom:2px}
-.node.top .title{color:#aac}
-.node .name{font-size:13px;font-weight:600}
-.connector{height:32px;display:flex;align-items:center;justify-content:center}
-.connector::after{content:'';display:block;width:2px;height:100%;background:#ddd}
-.h-line{height:2px;background:#ddd;margin:0 auto}
-.loading{text-align:center;color:#aaa;padding:48px}
+h1{font-size:22px;font-weight:700;margin-bottom:20px}
+
+/* TOP TABS */
+.top-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.top-tab{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;border:1px solid #ddd;background:#fff;font-size:13.5px;font-weight:600;color:#444;text-decoration:none;cursor:pointer;font-family:inherit;transition:.15s}
+.top-tab:hover{border-color:#1D9E75;color:#1D9E75}
+.top-tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff}
+
+/* BREADCRUMB */
+.crumb{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:#888;margin-bottom:18px}
+.crumb button{background:none;border:none;color:#1D9E75;font-family:inherit;font-size:13px;cursor:pointer;padding:2px 4px;font-weight:600}
+.crumb button:hover{text-decoration:underline}
+.crumb span.sep{color:#ccc}
+.crumb span.here{color:#1a1a18;font-weight:600}
+
+/* SITE / DEPT CARDS */
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.pick-card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.pick-card:hover{border-color:#1D9E75;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.pick-card .pick-icon{font-size:28px;color:#1D9E75;margin-bottom:10px}
+.pick-card .pick-name{font-size:14px;font-weight:600}
+.pick-card .pick-count{font-size:12px;color:#888;margin-top:4px}
+.empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
+
+/* ORG TREE (classic CSS org-chart pattern) */
+.tree-wrap{overflow-x:auto;padding:20px 0 40px}
+.tree, .tree ul{display:flex;justify-content:center}
+.tree ul{padding-top:28px;position:relative}
+.tree li{list-style:none;position:relative;padding:28px 12px 0;display:flex;flex-direction:column;align-items:center}
+.tree li::before,.tree li::after{content:'';position:absolute;top:0;right:50%;border-top:2px solid #d8dcd6;width:50%;height:28px}
+.tree li::after{right:auto;left:50%;border-left:2px solid #d8dcd6}
+.tree li:only-child::after,.tree li:only-child::before{display:none}
+.tree li:only-child{padding-top:0}
+.tree li:first-child::before{border:0 none}
+.tree li:last-child::after{border:0 none}
+.tree li:last-child::before{border-right:2px solid #d8dcd6;border-radius:0 6px 0 0}
+.tree li:first-child::after{border-radius:6px 0 0 0}
+.tree ul ul::before{content:'';position:absolute;top:0;left:50%;border-left:2px solid #d8dcd6;width:0;height:28px}
+
+.org-node{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:14px 16px;min-width:170px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.org-node .avatar{width:44px;height:44px;border-radius:50%;background:#E8F5F0;color:#1D9E75;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 8px}
+.org-node .n-name{font-size:13.5px;font-weight:700;text-align:center}
+.org-node .n-pos{font-size:12px;color:#1D9E75;text-align:center;margin-top:2px}
+.org-node .n-meta{font-size:11px;color:#888;text-align:center;margin-top:6px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -50,18 +71,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:24px}
   <div class="nav-links">
     <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
     <a href="/about.html">เกี่ยวกับเรา</a>
-    <div class="nav-dropdown">
-      <a href="/org-chart.html" class="dd-trigger active">โครงสร้างองค์กร</a>
-      <div class="dd-menu">
-    <a href="/org-docs/board.pdf" target="_blank">คณะกรรมการบริษัท</a>
-    <a href="/org-docs/management.pdf" target="_blank">ทีมผู้บริหาร</a>
-    <div class="dd-header">โครงสร้างบริษัท</div>
-    <a href="/org-docs/structure-head-office.pdf" target="_blank" class="dd-sub-item">Head Office</a>
-    <a href="/org-docs/structure-branch.pdf" target="_blank" class="dd-sub-item">Branch</a>
-    <a href="/org-docs/structure-factory1.pdf" target="_blank" class="dd-sub-item">Factory1</a>
-    <a href="/org-docs/structure-factory2.pdf" target="_blank" class="dd-sub-item">Factory2</a>
-      </div>
-    </div>
+    <a href="/org-chart.html" class="active">โครงสร้างองค์กร</a>
     <a href="/news.html">ข่าวสารกิจกรรม</a>
     <a href="/webboard.html">เว็บบอร์ด</a>
     <a href="/regulations.html">ระเบียบบริษัท</a>
@@ -72,52 +82,121 @@ h1{font-size:22px;font-weight:700;margin-bottom:24px}
 </nav>
 <div class="page">
   <h1>🏗 โครงสร้างองค์กร</h1>
-  <div class="org-wrap" id="org-wrap"><div class="loading">กำลังโหลด...</div></div>
+
+  <div class="top-tabs">
+    <a class="top-tab" href="/org-docs/board.pdf" target="_blank"><i class="ti ti-users"></i> คณะกรรมการบริษัท</a>
+    <a class="top-tab" href="/org-docs/management.pdf" target="_blank"><i class="ti ti-briefcase"></i> ทีมผู้บริหาร</a>
+    <button class="top-tab active" id="tab-structure" onclick="goSites()"><i class="ti ti-sitemap"></i> โครงสร้างบริษัท</button>
+  </div>
+
+  <div class="crumb" id="crumb"></div>
+  <div id="content"><div class="empty">กำลังโหลด...</div></div>
 </div>
 <script>
 async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
 
-function buildNode(u, isTop=false){
-  return `<div class="node${isTop?' top':''}">
-    <div class="title">${u.dept||''}</div>
-    <div class="name">${u.name}</div>
+const SITES = [
+  { key:'head_office', label:'Head Office', icon:'ti-building-skyscraper' },
+  { key:'branch',      label:'Branch',      icon:'ti-building-store' },
+  { key:'factory1',    label:'Factory1',    icon:'ti-building-factory-2' },
+  { key:'factory2',    label:'Factory2',    icon:'ti-building-factory-2' }
+];
+const SITE_LABEL = Object.fromEntries(SITES.map(s=>[s.key,s.label]));
+
+let orgData = [];
+let currentDepts = [];
+let state = { site:null, dept:null };
+
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderCrumb(){
+  const parts = [`<button onclick="goSites()">โครงสร้างบริษัท</button>`];
+  if(state.site){
+    parts.push('<span class="sep">›</span>');
+    parts.push(state.dept
+      ? `<button onclick="goDepts('${state.site}')">${esc(SITE_LABEL[state.site])}</button>`
+      : `<span class="here">${esc(SITE_LABEL[state.site])}</span>`);
+  }
+  if(state.dept){
+    parts.push('<span class="sep">›</span>');
+    parts.push(`<span class="here">${esc(state.dept)}</span>`);
+  }
+  document.getElementById('crumb').innerHTML = parts.join('');
+}
+
+function goSites(){
+  state.site = null; state.dept = null;
+  renderCrumb();
+  const html = SITES.map(s=>{
+    const count = orgData.filter(u=>u.org_site===s.key).length;
+    return `<div class="pick-card" onclick="goDepts('${s.key}')">
+      <div class="pick-icon"><i class="ti ${s.icon}"></i></div>
+      <div class="pick-name">${esc(s.label)}</div>
+      <div class="pick-count">${count} คน</div>
+    </div>`;
+  }).join('');
+  document.getElementById('content').innerHTML = `<div class="pick-grid">${html}</div>`;
+}
+
+function goDepts(siteKey){
+  state.site = siteKey; state.dept = null;
+  renderCrumb();
+  const members = orgData.filter(u=>u.org_site===siteKey);
+  if(!members.length){
+    document.getElementById('content').innerHTML = '<div class="empty">ยังไม่มีข้อมูลพนักงานสำหรับ Site นี้</div>';
+    return;
+  }
+  const depts = [...new Set(members.map(u=>u.dept))].sort();
+  currentDepts = depts;
+  const html = depts.map((d,i)=>{
+    const count = members.filter(u=>u.dept===d).length;
+    return `<div class="pick-card" onclick="goTree('${siteKey}', ${i})">
+      <div class="pick-icon"><i class="ti ti-folder"></i></div>
+      <div class="pick-name">${esc(d)}</div>
+      <div class="pick-count">${count} คน</div>
+    </div>`;
+  }).join('');
+  document.getElementById('content').innerHTML = `<div class="pick-grid">${html}</div>`;
+}
+
+function nodeHTML(u){
+  const meta = [u.tel_ext?`☎ ${esc(u.tel_ext)}`:'', u.email?esc(u.email):''].filter(Boolean).join(' · ');
+  return `<div class="org-node">
+    <div class="avatar"><i class="ti ti-user"></i></div>
+    <div class="n-name">${esc(u.name)}</div>
+    ${u.position?`<div class="n-pos">${esc(u.position)}</div>`:''}
+    ${meta?`<div class="n-meta">${meta}</div>`:''}
   </div>`;
+}
+
+function buildTree(nodes, all){
+  if(!nodes.length) return '';
+  return `<ul>${nodes.map(n=>{
+    const kids = all.filter(u=>u.manager_id===n.id);
+    return `<li>${nodeHTML(n)}${buildTree(kids, all)}</li>`;
+  }).join('')}</ul>`;
+}
+
+function goTree(siteKey, deptIdx){
+  const dept = currentDepts[deptIdx];
+  state.site = siteKey; state.dept = dept;
+  renderCrumb();
+  const members = orgData.filter(u=>u.org_site===siteKey && u.dept===dept);
+  const idSet = new Set(members.map(u=>u.id));
+  const roots = members.filter(u=>!u.manager_id || !idSet.has(u.manager_id));
+  document.getElementById('content').innerHTML =
+    `<div class="tree-wrap"><div class="tree">${buildTree(roots, members)}</div></div>`;
 }
 
 (async()=>{
   try{
-    const me=await fetch('/api/me').then(r=>r.json());
-    if(me.error){window.location.href='/login.html';return;}
-    document.getElementById('nav-user').textContent=me.name;
+    const me = await fetch('/api/me').then(r=>r.json());
+    if(me.error){ window.location.href='/login.html'; return; }
+    document.getElementById('nav-user').textContent = me.name;
 
-    const users=await fetch('/api/users').then(r=>r.ok?r.json():[]).catch(()=>[]);
-    if(!users.length){document.getElementById('org-wrap').innerHTML='<div class="loading">ไม่พบข้อมูล</div>';return;}
-
-    // Build tree: group by dept
-    const depts={};
-    const tops=users.filter(u=>!u.manager_id);
-    const rest=users.filter(u=>u.manager_id);
-
-    // Simple view: top-level then by dept
-    const deptMap={};
-    users.forEach(u=>{if(!deptMap[u.dept||'ทั่วไป'])deptMap[u.dept||'ทั่วไป']=[];deptMap[u.dept||'ทั่วไป'].push(u);});
-
-    let html='<div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center">';
-    Object.entries(deptMap).forEach(([dept,members])=>{
-      html+=`<div style="background:#fff;border-radius:12px;padding:16px 20px;min-width:160px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-        <div style="font-size:12px;font-weight:700;color:#1D9E75;margin-bottom:12px;border-bottom:2px solid #E8F5F0;padding-bottom:6px">📂 ${dept}</div>`;
-      members.forEach(u=>{
-        const isMgr=users.some(x=>x.manager_id===u.id);
-        html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f0">
-          <span style="font-size:16px">${isMgr?'👔':'👤'}</span>
-          <div><div style="font-size:13px;font-weight:${isMgr?'600':'400'}">${u.name}</div>
-          ${u.manager_id?'':'<div style="font-size:11px;color:#888">หัวหน้า</div>'}</div></div>`;
-      });
-      html+='</div>';
-    });
-    html+='</div>';
-    document.getElementById('org-wrap').innerHTML=html;
-  }catch(e){window.location.href='/login.html';}
+    orgData = await fetch('/api/org-chart').then(r=>r.ok?r.json():[]).catch(()=>[]);
+    goSites();
+  }catch(e){ window.location.href='/login.html'; }
 })();
 </script>
 </body></html>
