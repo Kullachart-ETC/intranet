@@ -43,20 +43,14 @@ h1{font-size:22px;font-weight:700;margin-bottom:20px}
 .pick-card .pick-count{font-size:12px;color:#888;margin-top:4px}
 .empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
 
-/* ORG TREE (classic CSS org-chart pattern) */
-.tree-wrap{overflow-x:auto;padding:20px 0 40px}
-.tree{display:table;margin:0 auto}
-.tree ul{display:flex;justify-content:center;padding-top:28px;position:relative}
-.tree li{list-style:none;position:relative;padding:28px 12px 0;display:flex;flex-direction:column;align-items:center}
-.tree li::before,.tree li::after{content:'';position:absolute;top:0;right:50%;border-top:2px solid #d8dcd6;width:50%;height:28px}
-.tree li::after{right:auto;left:50%;border-left:2px solid #d8dcd6}
-.tree li:only-child::after,.tree li:only-child::before{display:none}
-.tree li:only-child{padding-top:0}
-.tree li:first-child::before{border:0 none}
-.tree li:last-child::after{border:0 none}
-.tree li:last-child::before{border-right:2px solid #d8dcd6;border-radius:0 6px 0 0}
-.tree li:first-child::after{border-radius:6px 0 0 0}
-.tree ul ul::before{content:'';position:absolute;top:0;left:50%;border-left:2px solid #d8dcd6;width:0;height:28px}
+/* ORG TREE — laid out in rows by position rank (Sr. Manager row, Manager row, ...
+   down to Staff row); connector lines follow the actual "รหัสหัวหน้า" (manager_id)
+   relationship even when it skips rank rows, drawn with SVG after layout. */
+.tree-wrap{overflow-x:auto;padding:10px 0 40px}
+.tree-canvas{position:relative;display:inline-block;min-width:100%;padding:20px 40px;box-sizing:border-box}
+#tree-svg{position:absolute;top:0;left:0;pointer-events:none}
+.org-row{display:flex;justify-content:center;gap:28px;position:relative;z-index:1;margin-bottom:64px}
+.org-row:last-child{margin-bottom:0}
 
 .org-node{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:14px 16px;min-width:170px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .org-node .avatar{width:44px;height:44px;border-radius:50%;background:#E8F5F0;color:#1D9E75;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 8px}
@@ -103,8 +97,8 @@ const SITES = [
 ];
 const SITE_LABEL = Object.fromEntries(SITES.map(s=>[s.key,s.label]));
 
-// ลำดับชั้นตำแหน่ง ใช้เรียงพี่น้องในระดับเดียวกันของผังองค์กร (มาก่อน = อาวุโสกว่า)
-// tree ยังยึด "รหัสหัวหน้า" (manager_id) เป็นตัวกำหนดสายบังคับบัญชาเหมือนเดิม
+// ลำดับชั้นตำแหน่ง กำหนด "แถว" ที่แต่ละคนจะถูกวางในผังองค์กร (มาก่อน = แถวบนกว่า)
+// เส้นเชื่อมระหว่างแถวยังคงยึด "รหัสหัวหน้า" (manager_id) จริงเสมอ — มีผลกับการอนุมัติใบลาด้วย
 const POSITION_RANK = [
   'sr. manager', 'manager', 'vice manager', 'asst. manager',
   'senior supervisor', 'supervisor', 'chief', 'staff'
@@ -113,7 +107,6 @@ function rankOf(u){
   const i = POSITION_RANK.indexOf(String(u.position||'').trim().toLowerCase());
   return i === -1 ? POSITION_RANK.length : i;
 }
-function byRank(a, b){ return rankOf(a) - rankOf(b); }
 
 let orgData = [];
 let currentDepts = [];
@@ -173,31 +166,70 @@ function goDepts(siteKey){
 
 function nodeHTML(u){
   const meta = [u.tel_ext?`☎ ${esc(u.tel_ext)}`:'', u.email?esc(u.email):''].filter(Boolean).join(' · ');
-  return `<div class="org-node">
+  return `<div class="org-node-wrap" data-id="${u.id}"><div class="org-node">
     <div class="avatar"><i class="ti ti-user"></i></div>
     <div class="n-name">${esc(u.name)}</div>
     ${u.position?`<div class="n-pos">${esc(u.position)}</div>`:''}
     ${meta?`<div class="n-meta">${meta}</div>`:''}
-  </div>`;
+  </div></div>`;
 }
 
-function buildTree(nodes, all){
-  if(!nodes.length) return '';
-  return `<ul>${[...nodes].sort(byRank).map(n=>{
-    const kids = all.filter(u=>u.manager_id===n.id);
-    return `<li>${nodeHTML(n)}${buildTree(kids, all)}</li>`;
-  }).join('')}</ul>`;
-}
-
+// วางเป็นแถวตามลำดับตำแหน่ง (rank เดียวกัน = แถวเดียวกัน) แล้วลากเส้นเชื่อมตาม
+// "รหัสหัวหน้า" จริง ถึงจะข้ามหลายระดับตำแหน่งก็เชื่อมได้ถูกต้อง
 function goTree(siteKey, deptIdx){
   const dept = currentDepts[deptIdx];
   state.site = siteKey; state.dept = dept;
   renderCrumb();
   const members = orgData.filter(u=>u.org_site===siteKey && u.dept===dept);
-  const idSet = new Set(members.map(u=>u.id));
-  const roots = members.filter(u=>!u.manager_id || !idSet.has(u.manager_id));
+  if(!members.length){
+    document.getElementById('content').innerHTML = '<div class="empty">ยังไม่มีข้อมูลพนักงานในแผนกนี้</div>';
+    return;
+  }
+
+  const byRankMap = new Map();
+  members.forEach(u=>{
+    const r = rankOf(u);
+    if(!byRankMap.has(r)) byRankMap.set(r, []);
+    byRankMap.get(r).push(u);
+  });
+  const ranks = [...byRankMap.keys()].sort((a,b)=>a-b);
+
+  const rowsHTML = ranks.map(r=>{
+    const rowMembers = [...byRankMap.get(r)].sort((a,b)=>a.name.localeCompare(b.name,'th'));
+    return `<div class="org-row">${rowMembers.map(nodeHTML).join('')}</div>`;
+  }).join('');
+
   document.getElementById('content').innerHTML =
-    `<div class="tree-wrap"><div class="tree">${buildTree(roots, members)}</div></div>`;
+    `<div class="tree-wrap"><div class="tree-canvas" id="tree-canvas"><svg id="tree-svg"></svg>${rowsHTML}</div></div>`;
+
+  drawConnectors(members);
+}
+
+function drawConnectors(members){
+  const canvas = document.getElementById('tree-canvas');
+  const svg = document.getElementById('tree-svg');
+  const canvasRect = canvas.getBoundingClientRect();
+  const w = canvas.scrollWidth, h = canvas.scrollHeight;
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', h);
+  svg.style.width = w + 'px';
+  svg.style.height = h + 'px';
+
+  const idSet = new Set(members.map(u=>u.id));
+  let paths = '';
+  members.forEach(u=>{
+    if(!u.manager_id || !idSet.has(u.manager_id) || u.manager_id === u.id) return;
+    const childEl  = canvas.querySelector(`[data-id="${u.id}"]`);
+    const parentEl = canvas.querySelector(`[data-id="${u.manager_id}"]`);
+    if(!childEl || !parentEl) return;
+    const c = childEl.getBoundingClientRect();
+    const p = parentEl.getBoundingClientRect();
+    const x1 = p.left - canvasRect.left + p.width/2, y1 = p.bottom - canvasRect.top;
+    const x2 = c.left - canvasRect.left + c.width/2, y2 = c.top - canvasRect.top;
+    const midY = (y1 + y2) / 2;
+    paths += `<path d="M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}" fill="none" stroke="#c7cdc5" stroke-width="2"/>`;
+  });
+  svg.innerHTML = paths;
 }
 
 (async()=>{
