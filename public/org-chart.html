@@ -4,6 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>โครงสร้างองค์กร - EARTH (THAILAND)</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
 .nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
@@ -12,6 +13,7 @@
 .nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
 .nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
 .nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+.nav-home{display:inline-flex;align-items:center;justify-content:center;font-size:16px}
 .nav-dropdown{position:relative}
 .nav-dropdown>.dd-trigger{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s;display:inline-block}
 .nav-dropdown:hover>.dd-trigger,.nav-dropdown>.dd-trigger.active{color:#fff;background:rgba(255,255,255,.1)}
@@ -45,7 +47,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:24px}
 <nav class="nav">
   <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
   <div class="nav-links">
-    <a href="/index.html">หน้าแรก</a>
+    <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
     <a href="/about.html">เกี่ยวกับเรา</a>
     <div class="nav-dropdown">
       <a href="/org-chart.html" class="dd-trigger active">โครงสร้างองค์กร</a>
@@ -59,7 +61,6 @@ h1{font-size:22px;font-weight:700;margin-bottom:24px}
     <a href="/org-docs/structure-factory2.pdf" target="_blank" class="dd-sub-item">Factory2</a>
       </div>
     </div>
-    <a href="/car-booking.html">จองรถ</a>
     <a href="/news.html">ข่าวสารกิจกรรม</a>
     <a href="/webboard.html">เว็บบอร์ด</a>
     <a href="/regulations.html">ระเบียบบริษัท</a>
