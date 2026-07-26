@@ -12,16 +12,37 @@ body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size
 /* BUG BANNER — mosquito flies in, gets sprayed, falls */
 .bug-banner{position:relative;height:64px;overflow:hidden;background:linear-gradient(90deg,#eaf5ff,#f7fcfa);border-bottom:1px solid #dbe7e0}
 .bug-banner .mosquito{position:absolute;left:-6%;top:38%;font-size:24px;line-height:1;animation:mosquito-fly 5.5s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18))}
-.bug-banner .can{position:absolute;right:9%;top:50%;width:14px;height:26px;background:#1D9E75;border-radius:3px 3px 2px 2px;transform-origin:bottom center;animation:can-squeeze 5.5s ease-in-out infinite}
-.bug-banner .can::before{content:'';position:absolute;top:-6px;left:2px;width:10px;height:6px;background:#0f2c6f;border-radius:2px 2px 0 0}
-.bug-banner .can::after{content:'';position:absolute;top:-9px;left:5px;width:4px;height:4px;background:#0f2c6f;border-radius:1px}
-.bug-banner .mist{position:absolute;right:13.5%;top:44%;width:8px;height:8px;border-radius:50%;background:rgba(29,158,117,.55);opacity:0;animation:mist-puff 5.5s ease-in-out infinite}
-.bug-banner .mist2{right:16%;top:40%;animation-delay:.04s}
-.bug-banner .mist3{right:11.5%;top:48%;animation-delay:.08s}
-.bug-banner .roach{position:absolute;left:-8%;bottom:6px;font-size:20px;animation:walk-x 8s linear infinite, walk-bob .22s ease-in-out infinite}
-.bug-banner .ant{position:absolute;left:-8%;bottom:5px;font-size:13px;animation:walk-x 10.5s linear infinite 2.2s, walk-bob .16s ease-in-out infinite}
+.bug-banner .can{position:absolute;right:7%;top:6px;height:52px;width:auto;transform-origin:bottom center;animation:can-squeeze 5.5s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.bug-banner .mist{position:absolute;right:14%;top:10px;width:8px;height:8px;border-radius:50%;background:rgba(29,158,117,.55);opacity:0;animation:mist-puff 5.5s ease-in-out infinite}
+.bug-banner .mist2{right:17%;top:6px;animation-delay:.04s}
+.bug-banner .mist3{right:12%;top:16px;animation-delay:.08s}
+.bug-banner .roach-wrap{position:absolute;left:-8%;bottom:6px;animation:walk-x 8s linear infinite}
+.bug-banner .ant-wrap{position:absolute;left:-8%;bottom:5px;animation:walk-x 10.5s linear infinite 2.2s}
+.bug-banner .roach{display:block;font-size:20px;animation:bug-walk-hit 8s ease-in-out infinite}
+.bug-banner .ant{display:block;font-size:13px;animation:bug-walk-hit 10.5s ease-in-out infinite 2.2s}
+.bug-banner .ground-mist{position:absolute;right:10.5%;bottom:14px;width:7px;height:7px;border-radius:50%;background:rgba(29,158,117,.55)}
+.bug-banner .ground-mist.roach-mist{animation:ground-mist-puff 8s ease-in-out infinite}
+.bug-banner .ground-mist.ant-mist{right:9%;bottom:11px;animation:ground-mist-puff 10.5s ease-in-out infinite 2.2s}
 @keyframes walk-x{0%{left:-8%}100%{left:106%}}
-@keyframes walk-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes bug-walk-hit{
+  0%{transform:translateY(0) rotate(0deg);opacity:1}
+  6%{transform:translateY(-2px)}
+  12%{transform:translateY(0)}
+  18%{transform:translateY(-2px)}
+  24%{transform:translateY(0)}
+  30%{transform:translateY(-2px)}
+  36%{transform:translateY(0)}
+  42%{transform:translateY(-2px)}
+  48%{transform:translateY(0)}
+  54%{transform:translateY(-2px)}
+  60%{transform:translateY(0)}
+  66%{transform:translateY(-2px)}
+  72%{transform:translateY(0)}
+  78%{transform:translateY(-2px);opacity:1}
+  84%{transform:translateY(0);opacity:1}
+  89%{transform:translateY(-4px) rotate(90deg) scale(1.15);opacity:1}
+  100%{transform:translateY(34px) rotate(230deg) scale(.7);opacity:0}
+}
 @keyframes mosquito-fly{
   0%{left:-6%;top:38%;transform:rotate(0deg);opacity:1}
   22%{top:58%}
@@ -41,6 +62,12 @@ body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size
   60%{opacity:.9;transform:scale(1)}
   72%{opacity:0;transform:scale(2.4)}
   100%{opacity:0;transform:scale(2.4)}
+}
+@keyframes ground-mist-puff{
+  0%,83%{opacity:0;transform:scale(.3)}
+  87%{opacity:.9;transform:scale(1)}
+  96%{opacity:0;transform:scale(2)}
+  100%{opacity:0;transform:scale(2)}
 }
 .topbar{background:#1a1a18;border-bottom:none;padding:6px 1rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:52px;position:sticky;top:0;z-index:10}
 .logo{display:flex;align-items:center;gap:8px}
@@ -244,12 +271,14 @@ tr:last-child td{border-bottom:none}
 </div>
 <div class="bug-banner">
   <div class="mosquito">🦟</div>
-  <div class="can"></div>
+  <img class="can" src="/ARS.jpg" alt="">
   <div class="mist"></div>
   <div class="mist mist2"></div>
   <div class="mist mist3"></div>
-  <div class="roach">🪳</div>
-  <div class="ant">🐜</div>
+  <div class="roach-wrap"><div class="roach">🪳</div></div>
+  <div class="ant-wrap"><div class="ant">🐜</div></div>
+  <div class="ground-mist roach-mist"></div>
+  <div class="ground-mist ant-mist"></div>
 </div>
 
 <!-- BOARD -->
@@ -293,9 +322,9 @@ tr:last-child td{border-bottom:none}
           <a href="javascript:void(0)" onclick="goToLeave()" class="quick-link-photo" style="background-image:url('/holiday.png')"><span>ใบลาออนไลน์</span></a>
           <a href="/meeting-calendar.html" class="quick-link-photo" style="background-image:url('/meeting-room.png')"><span>จองห้องประชุม</span></a>
           <a href="/car-booking.html" class="quick-link-photo" style="background-image:url('/car.png');background-position:center 85%"><span>จองรถ</span></a>
-          <a href="/forms.html" class="quick-link-icon" style="background:linear-gradient(135deg,#0f766e,#0891B2)"><i class="ti ti-clipboard-text"></i><span>แบบฟอร์ม - ARS</span></a>
-          <a href="/webboard.html" class="quick-link-icon" style="background:linear-gradient(135deg,#7C3AED,#C026D3)"><i class="ti ti-message-circle-2"></i><span>เว็บบอร์ด</span></a>
-          <a href="/regulations.html" class="quick-link-icon" style="background:linear-gradient(135deg,#0f2c6f,#1D5FA5)"><i class="ti ti-book-2"></i><span>ระเบียบบริษัท</span></a>
+          <a href="/forms.html" class="quick-link-photo" style="background:#0f766e url('/doc.jpg') center/62% no-repeat"><span>แบบฟอร์ม - ARS</span></a>
+          <a href="/webboard.html" class="quick-link-photo" style="background-image:url('/board.png')"><span>เว็บบอร์ด</span></a>
+          <a href="/regulations.html" class="quick-link-photo" style="background:#0f2c6f url('/rule.png') center/62% no-repeat"><span>ระเบียบบริษัท</span></a>
         </div>
       </div>
     </div>
