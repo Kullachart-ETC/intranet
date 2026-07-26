@@ -68,6 +68,12 @@ async function initDB() {
       slot TEXT, name TEXT, purpose TEXT,
       user_id INTEGER
     );
+    CREATE TABLE IF NOT EXISTS car_bookings (
+      id SERIAL PRIMARY KEY,
+      car_idx INTEGER, date TEXT,
+      slot TEXT, name TEXT, purpose TEXT,
+      user_id INTEGER
+    );
     CREATE TABLE IF NOT EXISTS leave_requests (
       id SERIAL PRIMARY KEY,
       leave_no TEXT UNIQUE,
@@ -497,6 +503,31 @@ app.post('/api/bookings', requireLogin, async (req, res) => {
 });
 app.delete('/api/bookings/:id', requireLogin, async (req, res) => {
   await pool.query('DELETE FROM bookings WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+
+// ======== API CAR BOOKINGS ========
+app.get('/api/car-bookings', requireLogin, async (req, res) => {
+  const r = await pool.query('SELECT * FROM car_bookings');
+  res.json(r.rows);
+});
+app.post('/api/car-bookings', requireLogin, async (req, res) => {
+  const { car_idx, date, slot, name, purpose } = req.body;
+  const [newStart, newEnd] = slot.split('-');
+  const existing = await pool.query(
+    `SELECT id FROM car_bookings WHERE car_idx=$1 AND date=$2
+     AND SPLIT_PART(slot,'-',1) < $4 AND SPLIT_PART(slot,'-',2) > $3`,
+    [car_idx, date, newStart, newEnd]
+  );
+  if (existing.rows.length > 0) return res.status(409).json({ error: 'ช่วงเวลานี้ทับซ้อนกับการจองที่มีอยู่' });
+  await pool.query(
+    'INSERT INTO car_bookings (car_idx,date,slot,name,purpose,user_id) VALUES ($1,$2,$3,$4,$5,$6)',
+    [car_idx, date, slot, name, purpose, req.session.user.id]
+  );
+  res.json({ ok: true });
+});
+app.delete('/api/car-bookings/:id', requireLogin, async (req, res) => {
+  await pool.query('DELETE FROM car_bookings WHERE id=$1', [req.params.id]);
   res.json({ ok: true });
 });
 
