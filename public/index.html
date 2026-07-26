@@ -51,6 +51,10 @@ body:has(#page-board.active){background:#0f3460}
 .quick-link{display:flex;align-items:center;gap:16px;padding:20px;border-radius:14px;color:#fff;text-decoration:none;font-size:16px;font-weight:600;transition:filter .15s,transform .15s}
 .quick-link:hover{filter:brightness(1.1);transform:translateY(-2px)}
 .quick-link i{font-size:34px;line-height:1;flex-shrink:0}
+.quick-link-photo{position:relative;display:flex;align-items:flex-end;min-height:150px;border-radius:14px;overflow:hidden;color:#fff;text-decoration:none;font-size:17px;font-weight:700;padding:18px 20px;background-size:cover;background-position:center;transition:transform .15s}
+.quick-link-photo:hover{transform:translateY(-2px)}
+.quick-link-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.15) 55%,rgba(0,0,0,0) 100%)}
+.quick-link-photo span{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 .isms-item{border-bottom:1px solid rgba(255,255,255,0.12);padding:10px 0;cursor:pointer;text-decoration:none;display:block}
 .isms-item:last-child{border-bottom:none}
 .isms-title{font-size:12px;font-weight:500;color:#fff;line-height:1.4;margin-bottom:3px}
@@ -238,7 +242,7 @@ tr:last-child td{border-bottom:none}
         <h3>⚡ เมนูลัด</h3>
         <div class="quick-links">
           <a href="javascript:void(0)" onclick="goToLeave()" class="quick-link" style="background:#1D9E75"><i class="ti ti-calendar-off"></i> ใบลาออนไลน์</a>
-          <a href="/meeting-calendar.html" class="quick-link" style="background:#1D5FA5"><i class="ti ti-door"></i> จองห้องประชุม</a>
+          <a href="/meeting-calendar.html" class="quick-link-photo" style="background-image:url('/meeting-room.png')"><span>จองห้องประชุม</span></a>
           <a href="/car-booking.html" class="quick-link" style="background:#7C3AED"><i class="ti ti-car"></i> จองรถ</a>
         </div>
       </div>
