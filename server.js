@@ -99,6 +99,7 @@ async function initDB() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS position TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS tel_ext TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS org_site TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS org_level INTEGER;
     CREATE TABLE IF NOT EXISTS leave_quotas (
       id SERIAL PRIMARY KEY,
       user_id INTEGER,
@@ -394,18 +395,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ======== API USERS ========
 app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
-  const r = await pool.query('SELECT id,username,name,dept,role,email,manager_id,start_date,annual_leave_quota,position,tel_ext,org_site FROM users ORDER BY id');
+  const r = await pool.query('SELECT id,username,name,dept,role,email,manager_id,start_date,annual_leave_quota,position,tel_ext,org_site,org_level FROM users ORDER BY id');
   res.json(r.rows);
 });
 app.post('/api/users', requireLogin, requireAdmin, async (req, res) => {
-  const { username, password, name, dept, role, email, manager_id, start_date, annual_leave_quota, work_schedule, position, tel_ext, org_site } = req.body;
+  const { username, password, name, dept, role, email, manager_id, start_date, annual_leave_quota, work_schedule, position, tel_ext, org_site, org_level } = req.body;
   if (!username || !password || !name) return res.status(400).json({ error: 'กรอกข้อมูลให้ครบ' });
   const exists = await pool.query('SELECT id FROM users WHERE username=$1', [username]);
   if (exists.rows.length > 0) return res.status(409).json({ error: 'ชื่อผู้ใช้นี้มีแล้ว' });
   const hash = bcrypt.hashSync(password, 10);
   await pool.query(
-    'INSERT INTO users (username,password,name,dept,role,email,manager_id,start_date,annual_leave_quota,work_schedule,position,tel_ext,org_site) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)',
-    [username, hash, name, dept, role||'user', email, manager_id||null, start_date||null, annual_leave_quota||6, work_schedule||'office', position||null, tel_ext||null, org_site||null]
+    'INSERT INTO users (username,password,name,dept,role,email,manager_id,start_date,annual_leave_quota,work_schedule,position,tel_ext,org_site,org_level) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)',
+    [username, hash, name, dept, role||'user', email, manager_id||null, start_date||null, annual_leave_quota||6, work_schedule||'office', position||null, tel_ext||null, org_site||null, org_level||null]
   );
   res.json({ ok: true });
 });
@@ -420,10 +421,10 @@ app.put('/api/users/:id/password', requireLogin, requireAdmin, async (req, res) 
   res.json({ ok: true });
 });
 app.put('/api/users/:id', requireLogin, requireAdmin, async (req, res) => {
-  const { name, dept, role, email, manager_id, start_date, annual_leave_quota, position, tel_ext, org_site } = req.body;
+  const { name, dept, role, email, manager_id, start_date, annual_leave_quota, position, tel_ext, org_site, org_level } = req.body;
   await pool.query(
-    'UPDATE users SET name=$1,dept=$2,role=$3,email=$4,manager_id=$5,start_date=$6,annual_leave_quota=$7,position=$8,tel_ext=$9,org_site=$10 WHERE id=$11',
-    [name, dept, role, email, manager_id||null, start_date||null, annual_leave_quota||6, position||null, tel_ext||null, org_site||null, req.params.id]
+    'UPDATE users SET name=$1,dept=$2,role=$3,email=$4,manager_id=$5,start_date=$6,annual_leave_quota=$7,position=$8,tel_ext=$9,org_site=$10,org_level=$11 WHERE id=$12',
+    [name, dept, role, email, manager_id||null, start_date||null, annual_leave_quota||6, position||null, tel_ext||null, org_site||null, org_level||null, req.params.id]
   );
   res.json({ ok: true });
 });
@@ -469,7 +470,7 @@ app.get('/api/employees', requireLogin, async (req, res) => {
 // ======== API ORG CHART ========
 app.get('/api/org-chart', requireLogin, async (req, res) => {
   const r = await pool.query(`
-    SELECT id, name, dept, position, tel_ext, org_site, manager_id, email
+    SELECT id, name, dept, position, tel_ext, org_site, org_level, manager_id, email
     FROM users WHERE role != 'admin' ORDER BY name
   `);
   res.json(r.rows);
@@ -972,7 +973,8 @@ app.get('/api/users/template', requireLogin, requireAdmin, (req, res) => {
       'แผนก(*)', 'ตำแหน่ง', 'วันเริ่มงาน (YYYY-MM-DD)', 'ประเภทพนักงาน',
       'รหัสหัวหน้า', 'Username(*)', 'Password(*)', 'Role(*) (admin/user)',
       'โควต้าพักร้อน (ชม.)', 'โควต้าลาป่วย (ชม.)', 'โควต้าลากิจ (ชม.)', 'หมายเหตุ',
-      'เบอร์โทรภายใน', 'Site (Head Office/Branch/Factory1/Factory2)'
+      'เบอร์โทรภายใน', 'Site (Head Office/Branch/Factory1/Factory2)',
+      'ระดับตำแหน่ง 1-8 (1=Sr.Manager 2=Manager 3=Vice Manager 4=Asst.Manager 5=Senior Supervisor 6=Supervisor 7=Chief 8=Staff)'
     ]
   ];
 
@@ -982,11 +984,11 @@ app.get('/api/users/template', requireLogin, requireAdmin, (req, res) => {
      'IT','Developer','2023-01-01','full-time',
      '','somchai','Pass1234','user',
      '98','','','',
-     '109','Head Office']
+     '109','Head Office','2']
   ];
 
   const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
-  ws['!cols'] = Array(18).fill({ wch: 18 });
+  ws['!cols'] = Array(19).fill({ wch: 18 });
   XLSX.utils.book_append_sheet(wb, ws, 'Employee_Template');
 
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
@@ -1032,7 +1034,7 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
           dept, position, startDate, empType,
           supervisorEmpId, _usernameCol, password, role,
           annualHours, sickHours, personalHours, notes,
-          telExt, orgSiteRaw
+          telExt, orgSiteRaw, orgLevelRaw
         ] = row;
 
         // ใช้ รหัสพนักงาน (A) เป็น username เสมอ
@@ -1086,10 +1088,12 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
           const positionClean = position ? String(position).trim() : null;
           const telExtClean   = telExt ? String(telExt).trim() : null;
           const orgSite       = normalizeOrgSite(orgSiteRaw);
+          const orgLevelNum   = parseInt(orgLevelRaw);
+          const orgLevel      = (orgLevelNum >= 1 && orgLevelNum <= 8) ? orgLevelNum : null;
 
           const upsertResult = await pool.query(
-            `INSERT INTO users (username,password,name,dept,role,email,start_date,annual_leave_quota,work_schedule,position,tel_ext,org_site)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+            `INSERT INTO users (username,password,name,dept,role,email,start_date,annual_leave_quota,work_schedule,position,tel_ext,org_site,org_level)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
              ON CONFLICT (username) DO UPDATE SET
                password = EXCLUDED.password,
                name = EXCLUDED.name,
@@ -1101,11 +1105,12 @@ app.post('/api/users/bulk-upload', requireLogin, requireAdmin,
                work_schedule = EXCLUDED.work_schedule,
                position = EXCLUDED.position,
                tel_ext = EXCLUDED.tel_ext,
-               org_site = EXCLUDED.org_site
+               org_site = EXCLUDED.org_site,
+               org_level = EXCLUDED.org_level
              RETURNING id`,
             [usernameClean, hash, name, String(dept).trim(),
              roleClean, String(email).trim(), parsedDate, annualDays, workSch,
-             positionClean, telExtClean, orgSite]
+             positionClean, telExtClean, orgSite, orgLevel]
           );
 
           const userId    = upsertResult.rows[0].id;

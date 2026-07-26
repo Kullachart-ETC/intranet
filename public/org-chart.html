@@ -104,6 +104,10 @@ const POSITION_RANK = [
   'senior supervisor', 'supervisor', 'chief', 'staff'
 ];
 function rankOf(u){
+  // เลขระดับ (org_level, 1-8) เป็นตัวหลัก แม่นยำกว่าเพราะไม่ขึ้นกับการสะกดชื่อตำแหน่ง
+  const lvl = parseInt(u.org_level);
+  if (lvl >= 1 && lvl <= 8) return lvl - 1;
+  // ถ้าไม่มีเลขระดับ (ข้อมูลเก่า) ค่อย fallback ไปเทียบชื่อตำแหน่งแบบเดิม
   const i = POSITION_RANK.indexOf(String(u.position||'').trim().toLowerCase());
   return i === -1 ? POSITION_RANK.length : i;
 }
