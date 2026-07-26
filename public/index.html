@@ -55,6 +55,10 @@ body:has(#page-board.active){background:#0f3460}
 .quick-link-photo:hover{transform:translateY(-2px)}
 .quick-link-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.15) 55%,rgba(0,0,0,0) 100%)}
 .quick-link-photo span{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.quick-link-icon{position:relative;display:flex;align-items:flex-end;min-height:150px;border-radius:14px;overflow:hidden;color:#fff;text-decoration:none;font-size:17px;font-weight:700;padding:18px 20px;transition:transform .15s}
+.quick-link-icon:hover{transform:translateY(-2px)}
+.quick-link-icon i{position:absolute;right:14px;top:14px;font-size:56px;opacity:.35}
+.quick-link-icon span{position:relative;z-index:1}
 .isms-item{border-bottom:1px solid rgba(255,255,255,0.12);padding:10px 0;cursor:pointer;text-decoration:none;display:block}
 .isms-item:last-child{border-bottom:none}
 .isms-title{font-size:12px;font-weight:500;color:#fff;line-height:1.4;margin-bottom:3px}
@@ -244,6 +248,9 @@ tr:last-child td{border-bottom:none}
           <a href="javascript:void(0)" onclick="goToLeave()" class="quick-link-photo" style="background-image:url('/holiday.png')"><span>ใบลาออนไลน์</span></a>
           <a href="/meeting-calendar.html" class="quick-link-photo" style="background-image:url('/meeting-room.png')"><span>จองห้องประชุม</span></a>
           <a href="/car-booking.html" class="quick-link-photo" style="background-image:url('/car.png');background-position:center 85%"><span>จองรถ</span></a>
+          <a href="/forms.html" class="quick-link-icon" style="background:linear-gradient(135deg,#0f766e,#0891B2)"><i class="ti ti-clipboard-text"></i><span>แบบฟอร์ม - ARS</span></a>
+          <a href="/webboard.html" class="quick-link-icon" style="background:linear-gradient(135deg,#7C3AED,#C026D3)"><i class="ti ti-message-circle-2"></i><span>เว็บบอร์ด</span></a>
+          <a href="/regulations.html" class="quick-link-icon" style="background:linear-gradient(135deg,#0f2c6f,#1D5FA5)"><i class="ti ti-book-2"></i><span>ระเบียบบริษัท</span></a>
         </div>
       </div>
     </div>
