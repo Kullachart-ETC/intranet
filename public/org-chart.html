@@ -37,8 +37,8 @@ h1{font-size:22px;font-weight:700;margin-bottom:20px}
 /* SITE / DEPT CARDS */
 .pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
 .pick-card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.pick-card:hover{border-color:#1D9E75;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.pick-card .pick-icon{font-size:28px;color:#1D9E75;margin-bottom:10px}
+.pick-card:hover{border-color:var(--accent,#1D9E75);transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.pick-card .pick-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px}
 .pick-card .pick-name{font-size:14px;font-weight:600}
 .pick-card .pick-count{font-size:12px;color:#888;margin-top:4px}
 .empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
@@ -90,12 +90,32 @@ h1{font-size:22px;font-weight:700;margin-bottom:20px}
 async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
 
 const SITES = [
-  { key:'head_office', label:'Head Office', icon:'ti-building-skyscraper' },
-  { key:'branch',      label:'Branch',      icon:'ti-building-store' },
-  { key:'factory1',    label:'Factory1',    icon:'ti-building-factory-2' },
-  { key:'factory2',    label:'Factory2',    icon:'ti-building-factory-2' }
+  { key:'head_office', label:'Head Office', icon:'ti-building-skyscraper',  color:'#0f2c6f' },
+  { key:'branch',      label:'Branch',      icon:'ti-building-store',      color:'#0f766e' },
+  { key:'factory1',    label:'Factory1',    icon:'ti-building-factory-2',  color:'#B8860B' },
+  { key:'factory2',    label:'Factory2',    icon:'ti-building-factory-2',  color:'#993C1D' }
 ];
 const SITE_LABEL = Object.fromEntries(SITES.map(s=>[s.key,s.label]));
+
+// ไอคอน+สีของการ์ดแผนก จับคู่จากคำในชื่อแผนก (เรียงลำดับ ตัวแรกที่แมตช์ชนะ) ไม่ตรงเลยใช้ค่า default
+const DEPT_ICON_RULES = [
+  [/\bac\b|acc|บัญชี|finance|การเงิน/i,      { icon:'ti-calculator',      color:'#993C1D' }],
+  [/purchas|จัดซื้อ/i,                       { icon:'ti-shopping-cart',   color:'#B8860B' }],
+  [/supply chain|logistic|โลจิสติกส์/i,      { icon:'ti-truck',           color:'#0f6e56' }],
+  [/\bqa\b|quality|คุณภาพ/i,                 { icon:'ti-shield-check',    color:'#0f766e' }],
+  [/maintenance|ซ่อมบำรุง/i,                 { icon:'ti-tools',           color:'#6b7280' }],
+  [/production|line|โรงงาน|ผลิต/i,           { icon:'ti-settings',        color:'#4b5563' }],
+  [/\bit\b|information technology|เทคโนโลยี/i,{ icon:'ti-device-desktop', color:'#1D9E75' }],
+  [/hr\s*&?\s*ga|human resource|บุคคล|general affair/i,{ icon:'ti-users-group', color:'#185FA5' }],
+  [/trade marketing|marketing|การตลาด/i,     { icon:'ti-speakerphone',    color:'#993556' }],
+  [/foreign trade|ต่างประเทศ/i,              { icon:'ti-world',           color:'#2563eb' }],
+  [/overseas sales|\bsales?\b|ขาย/i,         { icon:'ti-chart-line',      color:'#534AB7' }],
+  [/director|management|ผู้บริหาร/i,         { icon:'ti-user-star',       color:'#0f2c6f' }]
+];
+function deptIconFor(deptName){
+  const found = DEPT_ICON_RULES.find(([re])=>re.test(deptName));
+  return found ? found[1] : { icon:'ti-folder', color:'#1D9E75' };
+}
 
 // ลำดับชั้นตำแหน่ง กำหนด "แถว" ที่แต่ละคนจะถูกวางในผังองค์กร (มาก่อน = แถวบนกว่า)
 // เส้นเชื่อมระหว่างแถวยังคงยึด "รหัสหัวหน้า" (manager_id) จริงเสมอ — มีผลกับการอนุมัติใบลาด้วย
@@ -138,8 +158,8 @@ function goSites(){
   renderCrumb();
   const html = SITES.map(s=>{
     const count = orgData.filter(u=>u.org_site===s.key).length;
-    return `<div class="pick-card" onclick="goDepts('${s.key}')">
-      <div class="pick-icon"><i class="ti ${s.icon}"></i></div>
+    return `<div class="pick-card" style="--accent:${s.color}" onclick="goDepts('${s.key}')">
+      <div class="pick-icon" style="background:${s.color}22;color:${s.color}"><i class="ti ${s.icon}"></i></div>
       <div class="pick-name">${esc(s.label)}</div>
       <div class="pick-count">${count} คน</div>
     </div>`;
@@ -159,8 +179,9 @@ function goDepts(siteKey){
   currentDepts = depts;
   const html = depts.map((d,i)=>{
     const count = members.filter(u=>u.dept===d).length;
-    return `<div class="pick-card" onclick="goTree('${siteKey}', ${i})">
-      <div class="pick-icon"><i class="ti ti-folder"></i></div>
+    const { icon, color } = deptIconFor(d);
+    return `<div class="pick-card" style="--accent:${color}" onclick="goTree('${siteKey}', ${i})">
+      <div class="pick-icon" style="background:${color}22;color:${color}"><i class="ti ${icon}"></i></div>
       <div class="pick-name">${esc(d)}</div>
       <div class="pick-count">${count} คน</div>
     </div>`;
