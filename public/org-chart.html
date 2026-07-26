@@ -103,6 +103,18 @@ const SITES = [
 ];
 const SITE_LABEL = Object.fromEntries(SITES.map(s=>[s.key,s.label]));
 
+// ลำดับชั้นตำแหน่ง ใช้เรียงพี่น้องในระดับเดียวกันของผังองค์กร (มาก่อน = อาวุโสกว่า)
+// tree ยังยึด "รหัสหัวหน้า" (manager_id) เป็นตัวกำหนดสายบังคับบัญชาเหมือนเดิม
+const POSITION_RANK = [
+  'sr. manager', 'manager', 'vice manager', 'asst. manager',
+  'senior supervisor', 'supervisor', 'chief', 'staff'
+];
+function rankOf(u){
+  const i = POSITION_RANK.indexOf(String(u.position||'').trim().toLowerCase());
+  return i === -1 ? POSITION_RANK.length : i;
+}
+function byRank(a, b){ return rankOf(a) - rankOf(b); }
+
 let orgData = [];
 let currentDepts = [];
 let state = { site:null, dept:null };
@@ -171,7 +183,7 @@ function nodeHTML(u){
 
 function buildTree(nodes, all){
   if(!nodes.length) return '';
-  return `<ul>${nodes.map(n=>{
+  return `<ul>${[...nodes].sort(byRank).map(n=>{
     const kids = all.filter(u=>u.manager_id===n.id);
     return `<li>${nodeHTML(n)}${buildTree(kids, all)}</li>`;
   }).join('')}</ul>`;
