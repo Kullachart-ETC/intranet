@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Upload พนักงาน — EARTH (THAILAND)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; }
@@ -15,6 +16,8 @@
   }
   .top-bar a { color: #90cdf4; text-decoration: none; font-size: 13px; }
   .top-bar a:hover { text-decoration: underline; }
+  .top-bar-home{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,0.12);color:#fff;font-size:16px;text-decoration:none;transition:.15s}
+  .top-bar-home:hover{background:rgba(255,255,255,0.25)}
   .top-bar h1 { font-size: 18px; font-weight: 600; }
 
   .container { max-width: 800px; margin: 32px auto; padding: 0 16px; }
@@ -128,7 +131,7 @@
 <body>
 
 <div class="top-bar">
-  <a href="/">← กลับหน้าหลัก</a>
+  <a href="/" class="top-bar-home" title="กลับหน้าหลัก"><i class="ti ti-home"></i></a>
   <span style="opacity:.4">|</span>
   <h1>🏢 Upload พนักงานเข้าระบบ</h1>
 </div>

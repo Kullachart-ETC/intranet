@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>จองห้องประชุม - EARTH (THAILAND)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -31,6 +32,8 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 }
 .topnav a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; }
 .topnav a:hover { color: #fff; }
+.nav-home-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,0.12);color:#fff;font-size:16px;text-decoration:none;transition:.15s}
+.nav-home-btn:hover{background:rgba(255,255,255,0.25)}
 .topnav h1 { font-size: 15px; font-weight: 600; flex: 1; }
 .topnav .nav-actions { display: flex; gap: 6px; }
 .top-btn {
@@ -277,7 +280,7 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 
 <!-- TOP NAV -->
 <div class="topnav">
-  <a href="/">← หน้าหลัก</a>
+  <a href="/" class="nav-home-btn" title="หน้าหลัก"><i class="ti ti-home"></i></a>
   <h1>จองห้องประชุม</h1>
   <div class="nav-actions">
     <button class="top-btn" onclick="goToday()">Today</button>
