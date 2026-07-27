@@ -1244,9 +1244,12 @@ app.post('/api/documents', requireLogin, docUpload.single('file'), async (req, r
     if (!req.file) return res.status(400).json({ error: 'ไม่พบไฟล์' });
     const { dept } = req.body;
     if (!dept) return res.status(400).json({ error: 'กรุณาระบุแผนก' });
+    // multer/busboy decode multipart filenames as latin1 by default — re-decode as utf8
+    // so non-ASCII (Thai) filenames don't come out garbled
+    const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
     await pool.query(
       'INSERT INTO documents (original_name, dept, file_data, file_size, mime_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6)',
-      [req.file.originalname, dept, req.file.buffer, req.file.size, req.file.mimetype, req.session.user.id]
+      [originalName, dept, req.file.buffer, req.file.size, req.file.mimetype, req.session.user.id]
     );
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
