@@ -19,6 +19,8 @@
   a.top-bar-home{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#0f2c6f;font-size:20px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
   a.top-bar-home:hover{background:#0f2c6f;color:#fff;transform:scale(1.08)}
   .top-bar h1 { font-size: 18px; font-weight: 600; }
+  .lang-toggle-btn{margin-left:auto;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+  .lang-toggle-btn:hover{background:rgba(255,255,255,.25)}
 
   .container { max-width: 800px; margin: 32px auto; padding: 0 16px; }
 
@@ -133,7 +135,8 @@
 <div class="top-bar">
   <a href="/" class="top-bar-home" title="กลับหน้าหลัก"><i class="ti ti-home"></i></a>
   <span style="opacity:.4">|</span>
-  <h1>🏢 Upload พนักงานเข้าระบบ</h1>
+  <h1 data-i18n="h1.uploademployee">🏢 Upload พนักงานเข้าระบบ</h1>
+  <button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button>
 </div>
 
 <div class="container">
@@ -182,7 +185,7 @@
 
       <div class="btn-row">
         <button class="btn btn-secondary" onclick="downloadTemplate()">⬇️ ดาวน์โหลด Template</button>
-        <button class="btn btn-primary" id="uploadBtn" disabled onclick="uploadFile()">⬆️ อัปโหลดและ Import</button>
+        <button class="btn btn-primary" id="uploadBtn" disabled data-i18n="btn.uploademployee" onclick="uploadFile()">⬆️ อัปโหลดและ Import</button>
       </div>
 
       <div class="progress-wrap" id="progressWrap">
@@ -368,5 +371,6 @@ function resetForm() {
   document.getElementById('progressFill').style.width = '0%';
 }
 </script>
+<script src="/i18n.js"></script>
 </body>
 </html>

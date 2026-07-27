@@ -29,6 +29,8 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 a.nav-home-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:var(--primary);font-size:20px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
 a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 .topnav h1 { font-size: 15px; font-weight: 600; flex: 1; }
+.lang-toggle-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.lang-toggle-btn:hover{background:rgba(255,255,255,.25)}
 
 /* LAYOUT */
 .container { max-width: 1100px; margin: 0 auto; padding: 20px 16px; }
@@ -145,7 +147,8 @@ tr:last-child td { border-bottom: none; }
 
 <div class="topnav">
   <a href="/" class="nav-home-btn" title="หน้าหลัก"><i class="ti ti-home"></i></a>
-  <h1>📋 ระบบลาหยุด</h1>
+  <h1 data-i18n="h1.leave">📋 ระบบลาหยุด</h1>
+  <button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button>
 </div>
 
 <div class="container">
@@ -245,7 +248,7 @@ tr:last-child td { border-bottom: none; }
         ⏰ เวลาทำงาน 08:30–17:40 | พักเที่ยง 12:00–13:00 | ลาขั้นต่ำ 30 นาที
       </div>
 
-      <button class="btn btn-primary" id="btnSubmit" onclick="submitLeave()">📤 ยื่นใบลา</button>
+      <button class="btn btn-primary" id="btnSubmit" data-i18n="btn.submitleave" onclick="submitLeave()">📤 ยื่นใบลา</button>
     </div>
   </div>
 
@@ -700,5 +703,6 @@ function toast(msg, type='') {
 
 init();
 </script>
+<script src="/i18n.js"></script>
 </body>
 </html>

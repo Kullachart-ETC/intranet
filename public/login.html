@@ -111,6 +111,8 @@ body::after{
 }
 .btn-login:hover{opacity:0.9;}
 .btn-login:active{transform:scale(0.98);}
+.lang-toggle-btn{position:absolute;top:14px;right:14px;background:#F0F2F7;color:#0f2c6f;border:1px solid #dde1ea;border-radius:14px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.lang-toggle-btn:hover{background:#e2e6ee}
 .error-box{
   background:#fff0f0;
   border:1px solid #ffd0d0;
@@ -164,12 +166,13 @@ body::after{
   <div class="company-name">EARTH (THAILAND)</div>
   <div class="company-sub">ระบบ Intranet ภายในองค์กร</div>
   <hr class="divider">
+  <button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button>
   <div class="error-box" id="err"></div>
-  <label class="form-label">ชื่อผู้ใช้งาน</label>
-  <input class="form-input" type="text" id="username" placeholder="กรอก Username" autocomplete="username">
-  <label class="form-label">รหัสผ่าน</label>
-  <input class="form-input" type="password" id="password" placeholder="กรอก Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
-  <button class="btn-login" onclick="login()">เข้าสู่ระบบ</button>
+  <label class="form-label" data-i18n="lbl.username">ชื่อผู้ใช้งาน</label>
+  <input class="form-input" type="text" id="username" data-i18n-placeholder="ph.username" placeholder="กรอก Username" autocomplete="username">
+  <label class="form-label" data-i18n="lbl.password">รหัสผ่าน</label>
+  <input class="form-input" type="password" id="password" data-i18n-placeholder="ph.password" placeholder="กรอก Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+  <button class="btn-login" data-i18n="btn.login" onclick="login()">เข้าสู่ระบบ</button>
   <div class="footer-note">ติดต่อผู้ดูแลระบบหากยังไม่มี account</div>
 </div>
 <script>
@@ -187,5 +190,6 @@ async function login(){
   }catch(e){err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่';err.style.display='block';}
 }
 </script>
+<script src="/i18n.js"></script>
 </body>
 </html>

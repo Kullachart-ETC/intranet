@@ -40,15 +40,15 @@ h1{font-size:22px;font-weight:700;margin-bottom:24px}
   <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
   <div class="nav-links">
     <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
-    <a href="/about.html">เกี่ยวกับเรา</a>
-    <a href="/org-chart.html">โครงสร้างองค์กร</a>
-    <a href="/news.html">ข่าวสารกิจกรรม</a>
-    <a href="/webboard.html">เว็บบอร์ด</a>
-    <a href="/regulations.html">ระเบียบบริษัท</a>
+    <a href="/about.html" data-i18n="nav.about">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html" data-i18n="nav.orgchart">โครงสร้างองค์กร</a>
+    <a href="/news.html" data-i18n="nav.news">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html" data-i18n="nav.webboard">เว็บบอร์ด</a>
+    <a href="/regulations.html" data-i18n="nav.regulations">ระเบียบบริษัท</a>
     <a href="/media-center.html" class="active">Media Center</a>
-    <a href="/forms.html">แบบฟอร์ม - ARS</a>
+    <a href="/forms.html" data-i18n="nav.forms">แบบฟอร์ม - ARS</a>
   </div>
-  <div class="nav-right"><span class="nav-user" id="nav-user"></span><button class="btn-logout" onclick="logout()">ออกจากระบบ</button></div>
+  <div class="nav-right"><span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button></div>
 </nav>
 <div class="page">
   <h1>🎬 Media Center</h1>
@@ -98,4 +98,5 @@ async function logout(){await fetch('/api/logout',{method:'POST'});window.locati
   }catch(e){window.location.href='/login.html';}
 })();
 </script>
+<script src="/i18n.js"></script>
 </body></html>

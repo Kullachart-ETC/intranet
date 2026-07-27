@@ -253,20 +253,21 @@ tr:last-child td{border-bottom:none}
     <span class="logo-text">EARTH (THAILAND)</span>
   </div>
   <nav class="nav">
-    <button id="nav-board-btn" class="active" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
-    <button onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
-    <button onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
-    <button onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
-    <button onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
-    <button onclick="window.location.href='/webboard.html'">💬 เว็บบอร์ด</button>
-    <button onclick="window.location.href='/regulations.html'">📜 ระเบียบบริษัท</button>
+    <button id="nav-board-btn" class="active" data-i18n="idx.board" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
+    <button data-i18n="idx.calendar" onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
+    <button data-i18n="idx.documents" onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
+    <button data-i18n="idx.about" onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
+    <button data-i18n="idx.orgchart" onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
+    <button data-i18n="idx.webboard" onclick="window.location.href='/webboard.html'">💬 เว็บบอร์ด</button>
+    <button data-i18n="idx.regulations" onclick="window.location.href='/regulations.html'">📜 ระเบียบบริษัท</button>
     <button id="admin-btn" onclick="showPage('admin',this)" style="display:none">⚙️ จัดการผู้ใช้</button>
-    <button id="report-btn" onclick="window.location.href='/leave-report.html'" style="display:none">📊 รายงานการลา</button>
+    <button id="report-btn" data-i18n="idx.leavereport" onclick="window.location.href='/leave-report.html'" style="display:none">📊 รายงานการลา</button>
   </nav>
   <div class="user-area">
     <span class="user-name" id="user-name">-</span>
     <span class="user-badge" id="user-badge">user</span>
-    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+    <button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button>
+    <button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button>
   </div>
 </div>
 <div class="bug-banner">
@@ -312,7 +313,7 @@ tr:last-child td{border-bottom:none}
   <!-- Content above bg -->
   <div style="position:relative;z-index:1">
     <div class="page-header"><h2 style="color:#fff">Board ประชาสัมพันธ์</h2>
-      <button class="btn btn-primary" onclick="openModal('post-modal')">+ โพสต์ใหม่</button>
+      <button class="btn btn-primary" data-i18n="btn.newpost" onclick="openModal('post-modal')">+ โพสต์ใหม่</button>
     </div>
     <div class="board-layout">
       <div class="posts-grid" id="posts-list"><div class="loading" style="color:#fff">กำลังโหลด...</div></div>
@@ -356,7 +357,7 @@ tr:last-child td{border-bottom:none}
 <div id="page-calendar" class="page">
   <div class="page-header">
     <div class="page-title"><button class="btn-home-icon" title="หน้าหลัก" onclick="showPage('board',document.getElementById('nav-board-btn'))"><i class="ti ti-home"></i></button><h2>ปฏิทินการทำงาน</h2></div>
-    <button class="btn btn-primary" onclick="openModal('ev-modal')">+ เพิ่มกิจกรรม</button>
+    <button class="btn btn-primary" data-i18n="btn.newevent" onclick="openModal('ev-modal')">+ เพิ่มกิจกรรม</button>
   </div>
   <div class="cal-wrap">
     <div class="sidebar"><h3>พนักงาน</h3><div id="emp-list"><div class="loading">โหลด...</div></div></div>
@@ -383,7 +384,7 @@ tr:last-child td{border-bottom:none}
 <div id="page-leave" class="page">
   <div class="page-header">
     <div class="page-title"><button class="btn-home-icon" title="หน้าหลัก" onclick="showPage('board',document.getElementById('nav-board-btn'))"><i class="ti ti-home"></i></button><h2>ระบบลาหยุด</h2></div>
-    <button class="btn btn-primary" onclick="initTimeSelects();openModal('leave-modal')">+ ยื่นใบลา</button>
+    <button class="btn btn-primary" data-i18n="btn.applyleave" onclick="initTimeSelects();openModal('leave-modal')">+ ยื่นใบลา</button>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="showLeaveTab('quota',this)">สิทธิ์การลา</button>
@@ -1004,5 +1005,6 @@ async function loadLeave(){
   </div>
   <p style="font-size:12px;color:#666">© 2025 EARTH (THAILAND) Co., Ltd. All Rights Reserved.</p>
 </footer>
+<script src="/i18n.js"></script>
 </body>
 </html>

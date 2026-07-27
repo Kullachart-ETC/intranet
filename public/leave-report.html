@@ -93,12 +93,13 @@ tr:hover td{background:#fafaf8}
   </a>
   <div class="nav-links">
     <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
-    <a href="/documents.html">คลังเอกสาร</a>
-    <a href="/leave-report.html" class="active">รายงานการลา</a>
+    <a href="/documents.html" data-i18n="nav.documents">คลังเอกสาร</a>
+    <a href="/leave-report.html" class="active" data-i18n="nav.leavereport">รายงานการลา</a>
   </div>
   <div class="nav-right">
     <span class="nav-user" id="nav-user"></span>
-    <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+    <button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button>
+    <button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button>
   </div>
 </nav>
 
@@ -370,5 +371,6 @@ async function downloadLeaveList() {
   }).catch(()=>{});
 
 </script>
+<script src="/i18n.js"></script>
 </body>
 </html>

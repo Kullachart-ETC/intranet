@@ -35,6 +35,8 @@ body { font-family: 'Sarabun','Segoe UI',sans-serif; background: var(--bg); colo
 a.nav-home-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:var(--primary);font-size:20px;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
 a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 .topnav h1 { font-size: 15px; font-weight: 600; flex: 1; }
+.lang-toggle-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.lang-toggle-btn:hover{background:rgba(255,255,255,.25)}
 .topnav .nav-actions { display: flex; gap: 6px; }
 .top-btn {
   background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
@@ -281,7 +283,8 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 <!-- TOP NAV -->
 <div class="topnav">
   <a href="/" class="nav-home-btn" title="หน้าหลัก"><i class="ti ti-home"></i></a>
-  <h1>จองรถ</h1>
+  <h1 data-i18n="h1.carbooking">จองรถ</h1>
+  <button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button>
   <div class="nav-actions">
     <button class="top-btn" onclick="goToday()">Today</button>
     <div style="display:flex;gap:2px;background:rgba(255,255,255,0.1);border-radius:7px;padding:2px;">
@@ -411,7 +414,7 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
     </div>
     <div class="mfooter">
       <button class="btn btn-ghost" onclick="closeModal('bookOverlay')">ยกเลิก</button>
-      <button class="btn btn-primary" id="btnBook" onclick="submitBooking()">✓ จองรถ</button>
+      <button class="btn btn-primary" id="btnBook" data-i18n="btn.bookcar" onclick="submitBooking()">✓ จองรถ</button>
     </div>
   </div>
 </div>
@@ -1081,5 +1084,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderCalendar();
 });
 </script>
+<script src="/i18n.js"></script>
 </body>
 </html>
