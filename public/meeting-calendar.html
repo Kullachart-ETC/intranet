@@ -157,6 +157,26 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 .epill:hover { filter: brightness(0.88); }
 .more-lbl { font-size: 10px; color: var(--muted); padding: 1px 3px; }
 
+/* ALL-ROOMS DAY VIEW */
+.dcell-allrooms {
+  position: absolute; top: 4px; right: 4px; width: 18px; height: 18px;
+  border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); opacity: .45; font-size: 12px;
+}
+.dcell:hover .dcell-allrooms { opacity: 1; color: var(--primary); }
+.ar-group-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin: 14px 0 6px; }
+.ar-group-label:first-child { margin-top: 0; }
+.ar-table-wrap { overflow-x: auto; }
+.ar-table { border-collapse: collapse; width: 100%; min-width: 480px; table-layout: fixed; }
+.ar-table th { font-size: 11px; font-weight: 600; color: var(--text); text-align: left; padding: 4px 5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.ar-table th:first-child { width: 50px; }
+.ar-hour { font-size: 10px; color: var(--muted); padding: 3px 5px; white-space: nowrap; }
+.ar-table td { padding: 2px; }
+.ar-cell { height: 22px; border-radius: 5px; font-size: 9px; color: #fff; display: flex; align-items: center; padding-left: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ar-free { background: #E1F5EE; border: 1px solid #5DCAA5; cursor: pointer; }
+.ar-free:hover { background: #C9EEE0; }
+.ar-busy { cursor: default; }
+
 /* MODAL */
 .overlay {
   display: none; position: fixed; inset: 0;
@@ -287,6 +307,7 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
   <button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button>
   <div class="nav-actions">
     <button class="top-btn" onclick="goToday()">Today</button>
+    <button class="top-btn" onclick="openAllRoomsModal(fmt(curDate))">ทุกห้อง</button>
     <div style="display:flex;gap:2px;background:rgba(255,255,255,0.1);border-radius:7px;padding:2px;">
       <button class="top-btn view-btn active" id="vbMonth" onclick="setView('month')">Month</button>
       <button class="top-btn view-btn" id="vbWeek" onclick="setView('week')">Week</button>
@@ -455,6 +476,23 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
     <div class="mfooter">
       <button class="btn btn-ghost" onclick="closeModal('bookOverlay')">ยกเลิก</button>
       <button class="btn btn-primary" id="btnBook" data-i18n="btn.bookroom" onclick="submitBooking()">✓ จองห้อง</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALL-ROOMS DAY VIEW MODAL -->
+<div class="overlay" id="allRoomsOverlay" onclick="overlayClick(event,'allRoomsOverlay')">
+  <div class="modal" style="max-width:640px">
+    <div class="mhead">
+      <h2 id="allRoomsTitle">ห้องประชุมทั้งหมด</h2>
+      <button class="mclose" onclick="closeModal('allRoomsOverlay')">✕</button>
+    </div>
+    <div class="mbody">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;font-size:11px;color:var(--muted)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#E1F5EE;border:1px solid #5DCAA5;display:inline-block"></span>ว่าง (คลิกเพื่อจอง)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#888;display:inline-block"></span>ไม่ว่าง</span>
+      </div>
+      <div id="allRoomsBody"></div>
     </div>
   </div>
 </div>
@@ -810,6 +848,15 @@ function renderCalendar() {
     dn.className = 'dnum'; dn.textContent = d;
     cell.appendChild(dn);
 
+    if (!other) {
+      const ar = document.createElement('div');
+      ar.className = 'dcell-allrooms';
+      ar.title = 'ดูห้องว่างทุกห้อง';
+      ar.innerHTML = '<i class="ti ti-layout-grid"></i>';
+      ar.onclick = e => { e.stopPropagation(); openAllRoomsModal(dateStr); };
+      cell.appendChild(ar);
+    }
+
     // Show up to 3 pills
     dayB.slice(0,3).forEach(b => {
       const pill = document.createElement('div');
@@ -896,6 +943,49 @@ function openModal(dateStr) {
     if (btn) delBooking(parseInt(btn.dataset.delId));
   };
   document.getElementById('bookOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function slotCoversHour(slot, h) {
+  const t = parseSlot(slot);
+  if (!t) return false;
+  const startMin = t.sh*60+t.sm, endMin = t.eh*60+t.em;
+  return startMin < (h*60+60) && endMin > h*60;
+}
+
+function openAllRoomsModal(dateStr) {
+  const [y,mo,d] = dateStr.split('-').map(Number);
+  const thaiM = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  document.getElementById('allRoomsTitle').textContent = `ห้องประชุมทั้งหมด — ${d} ${thaiM[mo]} ${y+543}`;
+
+  const dayB = bookings.filter(b => b.date === dateStr);
+  const sites = [
+    { label:'Office',     rooms: ROOMS.map((r,i)=>({...r,idx:i})).filter(r=>r.site==='office') },
+    { label:'Factory 2',  rooms: ROOMS.map((r,i)=>({...r,idx:i})).filter(r=>r.site==='factory') }
+  ];
+
+  let html = '';
+  sites.forEach(site => {
+    if (!site.rooms.length) return;
+    html += `<div class="ar-group-label">${site.label}</div><div class="ar-table-wrap"><table class="ar-table"><tr><th></th>` +
+      site.rooms.map(r=>`<th>${r.name}</th>`).join('') + `</tr>`;
+    HOURS.forEach(h => {
+      html += `<tr><td class="ar-hour">${String(h).padStart(2,'0')}:00</td>`;
+      site.rooms.forEach(r => {
+        const b = dayB.find(bk => parseInt(bk.room_idx)===r.idx && slotCoversHour(bk.slot,h));
+        if (b) {
+          const label = `${b._purpose||b.name}`;
+          html += `<td><div class="ar-cell ar-busy" style="background:${b._color||r.color}" title="${b.slot} | ${b.name}${b._purpose?' | '+b._purpose:''}">${label}</div></td>`;
+        } else {
+          html += `<td><div class="ar-cell ar-free" title="ว่าง — คลิกเพื่อจอง" onclick="closeModal('allRoomsOverlay');selectRoom(${r.idx});openModal('${dateStr}')"></div></td>`;
+        }
+      });
+      html += `</tr>`;
+    });
+    html += `</table></div>`;
+  });
+  document.getElementById('allRoomsBody').innerHTML = html;
+  document.getElementById('allRoomsOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
