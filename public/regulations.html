@@ -20,12 +20,30 @@ a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
 .nav-user{color:#ccc;font-size:12px}
 .btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
 .page{max-width:900px;margin:0 auto;padding:32px 16px}
-h1{font-size:22px;font-weight:700;margin-bottom:24px}
+h1{font-size:22px;font-weight:700}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .tab{padding:7px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s}
 .tab:hover{border-color:#1D9E75;color:#1D9E75}
 .tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
 .empty{text-align:center;color:#aaa;padding:48px;font-size:14px}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
+.btn-primary{background:#1D9E75;color:#fff}
+.btn-primary:hover{background:#178a63}
+.btn-primary:disabled{background:#9acfbd;cursor:not-allowed}
+.btn-outline{background:#fff;border:1px solid #ddd;color:#444}
+.btn-danger{background:#fff;border:1px solid #f5c6c6;color:#dc2626;font-size:12px;padding:4px 10px}
+.btn-danger:hover{background:#fef2f2}
+.upload-area{border:2px dashed #1D9E75;border-radius:12px;padding:16px;margin-bottom:20px;display:none;background:#fff}
+.upload-area.show{display:block}
+.upload-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:12px;color:#666}
+.form-group select,.form-group input[type="file"]{border:1px solid #ddd;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:#fff}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;display:none}
+.alert.show{display:block}
+.alert-ok{background:#e8f5f0;color:#1D9E75}
+.alert-err{background:#fef2f2;color:#dc2626}
 </style>
 </head>
 <body>
@@ -44,7 +62,30 @@ h1{font-size:22px;font-weight:700;margin-bottom:24px}
   <div class="nav-right"><span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button></div>
 </nav>
 <div class="page">
-  <h1>📜 ระเบียบบริษัท</h1>
+  <div class="page-head">
+    <h1>📜 ระเบียบบริษัท</h1>
+    <button class="btn btn-primary" id="btn-upload-toggle" style="display:none" onclick="toggleUpload()">+ เพิ่มเอกสาร</button>
+  </div>
+
+  <div id="upload-area" class="upload-area">
+    <div id="alert" class="alert"></div>
+    <div class="upload-row">
+      <div class="form-group">
+        <label>หมวดหมู่</label>
+        <select id="up-dept">
+          <option value="ระเบียบ">ระเบียบ</option>
+          <option value="นโยบาย">นโยบาย</option>
+          <option value="ประกาศ">ประกาศ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ไฟล์</label>
+        <input type="file" id="up-file" accept="*/*">
+      </div>
+      <button class="btn btn-primary" id="btn-do-upload" onclick="doUpload()">อัปโหลด</button>
+    </div>
+  </div>
+
   <div class="tabs">
     <button class="tab active" onclick="filterDept('ระเบียบ',this)">ระเบียบ</button>
     <button class="tab" onclick="filterDept('นโยบาย',this)">นโยบาย</button>
@@ -55,15 +96,29 @@ h1{font-size:22px;font-weight:700;margin-bottom:24px}
 </div>
 <script>
 let allDocs=[];
+let canManage=false;
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers:{} };
+  if (body instanceof FormData) opts.body = body;
+  else if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  const r = await fetch('/api'+path, opts);
+  if (!r.ok) { const e = await r.json().catch(()=>({error:r.statusText})); throw new Error(e.error||r.statusText); }
+  return r.json();
+}
+
+function escHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtSize(b){if(!b)return'';if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
 function fmtDate(dt){if(!dt)return'';return new Date(dt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'});}
 function fileIcon(m=''){if(m.includes('pdf'))return'📄';if(m.includes('word')||m.includes('doc'))return'📝';if(m.includes('sheet'))return'📊';if(m.includes('image'))return'🖼️';return'📎';}
+
 function filterDept(dept,btn){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const docs=dept==='all'?allDocs:allDocs.filter(d=>d.dept===dept);
   render(docs);
 }
+
 function render(docs){
   const el=document.getElementById('doc-list');
   if(!docs.length){el.innerHTML='<div class="empty">ไม่พบเอกสาร</div>';return;}
@@ -71,26 +126,73 @@ function render(docs){
     <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="background:#f8f8f6"><th style="padding:10px 14px;text-align:left;color:#555">ชื่อเอกสาร</th><th style="padding:10px 14px;text-align:left;color:#555">หมวด</th><th style="padding:10px 14px;text-align:left;color:#555">ขนาด</th><th style="padding:10px 14px;text-align:left;color:#555">วันที่</th><th style="padding:10px 14px"></th></tr></thead>
       <tbody>${docs.map(d=>`<tr style="border-top:1px solid #f0f0ec">
-        <td style="padding:10px 14px"><span style="margin-right:6px">${fileIcon(d.mime_type)}</span><strong>${d.original_name}</strong></td>
-        <td style="padding:10px 14px;color:#888">${d.dept}</td>
+        <td style="padding:10px 14px"><span style="margin-right:6px">${fileIcon(d.mime_type)}</span><strong>${escHtml(d.original_name)}</strong></td>
+        <td style="padding:10px 14px;color:#888">${escHtml(d.dept)}</td>
         <td style="padding:10px 14px;color:#888">${fmtSize(d.file_size)}</td>
         <td style="padding:10px 14px;color:#888;white-space:nowrap">${fmtDate(d.created_at)}</td>
-        <td style="padding:10px 14px"><a href="/api/documents/${d.id}/download" style="color:#1D9E75;font-size:12px;text-decoration:none">⬇ ดาวน์โหลด</a></td>
+        <td style="padding:10px 14px;white-space:nowrap;text-align:right">
+          <a href="/api/documents/${d.id}/download" style="color:#1D9E75;font-size:12px;text-decoration:none">⬇ ดาวน์โหลด</a>
+          ${canManage?`<button class="btn btn-danger" style="margin-left:8px" onclick="delDoc(${d.id},'${escHtml(d.original_name)}')">✕ ลบ</button>`:''}
+        </td>
       </tr>`).join('')}</tbody>
     </table></div>`;
 }
+
+function toggleUpload(){ document.getElementById('upload-area').classList.toggle('show'); }
+function showAlert(msg,type='ok'){
+  const el=document.getElementById('alert');
+  el.textContent=msg; el.className=`alert show alert-${type}`;
+  setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+async function doUpload(){
+  const dept=document.getElementById('up-dept').value;
+  const file=document.getElementById('up-file').files[0];
+  if(!file){showAlert('กรุณาเลือกไฟล์','err');return;}
+  const btn=document.getElementById('btn-do-upload');
+  btn.disabled=true; btn.textContent='กำลังอัปโหลด...';
+  try{
+    const fd=new FormData();
+    fd.append('file',file);
+    fd.append('dept',dept);
+    await api('/documents','POST',fd);
+    showAlert('อัปโหลดสำเร็จ','ok');
+    document.getElementById('up-file').value='';
+    await loadDocs();
+  }catch(e){ showAlert(e.message,'err'); }
+  btn.disabled=false; btn.textContent='อัปโหลด';
+}
+
+async function delDoc(id,name){
+  if(!confirm(`ต้องการลบ "${name}" ใช่ไหมครับ?`))return;
+  try{
+    await api('/documents/'+id,'DELETE');
+    await loadDocs();
+  }catch(e){ alert('ลบไม่สำเร็จ: '+e.message); }
+}
+
+async function loadDocs(){
+  allDocs=await api('/documents').catch(()=>[]);
+  const regDepts=['ระเบียบ','นโยบาย','ประกาศ'];
+  const regDocs=allDocs.filter(d=>regDepts.includes(d.dept));
+  if(regDocs.length)allDocs=regDocs;
+  const activeTab=document.querySelector('.tab.active');
+  const activeDept=activeTab?(activeTab.textContent.trim()==='ทั้งหมด'?'all':activeTab.textContent.trim()):'ระเบียบ';
+  render(activeDept==='all'?allDocs:allDocs.filter(d=>d.dept===activeDept));
+}
+
 async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
 (async()=>{
   try{
     const me=await fetch('/api/me').then(r=>r.json());
     if(me.error){window.location.href='/login.html';return;}
     document.getElementById('nav-user').textContent=me.name;
-    allDocs=await fetch('/api/documents').then(r=>r.ok?r.json():[]).catch(()=>[]);
-    // filter to regulation-related depts
-    const regDepts=['ระเบียบ','นโยบาย','ประกาศ'];
-    const regDocs=allDocs.filter(d=>regDepts.includes(d.dept));
-    if(regDocs.length)allDocs=regDocs;
-    render(allDocs.filter(d=>d.dept==='ระเบียบ')||allDocs);
+
+    const r=await fetch('/api/documents/can-manage');
+    if(r.ok){ const d=await r.json(); canManage=d.canManage; }
+    if(canManage) document.getElementById('btn-upload-toggle').style.display='';
+
+    await loadDocs();
   }catch(e){window.location.href='/login.html';}
 })();
 </script>
