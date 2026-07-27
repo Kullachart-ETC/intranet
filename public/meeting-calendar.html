@@ -485,6 +485,7 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
   <div class="modal" style="max-width:640px">
     <div class="mhead">
       <h2 id="allRoomsTitle">ห้องประชุมทั้งหมด</h2>
+      <input type="date" id="arDatePicker" onchange="openAllRoomsModal(this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;margin-right:8px">
       <button class="mclose" onclick="closeModal('allRoomsOverlay')">✕</button>
     </div>
     <div class="mbody">
@@ -957,6 +958,7 @@ function openAllRoomsModal(dateStr) {
   const [y,mo,d] = dateStr.split('-').map(Number);
   const thaiM = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   document.getElementById('allRoomsTitle').textContent = `ห้องประชุมทั้งหมด — ${d} ${thaiM[mo]} ${y+543}`;
+  document.getElementById('arDatePicker').value = dateStr;
 
   const dayB = bookings.filter(b => b.date === dateStr);
   const sites = [
