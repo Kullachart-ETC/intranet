@@ -390,11 +390,22 @@ tr:last-child td{border-bottom:none}
   <div class="tabs">
     <button class="tab active" onclick="showLeaveTab('quota',this)">สิทธิ์การลา</button>
     <button class="tab" onclick="showLeaveTab('my',this)">ประวัติการลาของฉัน</button>
+    <button class="tab" id="team-cal-tab" onclick="showLeaveTab('teamcal',this)" style="display:none">ดูแบบรายเดือน</button>
     <button class="tab" id="approve-tab" onclick="showLeaveTab('approve',this)" style="display:none">รออนุมัติ <span id="pending-count" style="background:#e24b4a;color:#fff;border-radius:20px;padding:1px 6px;font-size:11px;margin-left:4px"></span></button>
     <button class="tab" id="report-tab" onclick="showLeaveTab('report',this)" style="display:none">รายงาน</button>
   </div>
   <div id="leave-quota" class="leave-tab"><div class="loading">กำลังโหลด...</div></div>
   <div id="leave-my" class="leave-tab" style="display:none"><div class="loading">กำลังโหลด...</div></div>
+  <div id="leave-teamcal" class="leave-tab" style="display:none">
+    <div class="cal-box">
+      <div class="cal-nav">
+        <button onclick="changeTeamCalMonth(-1)">‹</button>
+        <span id="team-cal-label"></span>
+        <button onclick="changeTeamCalMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="team-cal-grid"></div>
+    </div>
+  </div>
   <div id="leave-approve" class="leave-tab" style="display:none"><div class="loading">กำลังโหลด...</div></div>
   <div id="leave-report" class="leave-tab" style="display:none"><div class="loading">กำลังโหลด...</div></div>
 </div>
@@ -607,7 +618,7 @@ const MONTHS_TH=['มกราคม','กุมภาพันธ์','มี�
 const TAG_MAP={announce:{cls:'tag-announce',label:'ประกาศ'},event:{cls:'tag-event',label:'กิจกรรม'},urgent:{cls:'tag-urgent',label:'ด่วน'},welfare:{cls:'tag-welfare',label:'สวัสดิการ'}};
 const LEAVE_NAMES={sick:'ลาป่วย',annual:'ลาพักร้อน',personal:'ลากิจจำเป็น',personal_special:'ลากิจพิเศษ',maternity:'ลาคลอด',ordain:'ลาบวช',military:'ลาราชการทหาร',marriage:'ลาสมรส',work_injury:'ลาป่วยเนื่องจากงาน',unpaid:'ลาตัดเงิน'};
 
-let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[]};
+let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[],teamCalYear:new Date().getFullYear(),teamCalMonth:new Date().getMonth(),teamLeaves:[]};
 
 const $=id=>document.getElementById(id);
 function todayStr(){const t=new Date();return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;}
@@ -723,6 +734,7 @@ function showLeaveTab(tab,btn){
   $('leave-'+tab).style.display='';btn.classList.add('active');
   if(tab==='quota')loadLeaveQuota();
   if(tab==='my')loadMyLeave();
+  if(tab==='teamcal')loadTeamLeaveCalendar();
   if(tab==='approve')loadPendingLeave();
   if(tab==='report')loadLeaveReport();
 }
@@ -774,6 +786,40 @@ async function loadMyLeave(){
   if(!leaves.length){$('leave-my').innerHTML='<div class="loading">ยังไม่มีประวัติการลา</div>';return;}
   $('leave-my').innerHTML=leaves.map(l=>`<div class="leave-card"><div class="leave-card-head"><div><div class="leave-no">${l.leave_no}</div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><span class="status-${l.status}">${l.status==='pending'?'รออนุมัติ':l.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></div><div class="leave-dates">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')}</div><div class="leave-days">${parseFloat(l.days).toFixed(2)} วัน · ${l.reason||'ไม่ระบุเหตุผล'}</div>${l.reject_reason?`<div style="font-size:12px;color:#A32D2D;margin-top:4px">เหตุผล: ${l.reject_reason}</div>`:''
 }${l.status==='pending'?`<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="openEditLeave(${JSON.stringify(l).split('"').join('&quot;')})">✏️ แก้ไข</button><button class="btn btn-danger btn-sm" onclick="cancelLeave(${l.id})">✕ ยกเลิก</button></div>`:''}</div>`).join('');
+}
+
+// ปฏิทินการลาของลูกทีม (รายเดือน)
+const TEAM_CAL_COLORS=['#1D9E75','#0f2c6f','#BA7517','#993556','#534AB7','#185FA5','#993C1D','#0F6E56'];
+async function loadTeamLeaveCalendar(){
+  state.teamLeaves=await api(`/leave/team?year=${state.teamCalYear}&month=${state.teamCalMonth+1}`);
+  renderTeamCal();
+}
+function renderTeamCal(){
+  $('team-cal-label').textContent=`${MONTHS_TH[state.teamCalMonth]} ${state.teamCalYear+543}`;
+  const first=new Date(state.teamCalYear,state.teamCalMonth,1).getDay();
+  const days=new Date(state.teamCalYear,state.teamCalMonth+1,0).getDate();
+  const today=new Date();
+  const DAYS=['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  const userIds=[...new Set(state.teamLeaves.map(l=>l.user_id))];
+  const colorOf=uid=>TEAM_CAL_COLORS[userIds.indexOf(uid)%TEAM_CAL_COLORS.length];
+
+  let html=DAYS.map(d=>`<div class="day-head">${d}</div>`).join('');
+  for(let i=0;i<first;i++)html+=`<div class="day-cell other"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=new Date(state.teamCalYear,state.teamCalMonth,d);
+    const isToday=today.getFullYear()===state.teamCalYear&&today.getMonth()===state.teamCalMonth&&today.getDate()===d;
+    const onLeave=state.teamLeaves.filter(l=>ds>=new Date(new Date(l.start_datetime).setHours(0,0,0,0))&&ds<=new Date(new Date(l.end_datetime).setHours(0,0,0,0)));
+    html+=`<div class="day-cell${isToday?' today':''}"><div class="day-num">${d}</div>${onLeave.map(l=>`<div class="ev-chip" style="background:${colorOf(l.user_id)}" title="${l.user_name} (${l.dept}) — ${LEAVE_NAMES[l.leave_type]||l.leave_type}">${l.user_name.split(' ')[0]}</div>`).join('')}</div>`;
+  }
+  $('team-cal-grid').innerHTML=html;
+  if(!state.teamLeaves.length)$('team-cal-grid').innerHTML+=`<div class="loading" style="grid-column:1/-1">ไม่มีวันลาของลูกทีมในเดือนนี้</div>`;
+}
+function changeTeamCalMonth(d){
+  state.teamCalMonth+=d;
+  if(state.teamCalMonth<0){state.teamCalMonth=11;state.teamCalYear--;}
+  if(state.teamCalMonth>11){state.teamCalMonth=0;state.teamCalYear++;}
+  loadTeamLeaveCalendar();
 }
 
 async function loadPendingLeave(){
@@ -968,7 +1014,7 @@ async function loadLeave(){
     $('user-badge').textContent=state.me.role;
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-btn').style.display='';}
     // แสดง tab รออนุมัติเฉพาะหัวหน้า (is_manager) หรือ admin
-    if(state.me.is_manager||state.me.role==='admin') $('approve-tab').style.display='';
+    if(state.me.is_manager||state.me.role==='admin'){$('approve-tab').style.display='';$('team-cal-tab').style.display='';}
     await loadBoard();
     loadThaiEconNews();
     loadTechNews();

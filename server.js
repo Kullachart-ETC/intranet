@@ -755,6 +755,39 @@ app.get('/api/leave/pending', requireLogin, async (req, res) => {
   res.json(r.rows);
 });
 
+// ปฏิทินการลาของลูกทีม (รายเดือน) — หัวหน้าเห็นเฉพาะลูกน้องตรง, admin เห็นทุกคน
+app.get('/api/leave/team', requireLogin, async (req, res) => {
+  try {
+    const me = req.session.user;
+    const y = parseInt(req.query.year) || new Date().getFullYear();
+    const m = parseInt(req.query.month) || (new Date().getMonth() + 1);
+    const startOfMonth = `${y}-${String(m).padStart(2, '0')}-01`;
+    const endOfMonth = new Date(y, m, 0).toISOString().split('T')[0];
+
+    const params = [startOfMonth, endOfMonth];
+    let userFilter = '';
+    if (me.role !== 'admin') {
+      userFilter = 'AND u.manager_id = $3';
+      params.push(me.id);
+    }
+
+    const r = await pool.query(`
+      SELECT lr.id, lr.leave_type, lr.start_datetime, lr.end_datetime, lr.days,
+             u.id as user_id, u.name as user_name, u.dept
+      FROM leave_requests lr
+      JOIN users u ON lr.user_id = u.id
+      WHERE lr.status = 'approved'
+        AND lr.start_datetime::date <= $2::date
+        AND lr.end_datetime::date >= $1::date
+        ${userFilter}
+      ORDER BY lr.start_datetime
+    `, params);
+    res.json(r.rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ดูใบลาทั้งหมด (Admin)
 app.get('/api/leave/all', requireLogin, requireAdmin, async (req, res) => {
   const r = await pool.query(
