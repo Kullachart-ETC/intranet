@@ -12,7 +12,7 @@ body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size
 /* BUG BANNER — mosquito flies in, gets sprayed, falls */
 .bug-banner{position:relative;height:64px;overflow:hidden;background:linear-gradient(90deg,#eaf5ff,#f7fcfa);border-bottom:1px solid #dbe7e0}
 .bug-banner .mosquito{position:absolute;left:-6%;top:38%;font-size:24px;line-height:1;animation:mosquito-fly 5.5s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18))}
-.bug-banner .can{position:absolute;right:7%;top:6px;height:52px;width:auto;transform-origin:bottom center;animation:can-squeeze 5.5s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.bug-banner .can{position:absolute;right:7%;top:6px;height:52px;width:auto;transform-origin:bottom center;animation:can-squeeze 5.5s ease-in-out infinite;mix-blend-mode:multiply}
 .bug-banner .mist{position:absolute;right:14%;top:10px;width:8px;height:8px;border-radius:50%;background:rgba(29,158,117,.55);opacity:0;animation:mist-puff 5.5s ease-in-out infinite}
 .bug-banner .mist2{right:17%;top:6px;animation-delay:.04s}
 .bug-banner .mist3{right:12%;top:16px;animation-delay:.08s}
@@ -322,9 +322,9 @@ tr:last-child td{border-bottom:none}
           <a href="javascript:void(0)" onclick="goToLeave()" class="quick-link-photo" style="background-image:url('/holiday.png')"><span>ใบลาออนไลน์</span></a>
           <a href="/meeting-calendar.html" class="quick-link-photo" style="background-image:url('/meeting-room.png')"><span>จองห้องประชุม</span></a>
           <a href="/car-booking.html" class="quick-link-photo" style="background-image:url('/car.png');background-position:center 85%"><span>จองรถ</span></a>
-          <a href="/forms.html" class="quick-link-photo" style="background:#0f766e url('/doc.jpg') center/62% no-repeat"><span>แบบฟอร์ม - ARS</span></a>
+          <a href="/forms.html" class="quick-link-photo" style="background:#0f766e url('/doc.png') center/62% no-repeat"><span>แบบฟอร์ม EARTH</span></a>
           <a href="/webboard.html" class="quick-link-photo" style="background-image:url('/board.png')"><span>เว็บบอร์ด</span></a>
-          <a href="/regulations.html" class="quick-link-photo" style="background:#0f2c6f url('/rule.png') center/62% no-repeat"><span>ระเบียบบริษัท</span></a>
+          <a href="/regulations.html" class="quick-link-photo" style="background-image:url('/rule.jpg')"><span>ระเบียบบริษัท</span></a>
         </div>
       </div>
     </div>
