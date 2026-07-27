@@ -11,7 +11,7 @@
 body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size:15px}
 /* BUG BANNER — mosquito flies in, gets sprayed, falls */
 .bug-banner{position:relative;height:64px;overflow:hidden;background:linear-gradient(90deg,#eaf5ff,#f7fcfa);border-bottom:1px solid #dbe7e0}
-.bug-banner::before{content:'';position:absolute;inset:0;background:url('/slogan.jpg') center/cover no-repeat;opacity:.14;pointer-events:none}
+.bug-banner::before{content:'';position:absolute;inset:0;background:url('/slogan.jpg') left center/auto 100% repeat-x;opacity:.14;pointer-events:none}
 .bug-banner .mosquito{position:absolute;left:-6%;top:38%;font-size:24px;line-height:1;animation:mosquito-fly 5.5s ease-in-out infinite;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18))}
 .bug-banner .can{position:absolute;right:7%;top:6px;height:52px;width:auto;transform-origin:bottom center;animation:can-squeeze 5.5s ease-in-out infinite;mix-blend-mode:multiply}
 .bug-banner .mist{position:absolute;right:14%;top:10px;width:8px;height:8px;border-radius:50%;background:rgba(29,158,117,.55);opacity:0;animation:mist-puff 5.5s ease-in-out infinite}
