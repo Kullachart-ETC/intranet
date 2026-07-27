@@ -176,6 +176,16 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 .ar-free { background: #E1F5EE; border: 1px solid #5DCAA5; cursor: pointer; }
 .ar-free:hover { background: #C9EEE0; }
 .ar-busy { cursor: default; }
+.ar-tab { padding: 6px 14px; border-radius: 6px; border: none; background: none; cursor: pointer; font-size: 12px; font-family: inherit; color: var(--muted); }
+.ar-tab.active { background: #fff; color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.ar-month-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.ar-month-head { background: #f8f8f6; font-size: 10px; font-weight: 600; color: var(--muted); text-align: center; padding: 5px 2px; }
+.ar-month-cell { background: #fff; min-height: 58px; padding: 4px; cursor: pointer; }
+.ar-month-cell.other { background: #fafafa; cursor: default; }
+.ar-month-cell:hover:not(.other) { background: #F4F6FF; }
+.ar-month-daynum { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.ar-month-cell.other .ar-month-daynum { color: #ccc; }
+.ar-month-rooms { font-size: 9px; color: var(--primary); line-height: 1.4; word-break: break-word; }
 
 /* MODAL */
 .overlay {
@@ -485,15 +495,33 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
   <div class="modal" style="max-width:640px">
     <div class="mhead">
       <h2 id="allRoomsTitle">ห้องประชุมทั้งหมด</h2>
-      <input type="date" id="arDatePicker" onchange="openAllRoomsModal(this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;margin-right:8px">
       <button class="mclose" onclick="closeModal('allRoomsOverlay')">✕</button>
     </div>
     <div class="mbody">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;font-size:11px;color:var(--muted)">
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#E1F5EE;border:1px solid #5DCAA5;display:inline-block"></span>ว่าง (คลิกเพื่อจอง)</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#888;display:inline-block"></span>ไม่ว่าง</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:2px;background:#f0f0ec;border-radius:7px;padding:2px">
+          <button class="ar-tab active" id="arTabDay" onclick="arSetView('day')">รายวัน</button>
+          <button class="ar-tab" id="arTabMonth" onclick="arSetView('month')">รายเดือน</button>
+        </div>
+        <div id="arDayControls">
+          <input type="date" id="arDatePicker" onchange="openAllRoomsModal(this.value)" style="border:1px solid #ddd;border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit">
+        </div>
+        <div id="arMonthControls" style="display:none;align-items:center;gap:8px">
+          <button class="top-btn" style="color:#444" onclick="arChangeMonth(-1)">‹</button>
+          <span id="arMonthLabel" style="font-size:13px;font-weight:600;min-width:110px;text-align:center"></span>
+          <button class="top-btn" style="color:#444" onclick="arChangeMonth(1)">›</button>
+        </div>
       </div>
-      <div id="allRoomsBody"></div>
+      <div id="arDayView">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;font-size:11px;color:var(--muted)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#E1F5EE;border:1px solid #5DCAA5;display:inline-block"></span>ว่าง (คลิกเพื่อจอง)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:#888;display:inline-block"></span>ไม่ว่าง</span>
+        </div>
+        <div id="allRoomsBody"></div>
+      </div>
+      <div id="arMonthView" style="display:none">
+        <div id="allRoomsMonthGrid"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -576,6 +604,7 @@ let selColor  = '#1D5FA5';
 let modalDate = null;
 let me        = null;
 let curView   = 'month';
+let arCursor  = new Date();
 
 // ===== INIT =====
 async function init() {
@@ -959,6 +988,8 @@ function openAllRoomsModal(dateStr) {
   const thaiM = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   document.getElementById('allRoomsTitle').textContent = `ห้องประชุมทั้งหมด — ${d} ${thaiM[mo]} ${y+543}`;
   document.getElementById('arDatePicker').value = dateStr;
+  arCursor = new Date(y, mo-1, d);
+  arSetView('day');
 
   const dayB = bookings.filter(b => b.date === dateStr);
   const sites = [
@@ -989,6 +1020,63 @@ function openAllRoomsModal(dateStr) {
   document.getElementById('allRoomsBody').innerHTML = html;
   document.getElementById('allRoomsOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+function arSetView(mode) {
+  document.getElementById('arTabDay').classList.toggle('active', mode==='day');
+  document.getElementById('arTabMonth').classList.toggle('active', mode==='month');
+  document.getElementById('arDayView').style.display = mode==='day' ? '' : 'none';
+  document.getElementById('arMonthView').style.display = mode==='month' ? '' : 'none';
+  document.getElementById('arDayControls').style.display = mode==='day' ? '' : 'none';
+  document.getElementById('arMonthControls').style.display = mode==='month' ? 'flex' : 'none';
+  if (mode==='month') renderAllRoomsMonth();
+}
+
+function arChangeMonth(d) {
+  arCursor = new Date(arCursor.getFullYear(), arCursor.getMonth()+d, 1);
+  renderAllRoomsMonth();
+}
+
+function shortRoomName(name) {
+  return name.replace('Factory 2 - ', '');
+}
+
+function renderAllRoomsMonth() {
+  const y = arCursor.getFullYear(), m = arCursor.getMonth();
+  const thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  document.getElementById('arMonthLabel').textContent = `${thM[m]} ${y+543}`;
+
+  const firstDow = new Date(y,m,1).getDay();
+  const daysInM  = new Date(y,m+1,0).getDate();
+  const daysInP  = new Date(y,m,0).getDate();
+  const total    = Math.ceil((firstDow+daysInM)/7)*7;
+
+  let html = '<div class="ar-month-grid">';
+  ['อา','จ','อ','พ','พฤ','ศ','ส'].forEach(dn => html += `<div class="ar-month-head">${dn}</div>`);
+
+  for (let i=0; i<total; i++) {
+    let d, cm, cy, other=false;
+    if (i<firstDow)               { d=daysInP-firstDow+i+1; cm=m-1; cy=y; other=true; }
+    else if (i>=firstDow+daysInM) { d=i-firstDow-daysInM+1; cm=m+1; cy=y; other=true; }
+    else                           { d=i-firstDow+1; cm=m; cy=y; }
+
+    const cellDate = new Date(cy,cm,d);
+    const dateStr  = fmt(cellDate);
+
+    let roomNames = [];
+    if (!other) {
+      const dayB = bookings.filter(b => b.date === dateStr);
+      const idxSet = [...new Set(dayB.map(b => parseInt(b.room_idx)))];
+      roomNames = idxSet.map(idx => ROOMS[idx] ? shortRoomName(ROOMS[idx].name) : null).filter(Boolean);
+    }
+
+    html += `<div class="ar-month-cell${other?' other':''}"${!other?` onclick="openAllRoomsModal('${dateStr}')"`:''}>
+      <div class="ar-month-daynum">${d}</div>
+      <div class="ar-month-rooms">${roomNames.join(', ')}</div>
+    </div>`;
+  }
+  html += '</div>';
+  document.getElementById('allRoomsMonthGrid').innerHTML = html;
 }
 
 function closeModal(id) {
