@@ -150,14 +150,20 @@ async function viewDoc(id, title) {
     });
     const pdf = await pdfjsLib.getDocument({data: buf}).promise;
     const images = [];
-    let pageW = 500, pageH = 700;
+    // "logical" page size for PageFlip's layout math — deliberately kept in the
+    // same order of magnitude as minWidth/maxWidth below, independent of the
+    // much higher pixel resolution used to actually rasterize each page.
+    // Passing the raw high-res pixel size here confused PageFlip's stretch
+    // calculation and made pages render blurrier, not sharper.
+    const baseViewport = (await pdf.getPage(1)).getViewport({scale: 1});
+    const pageW = Math.round(baseViewport.width);
+    const pageH = Math.round(baseViewport.height);
     const renderScale = 2.5 * (window.devicePixelRatio || 1);
     for (let i=1; i<=pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const viewport = page.getViewport({scale: renderScale});
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width; canvas.height = viewport.height;
-      pageW = viewport.width; pageH = viewport.height;
       await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
       images.push(canvas.toDataURL('image/png'));
     }
