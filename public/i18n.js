@@ -51,7 +51,10 @@ const I18N_DICT = {
   'ql.car':         {th:'จองรถ',           en:'Book Car'},
   'ql.forms':       {th:'แบบฟอร์ม EARTH',  en:'EARTH Forms'},
   'ql.webboard':    {th:'เว็บบอร์ด',        en:'Webboard'},
-  'ql.regulations': {th:'ระเบียบบริษัท',    en:'Regulations'}
+  'ql.regulations': {th:'ระเบียบบริษัท',    en:'Regulations'},
+  'ql.calendar':    {th:'ปฏิทินกิจกรรม',    en:'Calendar'},
+  'ql.kb':          {th:'Knowledge Base',  en:'Knowledge Base'},
+  'ql.csr':         {th:'CSR',             en:'CSR'}
 };
 
 function applyI18N(){

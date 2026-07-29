@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ค้นหา - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo img{height:32px;width:32px;object-fit:contain}
+a.nav-home{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#1D9E75;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s;margin-left:auto}
+a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
+.page{max-width:760px;margin:0 auto;padding:32px 16px}
+.search-hero{display:flex;gap:8px;margin-bottom:24px}
+.search-hero input{flex:1;border:1px solid #ddd;border-radius:10px;padding:12px 16px;font-size:15px;font-family:inherit}
+.search-hero input:focus{outline:none;border-color:#1D9E75}
+.btn{padding:12px 22px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;background:#1D9E75;color:#fff}
+.btn:hover{background:#178a63}
+.result-group{margin-bottom:20px}
+.result-group h3{font-size:13px;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em}
+.result-item{display:block;background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:8px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:.15s}
+.result-item:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);transform:translateY(-1px)}
+.result-title{font-size:14px;font-weight:600;color:#1a1a18}
+.result-snippet{font-size:12px;color:#888;margin-top:4px}
+.empty{text-align:center;color:#aaa;padding:60px 20px;font-size:14px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
+</nav>
+<div class="page">
+  <div class="search-hero">
+    <input id="q" type="text" placeholder="ค้นหาประกาศ, เอกสาร, เว็บบอร์ด, Knowledge Base, CSR..." onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="btn" onclick="doSearch()">ค้นหา</button>
+  </div>
+  <div id="results"></div>
+</div>
+<script>
+function escHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function doSearch() {
+  const q = document.getElementById('q').value.trim();
+  const el = document.getElementById('results');
+  if (!q) { el.innerHTML = ''; return; }
+  const url = new URL(location.href);
+  url.searchParams.set('q', q);
+  history.replaceState(null, '', url);
+  el.innerHTML = '<div class="empty">กำลังค้นหา...</div>';
+  try {
+    const r = await fetch('/api/search?q='+encodeURIComponent(q));
+    const rows = await r.json();
+    if (!rows.length) { el.innerHTML = '<div class="empty">ไม่พบผลลัพธ์สำหรับ "'+escHtml(q)+'"</div>'; return; }
+    const groups = {};
+    rows.forEach(row => { (groups[row.type] = groups[row.type]||[]).push(row); });
+    el.innerHTML = Object.entries(groups).map(([type, items]) => `
+      <div class="result-group">
+        <h3>${escHtml(type)}</h3>
+        ${items.map(it => `<a class="result-item" href="${it.url}">
+          <div class="result-title">${escHtml(it.title)}</div>
+          ${it.snippet?`<div class="result-snippet">${escHtml(it.snippet)}</div>`:''}
+        </a>`).join('')}
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">เกิดข้อผิดพลาดในการค้นหา</div>'; }
+}
+
+(async()=>{
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(me.error){window.location.href='/login.html';return;}
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (q) { document.getElementById('q').value = q; doSearch(); }
+  }catch(e){window.location.href='/login.html';}
+})();
+</script>
+</body></html>

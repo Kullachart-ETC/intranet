@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSR - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo img{height:32px;width:32px;object-fit:contain}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+a.nav-home{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#1D9E75;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
+a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-toggle{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.nav-toggle:hover{background:rgba(255,255,255,.1)}
+@media (max-width:760px){.nav{padding:0 12px}.nav-toggle{display:inline-flex;align-items:center;justify-content:center}.nav-links{display:none;position:absolute;top:52px;left:0;right:0;background:#1a1a18;flex-direction:column;align-items:flex-start;gap:2px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.3);z-index:60}.nav-links.open{display:flex}.nav-links a:not(.nav-home){padding:10px 14px;width:100%}.nav-links .nav-home{margin-bottom:6px}.nav-user{display:none}}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,.1);border-radius:20px;padding:2px 4px 2px 10px}
+.search-box input{background:none;border:none;color:#fff;font-size:12px;font-family:inherit;width:110px;outline:none}
+.search-box input::placeholder{color:#888}
+.search-box button{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:4px 6px}
+.page{max-width:1100px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;font-weight:700}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
+.btn-primary{background:#1D9E75;color:#fff}
+.btn-primary:hover{background:#178a63}
+.btn-danger{background:#fff;border:1px solid #f5c6c6;color:#dc2626;font-size:12px;padding:4px 10px}
+.btn-danger:hover{background:#fef2f2}
+.csr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.csr-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:.15s}
+.csr-card:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.csr-thumb{width:100%;height:170px;object-fit:cover;background:#eee;display:block}
+.csr-thumb-empty{width:100%;height:170px;background:#eee;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:32px}
+.csr-body{padding:14px}
+.csr-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.csr-date{font-size:11px;color:#999;margin-bottom:6px}
+.csr-desc{font-size:12px;color:#666;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.empty{text-align:center;color:#aaa;padding:40px;font-size:13px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.mhead{display:flex;align-items:center;padding:16px 18px 12px;border-bottom:1px solid #eee;gap:8px}
+.mhead h2{font-size:15px;font-weight:700;flex:1}
+.mclose{background:none;border:none;font-size:20px;cursor:pointer;color:#888;width:28px;height:28px;border-radius:6px}
+.mclose:hover{background:#f5f5f3}
+.mbody{padding:16px 18px}
+.lightbox-imgs{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px}
+.lightbox-imgs img{height:280px;border-radius:8px;flex-shrink:0;scroll-snap-align:start}
+.lightbox-imgs{scroll-snap-type:x mandatory}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.fg input,.fg textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+.fg textarea{min-height:70px;resize:vertical}
+.mfooter{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid #eee}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <div class="nav-links" id="navLinks">
+    <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
+    <a href="/about.html" data-i18n="nav.about">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html" data-i18n="nav.orgchart">โครงสร้างองค์กร</a>
+    <a href="/news.html" data-i18n="nav.news">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html" data-i18n="nav.webboard">เว็บบอร์ด</a>
+    <a href="/regulations.html" data-i18n="nav.regulations">ระเบียบบริษัท</a>
+    <a href="/media-center.html">Media Center</a>
+    <a href="/forms.html" data-i18n="nav.forms">แบบฟอร์ม - ARS</a>
+    <a href="/calendar.html">ปฏิทินกิจกรรม</a>
+    <a href="/knowledge-base.html">Knowledge Base</a>
+    <a href="/csr.html" class="active">CSR</a>
+  </div>
+  <div class="nav-right">
+    <div class="search-box"><input id="navSearch" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter'&&this.value.trim())location.href='/search.html?q='+encodeURIComponent(this.value.trim())"><button onclick="const v=document.getElementById('navSearch').value.trim();if(v)location.href='/search.html?q='+encodeURIComponent(v)"><i class="ti ti-search"></i></button></div>
+    <span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+  </div>
+  <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="เมนู"><i class="ti ti-menu-2"></i></button>
+</nav>
+<div class="page">
+  <div class="page-head">
+    <h1>🤝 CSR — กิจกรรมเพื่อสังคม</h1>
+    <button class="btn btn-primary" id="btnAdd" style="display:none" onclick="openAddModal()">+ เพิ่มกิจกรรม</button>
+  </div>
+  <div id="csrGrid" class="csr-grid"><div class="empty">กำลังโหลด...</div></div>
+</div>
+
+<div class="overlay" id="viewOverlay" onclick="if(event.target===this)closeView()">
+  <div class="modal">
+    <div class="mhead"><h2 id="viewTitle"></h2><button class="mclose" onclick="closeView()">✕</button></div>
+    <div class="mbody">
+      <div class="lightbox-imgs" id="viewImgs"></div>
+      <div id="viewDate" style="font-size:12px;color:#999;margin-bottom:8px"></div>
+      <div id="viewDesc" style="font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap"></div>
+    </div>
+    <div class="mfooter" id="viewFooter"></div>
+  </div>
+</div>
+
+<div class="overlay" id="addOverlay" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal">
+    <div class="mhead"><h2>เพิ่มกิจกรรม CSR</h2><button class="mclose" onclick="closeAddModal()">✕</button></div>
+    <div class="mbody">
+      <div class="fg"><label>ชื่อกิจกรรม</label><input id="ad-title" type="text"></div>
+      <div class="fg"><label>วันที่</label><input id="ad-date" type="date"></div>
+      <div class="fg"><label>รายละเอียด</label><textarea id="ad-desc"></textarea></div>
+      <div class="fg"><label>รูปถ่าย (เลือกได้หลายรูป)</label><input id="ad-photos" type="file" accept="image/*" multiple></div>
+    </div>
+    <div class="mfooter"><button class="btn btn-primary" onclick="saveActivity()" id="ad-save">บันทึก</button></div>
+  </div>
+</div>
+
+<script>
+let activities = [];
+let canManage = false;
+
+function escHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(dt){ return dt ? new Date(dt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : ''; }
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers:{} };
+  if (body instanceof FormData) opts.body = body;
+  else if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  const r = await fetch('/api'+path, opts);
+  if (!r.ok) { const e = await r.json().catch(()=>({error:r.statusText})); throw new Error(e.error||r.statusText); }
+  return r.json();
+}
+
+function renderGrid() {
+  const el = document.getElementById('csrGrid');
+  if (!activities.length) { el.innerHTML = '<div class="empty">ยังไม่มีกิจกรรม CSR</div>'; return; }
+  el.innerHTML = activities.map(a => {
+    const photoIds = a.photo_ids || [];
+    const thumb = photoIds.length ? `<img class="csr-thumb" src="/api/csr/photos/${photoIds[0]}" loading="lazy">` : `<div class="csr-thumb-empty"><i class="ti ti-photo"></i></div>`;
+    return `<div class="csr-card" onclick="openView(${a.id})">
+      ${thumb}
+      <div class="csr-body">
+        <div class="csr-title">${escHtml(a.title)}</div>
+        <div class="csr-date">${fmtDate(a.activity_date)}</div>
+        <div class="csr-desc">${escHtml(a.description||'')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openView(id) {
+  const a = activities.find(x=>x.id===id);
+  if (!a) return;
+  document.getElementById('viewTitle').textContent = a.title;
+  document.getElementById('viewDate').textContent = fmtDate(a.activity_date);
+  document.getElementById('viewDesc').textContent = a.description || '';
+  const photoIds = a.photo_ids || [];
+  document.getElementById('viewImgs').innerHTML = photoIds.length
+    ? photoIds.map(pid => `<img src="/api/csr/photos/${pid}">`).join('')
+    : '<div class="empty">ไม่มีรูปถ่าย</div>';
+  document.getElementById('viewFooter').innerHTML = canManage
+    ? `<button class="btn-danger" onclick="delActivity(${a.id})">✕ ลบกิจกรรมนี้</button>`
+    : '';
+  document.getElementById('viewOverlay').classList.add('open');
+}
+function closeView() { document.getElementById('viewOverlay').classList.remove('open'); }
+
+function openAddModal() {
+  document.getElementById('ad-title').value = '';
+  document.getElementById('ad-date').value = '';
+  document.getElementById('ad-desc').value = '';
+  document.getElementById('ad-photos').value = '';
+  document.getElementById('addOverlay').classList.add('open');
+}
+function closeAddModal() { document.getElementById('addOverlay').classList.remove('open'); }
+
+async function saveActivity() {
+  const title = document.getElementById('ad-title').value.trim();
+  const date = document.getElementById('ad-date').value;
+  const desc = document.getElementById('ad-desc').value.trim();
+  const files = document.getElementById('ad-photos').files;
+  if (!title) { alert('กรุณากรอกชื่อกิจกรรม'); return; }
+  const btn = document.getElementById('ad-save');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  try {
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('activity_date', date);
+    fd.append('description', desc);
+    for (const f of files) fd.append('photos', f);
+    await api('/csr/activities', 'POST', fd);
+    closeAddModal();
+    await loadActivities();
+  } catch(e) { alert('บันทึกไม่สำเร็จ: '+e.message); }
+  btn.disabled = false; btn.textContent = 'บันทึก';
+}
+async function delActivity(id) {
+  if (!confirm('ต้องการลบกิจกรรมนี้ใช่ไหมครับ?')) return;
+  try {
+    await api('/csr/activities/'+id, 'DELETE');
+    closeView();
+    await loadActivities();
+  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
+}
+
+async function loadActivities() {
+  activities = await api('/csr/activities').catch(()=>[]);
+  renderGrid();
+}
+
+async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
+(async()=>{
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(me.error){window.location.href='/login.html';return;}
+    document.getElementById('nav-user').textContent=me.name;
+    canManage = me.role==='admin';
+    if (canManage) document.getElementById('btnAdd').style.display='';
+    await loadActivities();
+  }catch(e){window.location.href='/login.html';}
+})();
+</script>
+<script src="/i18n.js"></script>
+</body></html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Knowledge Base - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo img{height:32px;width:32px;object-fit:contain}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+a.nav-home{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#1D9E75;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
+a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-toggle{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.nav-toggle:hover{background:rgba(255,255,255,.1)}
+@media (max-width:760px){.nav{padding:0 12px}.nav-toggle{display:inline-flex;align-items:center;justify-content:center}.nav-links{display:none;position:absolute;top:52px;left:0;right:0;background:#1a1a18;flex-direction:column;align-items:flex-start;gap:2px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.3);z-index:60}.nav-links.open{display:flex}.nav-links a:not(.nav-home){padding:10px 14px;width:100%}.nav-links .nav-home{margin-bottom:6px}.nav-user{display:none}.kb-layout{grid-template-columns:1fr}}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,.1);border-radius:20px;padding:2px 4px 2px 10px}
+.search-box input{background:none;border:none;color:#fff;font-size:12px;font-family:inherit;width:110px;outline:none}
+.search-box input::placeholder{color:#888}
+.search-box button{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:4px 6px}
+.page{max-width:1100px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;font-weight:700;margin-bottom:24px}
+.kb-layout{display:grid;grid-template-columns:230px 1fr;gap:20px;align-items:start}
+.kb-sidebar{background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.kb-cat{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:2px}
+.kb-cat:hover{background:#f5f5f3}
+.kb-cat.active{background:#E8F5F0;color:#1D9E75;font-weight:600}
+.kb-cat-del{background:none;border:none;color:#ccc;cursor:pointer;font-size:13px;padding:2px 4px}
+.kb-cat-del:hover{color:#dc2626}
+.kb-add-cat{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid #eee}
+.kb-add-cat input{flex:1;border:1px solid #ddd;border-radius:8px;padding:6px 8px;font-size:12px;font-family:inherit}
+.kb-main{background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.06);min-height:300px}
+.kb-main-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.kb-main-head h2{font-size:16px;font-weight:700}
+.kb-article{border:1px solid #eee;border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.kb-article-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.kb-article-title{font-size:14px;font-weight:600;cursor:pointer}
+.kb-article-title:hover{color:#1D9E75}
+.kb-article-body{font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap;margin-top:8px;display:none}
+.kb-article-body.open{display:block}
+.kb-article-meta{font-size:11px;color:#999;margin-top:6px}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
+.btn-primary{background:#1D9E75;color:#fff}
+.btn-primary:hover{background:#178a63}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{background:#fff;border:1px solid #f5c6c6;color:#dc2626;font-size:12px;padding:4px 10px}
+.btn-danger:hover{background:#fef2f2}
+.add-article{border:1px dashed #1D9E75;border-radius:10px;padding:14px;margin-bottom:16px;display:none;background:#F0FAF6}
+.add-article.show{display:block}
+.fg{margin-bottom:10px}
+.fg label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.fg input,.fg textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+.fg textarea{min-height:100px;resize:vertical}
+.empty{text-align:center;color:#aaa;padding:40px;font-size:13px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <div class="nav-links" id="navLinks">
+    <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
+    <a href="/about.html" data-i18n="nav.about">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html" data-i18n="nav.orgchart">โครงสร้างองค์กร</a>
+    <a href="/news.html" data-i18n="nav.news">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html" data-i18n="nav.webboard">เว็บบอร์ด</a>
+    <a href="/regulations.html" data-i18n="nav.regulations">ระเบียบบริษัท</a>
+    <a href="/media-center.html">Media Center</a>
+    <a href="/forms.html" data-i18n="nav.forms">แบบฟอร์ม - ARS</a>
+    <a href="/calendar.html">ปฏิทินกิจกรรม</a>
+    <a href="/knowledge-base.html" class="active">Knowledge Base</a>
+    <a href="/csr.html">CSR</a>
+  </div>
+  <div class="nav-right">
+    <div class="search-box"><input id="navSearch" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter'&&this.value.trim())location.href='/search.html?q='+encodeURIComponent(this.value.trim())"><button onclick="const v=document.getElementById('navSearch').value.trim();if(v)location.href='/search.html?q='+encodeURIComponent(v)"><i class="ti ti-search"></i></button></div>
+    <span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+  </div>
+  <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="เมนู"><i class="ti ti-menu-2"></i></button>
+</nav>
+<div class="page">
+  <h1>📚 Knowledge Base</h1>
+  <div class="kb-layout">
+    <div class="kb-sidebar">
+      <div id="catList"><div class="empty">กำลังโหลด...</div></div>
+      <div class="kb-add-cat" id="addCatRow" style="display:none">
+        <input id="newCatName" placeholder="หัวข้อใหม่..." onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn btn-primary btn-sm" onclick="addCategory()">+</button>
+      </div>
+    </div>
+    <div class="kb-main">
+      <div class="kb-main-head">
+        <h2 id="mainTitle">เลือกหัวข้อทางซ้าย</h2>
+        <button class="btn btn-primary btn-sm" id="btnAddArticle" style="display:none" onclick="toggleAddArticle()">+ เพิ่มบทความ</button>
+      </div>
+      <div class="add-article" id="addArticle">
+        <div class="fg"><label>ชื่อบทความ</label><input id="art-title" type="text"></div>
+        <div class="fg"><label>เนื้อหา</label><textarea id="art-body"></textarea></div>
+        <button class="btn btn-primary" onclick="saveArticle()">บันทึก</button>
+      </div>
+      <div id="articleList"><div class="empty">เลือกหัวข้อทางซ้ายเพื่อดูบทความ</div></div>
+    </div>
+  </div>
+</div>
+<script>
+let categories = [];
+let articles = [];
+let activeCatId = null;
+let canManage = false;
+
+function escHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(dt){ return dt ? new Date(dt).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : ''; }
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers:{} };
+  if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  const r = await fetch('/api'+path, opts);
+  if (!r.ok) { const e = await r.json().catch(()=>({error:r.statusText})); throw new Error(e.error||r.statusText); }
+  return r.json();
+}
+
+function renderCats() {
+  const el = document.getElementById('catList');
+  if (!categories.length) { el.innerHTML = '<div class="empty">ยังไม่มีหัวข้อ</div>'; return; }
+  el.innerHTML = categories.map(c => `
+    <div class="kb-cat${c.id===activeCatId?' active':''}" onclick="selectCategory(${c.id})">
+      <span>${escHtml(c.name)}</span>
+      ${canManage?`<button class="kb-cat-del" onclick="event.stopPropagation();delCategory(${c.id})">✕</button>`:''}
+    </div>`).join('');
+}
+
+async function selectCategory(id) {
+  activeCatId = id;
+  renderCats();
+  const cat = categories.find(c=>c.id===id);
+  document.getElementById('mainTitle').textContent = cat ? cat.name : '';
+  document.getElementById('btnAddArticle').style.display = canManage ? '' : 'none';
+  document.getElementById('addArticle').classList.remove('show');
+  articles = await api('/kb/articles?category_id='+id).catch(()=>[]);
+  renderArticles();
+}
+
+function renderArticles() {
+  const el = document.getElementById('articleList');
+  if (!articles.length) { el.innerHTML = '<div class="empty">ยังไม่มีบทความในหัวข้อนี้</div>'; return; }
+  el.innerHTML = articles.map(a => `
+    <div class="kb-article">
+      <div class="kb-article-head">
+        <div class="kb-article-title" onclick="toggleArticle(${a.id})">${escHtml(a.title)}</div>
+        ${canManage?`<button class="btn-danger" onclick="delArticle(${a.id})">✕</button>`:''}
+      </div>
+      <div class="kb-article-body" id="art-body-${a.id}">${escHtml(a.body)}</div>
+      <div class="kb-article-meta">${fmtDate(a.created_at)}</div>
+    </div>`).join('');
+}
+function toggleArticle(id) { document.getElementById('art-body-'+id).classList.toggle('open'); }
+
+function toggleAddArticle() { document.getElementById('addArticle').classList.toggle('show'); }
+
+async function addCategory() {
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) return;
+  try {
+    const c = await api('/kb/categories', 'POST', { name });
+    document.getElementById('newCatName').value = '';
+    await loadCategories();
+    selectCategory(c.id);
+  } catch(e) { alert('เพิ่มไม่สำเร็จ: '+e.message); }
+}
+async function delCategory(id) {
+  if (!confirm('ลบหัวข้อนี้จะลบบทความทั้งหมดในหัวข้อด้วย ต้องการลบใช่ไหมครับ?')) return;
+  try {
+    await api('/kb/categories/'+id, 'DELETE');
+    if (activeCatId===id) { activeCatId=null; document.getElementById('mainTitle').textContent='เลือกหัวข้อทางซ้าย'; document.getElementById('articleList').innerHTML='<div class="empty">เลือกหัวข้อทางซ้ายเพื่อดูบทความ</div>'; document.getElementById('btnAddArticle').style.display='none'; }
+    await loadCategories();
+  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
+}
+async function saveArticle() {
+  const title = document.getElementById('art-title').value.trim();
+  const body = document.getElementById('art-body').value.trim();
+  if (!title) { alert('กรุณากรอกชื่อบทความ'); return; }
+  try {
+    await api('/kb/articles', 'POST', { category_id: activeCatId, title, body });
+    document.getElementById('art-title').value = '';
+    document.getElementById('art-body').value = '';
+    document.getElementById('addArticle').classList.remove('show');
+    await selectCategory(activeCatId);
+  } catch(e) { alert('บันทึกไม่สำเร็จ: '+e.message); }
+}
+async function delArticle(id) {
+  if (!confirm('ต้องการลบบทความนี้ใช่ไหมครับ?')) return;
+  try {
+    await api('/kb/articles/'+id, 'DELETE');
+    await selectCategory(activeCatId);
+  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
+}
+
+async function loadCategories() {
+  categories = await api('/kb/categories').catch(()=>[]);
+  renderCats();
+}
+
+async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
+(async()=>{
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(me.error){window.location.href='/login.html';return;}
+    document.getElementById('nav-user').textContent=me.name;
+    canManage = me.role==='admin';
+    if (canManage) document.getElementById('addCatRow').style.display='flex';
+    await loadCategories();
+    if (categories.length) selectCategory(categories[0].id);
+  }catch(e){window.location.href='/login.html';}
+})();
+</script>
+<script src="/i18n.js"></script>
+</body></html>

@@ -19,6 +19,10 @@ a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
 .nav-right{display:flex;align-items:center;gap:8px}
 .nav-toggle{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
 .nav-toggle:hover{background:rgba(255,255,255,.1)}
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,.1);border-radius:20px;padding:2px 4px 2px 10px}
+.search-box input{background:none;border:none;color:#fff;font-size:12px;font-family:inherit;width:110px;outline:none}
+.search-box input::placeholder{color:#888}
+.search-box button{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:4px 6px}
 @media (max-width:760px){.nav{padding:0 12px}.nav-toggle{display:inline-flex;align-items:center;justify-content:center}.nav-links{display:none;position:absolute;top:52px;left:0;right:0;background:#1a1a18;flex-direction:column;align-items:flex-start;gap:2px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.3);z-index:60}.nav-links.open{display:flex}.nav-links a:not(.nav-home){padding:10px 14px;width:100%}.nav-links .nav-home{margin-bottom:6px}.nav-user{display:none}}
 .nav-user{color:#ccc;font-size:12px}
 .btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
@@ -51,8 +55,11 @@ h1{font-size:22px;font-weight:700;margin-bottom:8px}
     <a href="/regulations.html" data-i18n="nav.regulations">ระเบียบบริษัท</a>
     <a href="/media-center.html">Media Center</a>
     <a href="/forms.html" data-i18n="nav.forms">แบบฟอร์ม - ARS</a>
+    <a href="/calendar.html">ปฏิทินกิจกรรม</a>
+    <a href="/knowledge-base.html">Knowledge Base</a>
+    <a href="/csr.html">CSR</a>
   </div>
-  <div class="nav-right"><span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button></div>
+  <div class="nav-right"><div class="search-box"><input id="navSearch" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter'&&this.value.trim())location.href='/search.html?q='+encodeURIComponent(this.value.trim())"><button onclick="const v=document.getElementById('navSearch').value.trim();if(v)location.href='/search.html?q='+encodeURIComponent(v)"><i class="ti ti-search"></i></button></div><span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button></div>
   <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="เมนู"><i class="ti ti-menu-2"></i></button>
 </nav>
 <div class="page">

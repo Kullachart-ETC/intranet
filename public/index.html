@@ -91,6 +91,10 @@ body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size
 .nav button.active{background:rgba(255,255,255,.1);color:#fff;font-weight:500}
 
 .user-area{display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:8px;border-left:1px solid #444;flex-shrink:0}
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,.1);border-radius:20px;padding:2px 4px 2px 10px}
+.search-box input{background:none;border:none;color:#fff;font-size:12px;font-family:inherit;width:110px;outline:none}
+.search-box input::placeholder{color:#888}
+.search-box button{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:4px 6px}
 .user-name{font-size:12px;color:#ccc;white-space:nowrap}
 .user-badge{font-size:10px;background:#E1F5EE;color:#0F6E56;padding:2px 7px;border-radius:20px}
 .user-badge.admin{background:#EEEDFE;color:#534AB7}
@@ -292,6 +296,7 @@ tr:last-child td{border-bottom:none}
     <button id="report-btn" data-i18n="idx.leavereport" onclick="window.location.href='/leave-report.html'" style="display:none">📊 รายงานการลา</button>
   </nav>
   <div class="user-area">
+    <div class="search-box"><input id="navSearch" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter'&&this.value.trim())location.href='/search.html?q='+encodeURIComponent(this.value.trim())"><button onclick="const v=document.getElementById('navSearch').value.trim();if(v)location.href='/search.html?q='+encodeURIComponent(v)"><i class="ti ti-search"></i></button></div>
     <span class="user-name" id="user-name">-</span>
     <span class="user-badge" id="user-badge">user</span>
     <button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button>
@@ -352,6 +357,9 @@ tr:last-child td{border-bottom:none}
           <a href="/forms.html" class="quick-link-photo" style="background:#0f766e url('/doc.png') center/cover no-repeat"><span data-i18n="ql.forms">แบบฟอร์ม EARTH</span></a>
           <a href="/webboard.html" class="quick-link-photo" style="background-image:url('/board.png')"><span data-i18n="ql.webboard">เว็บบอร์ด</span></a>
           <a href="/regulations.html" class="quick-link-photo" style="background-image:url('/rule.jpg')"><span data-i18n="ql.regulations">ระเบียบบริษัท</span></a>
+          <a href="/calendar.html" class="quick-link-icon" style="background:#0369A1"><i class="ti ti-calendar-event"></i><span data-i18n="ql.calendar">ปฏิทินกิจกรรม</span></a>
+          <a href="/knowledge-base.html" class="quick-link-icon" style="background:#7C2D92"><i class="ti ti-books"></i><span data-i18n="ql.kb">Knowledge Base</span></a>
+          <a href="/csr.html" class="quick-link-icon" style="background:#B45309"><i class="ti ti-heart-handshake"></i><span data-i18n="ql.csr">CSR</span></a>
         </div>
       </div>
     </div>

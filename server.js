@@ -1329,6 +1329,183 @@ app.post('/api/webboard/:id/reply', requireLogin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ======== CALENDAR (holiday / meeting / training) ========
+async function initCalendar() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS calendar_events (
+    id SERIAL PRIMARY KEY,
+    category TEXT NOT NULL CHECK (category IN ('holiday','meeting','training')),
+    title TEXT NOT NULL,
+    description TEXT,
+    event_date DATE NOT NULL,
+    time_start TEXT,
+    time_end TEXT,
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`);
+}
+initCalendar().catch(console.error);
+
+app.get('/api/calendar-events', requireLogin, async (req, res) => {
+  const { month } = req.query; // 'YYYY-MM'
+  let q = 'SELECT * FROM calendar_events';
+  const params = [];
+  if (month) { q += ` WHERE to_char(event_date,'YYYY-MM')=$1`; params.push(month); }
+  q += ' ORDER BY event_date, time_start';
+  const r = await pool.query(q, params);
+  res.json(r.rows);
+});
+app.post('/api/calendar-events', requireLogin, requireAdmin, async (req, res) => {
+  const { category, title, description, event_date, time_start, time_end } = req.body;
+  if (!category || !title || !event_date) return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบ' });
+  await pool.query(
+    'INSERT INTO calendar_events (category,title,description,event_date,time_start,time_end,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    [category, title, description || null, event_date, time_start || null, time_end || null, req.session.user.id]
+  );
+  res.json({ ok: true });
+});
+app.delete('/api/calendar-events/:id', requireLogin, requireAdmin, async (req, res) => {
+  await pool.query('DELETE FROM calendar_events WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+
+// ======== KNOWLEDGE BASE ========
+async function initKB() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS kb_categories (
+    id SERIAL PRIMARY KEY, name TEXT NOT NULL,
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS kb_articles (
+    id SERIAL PRIMARY KEY,
+    category_id INTEGER REFERENCES kb_categories(id) ON DELETE CASCADE,
+    title TEXT NOT NULL, body TEXT,
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`);
+}
+initKB().catch(console.error);
+
+app.get('/api/kb/categories', requireLogin, async (req, res) => {
+  const r = await pool.query('SELECT * FROM kb_categories ORDER BY name');
+  res.json(r.rows);
+});
+app.post('/api/kb/categories', requireLogin, requireAdmin, async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'กรุณากรอกชื่อหัวข้อ' });
+  const r = await pool.query('INSERT INTO kb_categories (name,created_by) VALUES ($1,$2) RETURNING *', [name, req.session.user.id]);
+  res.json(r.rows[0]);
+});
+app.delete('/api/kb/categories/:id', requireLogin, requireAdmin, async (req, res) => {
+  await pool.query('DELETE FROM kb_categories WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+app.get('/api/kb/articles', requireLogin, async (req, res) => {
+  const { category_id } = req.query;
+  let q = 'SELECT * FROM kb_articles';
+  const params = [];
+  if (category_id) { q += ' WHERE category_id=$1'; params.push(category_id); }
+  q += ' ORDER BY created_at DESC';
+  const r = await pool.query(q, params);
+  res.json(r.rows);
+});
+app.post('/api/kb/articles', requireLogin, requireAdmin, async (req, res) => {
+  const { category_id, title, body } = req.body;
+  if (!category_id || !title) return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบ' });
+  const r = await pool.query(
+    'INSERT INTO kb_articles (category_id,title,body,created_by) VALUES ($1,$2,$3,$4) RETURNING *',
+    [category_id, title, body || '', req.session.user.id]
+  );
+  res.json(r.rows[0]);
+});
+app.put('/api/kb/articles/:id', requireLogin, requireAdmin, async (req, res) => {
+  const { title, body } = req.body;
+  await pool.query('UPDATE kb_articles SET title=$1, body=$2 WHERE id=$3', [title, body || '', req.params.id]);
+  res.json({ ok: true });
+});
+app.delete('/api/kb/articles/:id', requireLogin, requireAdmin, async (req, res) => {
+  await pool.query('DELETE FROM kb_articles WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+
+// ======== CSR ========
+async function initCSR() {
+  await pool.query(`CREATE TABLE IF NOT EXISTS csr_activities (
+    id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT, activity_date DATE,
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`);
+  await pool.query(`CREATE TABLE IF NOT EXISTS csr_photos (
+    id SERIAL PRIMARY KEY,
+    activity_id INTEGER REFERENCES csr_activities(id) ON DELETE CASCADE,
+    photo_data BYTEA NOT NULL, mime_type TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`);
+}
+initCSR().catch(console.error);
+
+app.get('/api/csr/activities', requireLogin, async (req, res) => {
+  const r = await pool.query(`
+    SELECT a.*, COALESCE(json_agg(p.id) FILTER (WHERE p.id IS NOT NULL), '[]') AS photo_ids
+    FROM csr_activities a LEFT JOIN csr_photos p ON p.activity_id=a.id
+    GROUP BY a.id ORDER BY a.activity_date DESC NULLS LAST, a.created_at DESC
+  `);
+  res.json(r.rows);
+});
+app.post('/api/csr/activities', requireLogin, requireAdmin, docUpload.array('photos', 10), async (req, res) => {
+  try {
+    const { title, description, activity_date } = req.body;
+    if (!title) return res.status(400).json({ error: 'กรุณากรอกชื่อกิจกรรม' });
+    const r = await pool.query(
+      'INSERT INTO csr_activities (title,description,activity_date,created_by) VALUES ($1,$2,$3,$4) RETURNING id',
+      [title, description || null, activity_date || null, req.session.user.id]
+    );
+    const activityId = r.rows[0].id;
+    for (const f of (req.files || [])) {
+      await pool.query('INSERT INTO csr_photos (activity_id,photo_data,mime_type) VALUES ($1,$2,$3)', [activityId, f.buffer, f.mimetype]);
+    }
+    res.json({ ok: true, id: activityId });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/csr/activities/:id', requireLogin, requireAdmin, async (req, res) => {
+  await pool.query('DELETE FROM csr_activities WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+app.get('/api/csr/photos/:id', requireLogin, async (req, res) => {
+  const r = await pool.query('SELECT photo_data, mime_type FROM csr_photos WHERE id=$1', [req.params.id]);
+  if (!r.rows.length) return res.status(404).end();
+  res.setHeader('Content-Type', r.rows[0].mime_type || 'image/jpeg');
+  res.send(r.rows[0].photo_data);
+});
+app.delete('/api/csr/photos/:id', requireLogin, requireAdmin, async (req, res) => {
+  await pool.query('DELETE FROM csr_photos WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+
+// ======== SEARCH ========
+app.get('/api/search', requireLogin, async (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q) return res.json([]);
+  const like = `%${q}%`;
+  const results = [];
+  try {
+    const posts = await pool.query('SELECT id, title, body FROM posts WHERE title ILIKE $1 OR body ILIKE $1 LIMIT 5', [like]);
+    posts.rows.forEach(p => results.push({ type: 'ประกาศ', id: p.id, title: p.title, snippet: (p.body||'').slice(0,120), url: '/index.html' }));
+
+    const docs = await pool.query('SELECT id, original_name, dept FROM documents WHERE original_name ILIKE $1 LIMIT 5', [like]);
+    docs.rows.forEach(d => results.push({ type: 'เอกสาร', id: d.id, title: d.original_name, snippet: d.dept, url: '/documents.html' }));
+
+    const wb = await pool.query('SELECT id, title, body FROM webboard_posts WHERE title ILIKE $1 OR body ILIKE $1 LIMIT 5', [like]);
+    wb.rows.forEach(w => results.push({ type: 'เว็บบอร์ด', id: w.id, title: w.title, snippet: (w.body||'').slice(0,120), url: `/webboard.html?id=${w.id}` }));
+
+    const kb = await pool.query('SELECT id, title, body FROM kb_articles WHERE title ILIKE $1 OR body ILIKE $1 LIMIT 5', [like]);
+    kb.rows.forEach(k => results.push({ type: 'Knowledge Base', id: k.id, title: k.title, snippet: (k.body||'').slice(0,120), url: '/knowledge-base.html' }));
+
+    const csr = await pool.query('SELECT id, title, description FROM csr_activities WHERE title ILIKE $1 OR description ILIKE $1 LIMIT 5', [like]);
+    csr.rows.forEach(c => results.push({ type: 'CSR', id: c.id, title: c.title, snippet: (c.description||'').slice(0,120), url: '/csr.html' }));
+
+    res.json(results);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
 // ======== ISMS NEWS FEED ========
 const https = require('https');

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ปฏิทินกิจกรรม - EARTH (THAILAND)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
+.nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
+.nav-logo{color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.nav-logo img{height:32px;width:32px;object-fit:contain}
+.nav-links{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-links a{color:#aaa;font-size:13px;padding:6px 10px;border-radius:6px;text-decoration:none;transition:.15s}
+.nav-links a:hover,.nav-links a.active{color:#fff;background:rgba(255,255,255,.1)}
+a.nav-home{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#1D9E75;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
+a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-toggle{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.nav-toggle:hover{background:rgba(255,255,255,.1)}
+@media (max-width:760px){.nav{padding:0 12px}.nav-toggle{display:inline-flex;align-items:center;justify-content:center}.nav-links{display:none;position:absolute;top:52px;left:0;right:0;background:#1a1a18;flex-direction:column;align-items:flex-start;gap:2px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.3);z-index:60}.nav-links.open{display:flex}.nav-links a:not(.nav-home){padding:10px 14px;width:100%}.nav-links .nav-home{margin-bottom:6px}.nav-user{display:none}}
+.nav-user{color:#ccc;font-size:12px}
+.btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,.1);border-radius:20px;padding:2px 4px 2px 10px}
+.search-box input{background:none;border:none;color:#fff;font-size:12px;font-family:inherit;width:110px;outline:none}
+.search-box input::placeholder{color:#888}
+.search-box button{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:4px 6px}
+.page{max-width:1000px;margin:0 auto;padding:32px 16px}
+h1{font-size:22px;font-weight:700}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tab{padding:7px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:6px}
+.tab:hover{border-color:#1D9E75;color:#1D9E75}
+.tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
+.tab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
+.btn-primary{background:#1D9E75;color:#fff}
+.btn-primary:hover{background:#178a63}
+.btn-danger{background:#fff;border:1px solid #f5c6c6;color:#dc2626;font-size:12px;padding:4px 10px}
+.btn-danger:hover{background:#fef2f2}
+.btn-ghost{background:none;border:1px solid #ddd;color:#666}
+.month-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px}
+.month-nav button{width:32px;height:32px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:16px}
+.month-nav span{font-size:16px;font-weight:700;min-width:150px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#eee;border:1px solid #eee;border-radius:10px;overflow:hidden}
+.cal-head{background:#f8f8f6;font-size:11px;font-weight:600;color:#888;text-align:center;padding:8px 2px}
+.cal-cell{background:#fff;min-height:78px;padding:6px;cursor:pointer;transition:.1s}
+.cal-cell:hover{background:#F4FBF8}
+.cal-cell.other{background:#fafafa;cursor:default;color:#ccc}
+.cal-cell.today{background:#EAF7F1}
+.cal-daynum{font-size:12px;font-weight:600;margin-bottom:4px}
+.cal-cell.today .cal-daynum{color:#1D9E75}
+.cal-dots{display:flex;flex-wrap:wrap;gap:3px}
+.cal-dot{width:8px;height:8px;border-radius:50%}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.mhead{display:flex;align-items:center;padding:16px 18px 12px;border-bottom:1px solid #eee;gap:8px}
+.mhead h2{font-size:15px;font-weight:700;flex:1}
+.mclose{background:none;border:none;font-size:20px;cursor:pointer;color:#888;width:28px;height:28px;border-radius:6px}
+.mclose:hover{background:#f5f5f3}
+.mbody{padding:16px 18px}
+.ev-item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:8px;background:#f8f8f6;margin-bottom:8px}
+.ev-dot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.ev-info{flex:1;min-width:0}
+.ev-title{font-size:13px;font-weight:600}
+.ev-time{font-size:11px;color:#888}
+.ev-desc{font-size:12px;color:#666;margin-top:2px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
+.fg textarea{min-height:60px;resize:vertical}
+.add-form{border-top:1px dashed #ddd;margin-top:14px;padding-top:14px}
+.empty{text-align:center;color:#aaa;padding:20px;font-size:13px}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
+  <div class="nav-links" id="navLinks">
+    <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
+    <a href="/about.html" data-i18n="nav.about">เกี่ยวกับเรา</a>
+    <a href="/org-chart.html" data-i18n="nav.orgchart">โครงสร้างองค์กร</a>
+    <a href="/news.html" data-i18n="nav.news">ข่าวสารกิจกรรม</a>
+    <a href="/webboard.html" data-i18n="nav.webboard">เว็บบอร์ด</a>
+    <a href="/regulations.html" data-i18n="nav.regulations">ระเบียบบริษัท</a>
+    <a href="/media-center.html">Media Center</a>
+    <a href="/forms.html" data-i18n="nav.forms">แบบฟอร์ม - ARS</a>
+    <a href="/calendar.html" class="active">ปฏิทินกิจกรรม</a>
+    <a href="/knowledge-base.html">Knowledge Base</a>
+    <a href="/csr.html">CSR</a>
+  </div>
+  <div class="nav-right">
+    <div class="search-box"><input id="navSearch" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter'&&this.value.trim())location.href='/search.html?q='+encodeURIComponent(this.value.trim())"><button onclick="const v=document.getElementById('navSearch').value.trim();if(v)location.href='/search.html?q='+encodeURIComponent(v)"><i class="ti ti-search"></i></button></div>
+    <span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+  </div>
+  <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="เมนู"><i class="ti ti-menu-2"></i></button>
+</nav>
+<div class="page">
+  <div class="page-head">
+    <h1>📅 ปฏิทินกิจกรรม</h1>
+    <button class="btn btn-primary" id="btn-add-toggle" style="display:none" onclick="openDay(fmt(new Date()))">+ เพิ่มกิจกรรม</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-cat="all" onclick="filterCategory('all',this)"><span class="tab-dot" style="background:#999"></span>ทั้งหมด</button>
+    <button class="tab" data-cat="holiday" onclick="filterCategory('holiday',this)"><span class="tab-dot" style="background:#DC2626"></span>ปฏิทินวันหยุด</button>
+    <button class="tab" data-cat="meeting" onclick="filterCategory('meeting',this)"><span class="tab-dot" style="background:#2563EB"></span>ประชุม</button>
+    <button class="tab" data-cat="training" onclick="filterCategory('training',this)"><span class="tab-dot" style="background:#7C3AED"></span>อบรม</button>
+  </div>
+
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)">‹</button>
+    <span id="monthLabel"></span>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+  <div id="calGrid" class="cal-grid"></div>
+</div>
+
+<div class="overlay" id="dayOverlay" onclick="if(event.target===this)closeDay()">
+  <div class="modal">
+    <div class="mhead"><h2 id="dayTitle">รายการ</h2><button class="mclose" onclick="closeDay()">✕</button></div>
+    <div class="mbody">
+      <div id="dayEvents"></div>
+      <div class="add-form" id="addForm" style="display:none">
+        <div class="fg"><label>ประเภท</label>
+          <select id="af-category">
+            <option value="holiday">ปฏิทินวันหยุด</option>
+            <option value="meeting">ประชุม</option>
+            <option value="training">อบรม</option>
+          </select>
+        </div>
+        <div class="fg"><label>ชื่อกิจกรรม</label><input id="af-title" type="text" placeholder="เช่น วันหยุดชดเชย, ประชุมฝ่ายขาย"></div>
+        <div class="fg"><label>วันที่</label><input id="af-date" type="date"></div>
+        <div class="fg"><label>เวลาเริ่ม - สิ้นสุด (ไม่บังคับ)</label>
+          <div style="display:flex;gap:8px">
+            <input id="af-start" type="time">
+            <input id="af-end" type="time">
+          </div>
+        </div>
+        <div class="fg"><label>รายละเอียด (ไม่บังคับ)</label><textarea id="af-desc"></textarea></div>
+        <button class="btn btn-primary" onclick="addEvent()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let events = [];
+let activeCategory = 'all';
+let cursor = new Date();
+let canManage = false;
+const CAT_COLOR = { holiday:'#DC2626', meeting:'#2563EB', training:'#7C3AED' };
+const CAT_LABEL = { holiday:'ปฏิทินวันหยุด', meeting:'ประชุม', training:'อบรม' };
+const thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function fmt(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function monthStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function escHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers:{} };
+  if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  const r = await fetch('/api'+path, opts);
+  if (!r.ok) { const e = await r.json().catch(()=>({error:r.statusText})); throw new Error(e.error||r.statusText); }
+  return r.json();
+}
+
+function filterCategory(cat, btn) {
+  activeCategory = cat;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function changeMonth(delta) {
+  cursor = new Date(cursor.getFullYear(), cursor.getMonth()+delta, 1);
+  loadEvents();
+}
+
+async function loadEvents() {
+  document.getElementById('monthLabel').textContent = `${thM[cursor.getMonth()]} ${cursor.getFullYear()+543}`;
+  events = await api(`/calendar-events?month=${monthStr(cursor)}`).catch(()=>[]);
+  renderGrid();
+}
+
+function eventsFor(dateStr, cat) {
+  return events.filter(e => e.event_date.slice(0,10)===dateStr && (cat==='all' || e.category===cat));
+}
+
+function renderGrid() {
+  const y = cursor.getFullYear(), m = cursor.getMonth();
+  const firstDow = new Date(y,m,1).getDay();
+  const daysInM  = new Date(y,m+1,0).getDate();
+  const daysInP  = new Date(y,m,0).getDate();
+  const total    = Math.ceil((firstDow+daysInM)/7)*7;
+  const todayStr = fmt(new Date());
+
+  let html = '';
+  ['อา','จ','อ','พ','พฤ','ศ','ส'].forEach(dn => html += `<div class="cal-head">${dn}</div>`);
+
+  for (let i=0; i<total; i++) {
+    let d, cm, cy, other=false;
+    if (i<firstDow)               { d=daysInP-firstDow+i+1; cm=m-1; cy=y; other=true; }
+    else if (i>=firstDow+daysInM) { d=i-firstDow-daysInM+1; cm=m+1; cy=y; other=true; }
+    else                           { d=i-firstDow+1; cm=m; cy=y; }
+    const dateStr = fmt(new Date(cy,cm,d));
+    const dayEvs = other ? [] : eventsFor(dateStr, activeCategory);
+    const dots = dayEvs.map(e => `<span class="cal-dot" style="background:${CAT_COLOR[e.category]}"></span>`).join('');
+    html += `<div class="cal-cell${other?' other':''}${dateStr===todayStr?' today':''}"${!other?` onclick="openDay('${dateStr}')"`:''}>
+      <div class="cal-daynum">${d}</div>
+      <div class="cal-dots">${dots}</div>
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function openDay(dateStr) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const thaiM = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  document.getElementById('dayTitle').textContent = `${d} ${thaiM[m]} ${y+543}`;
+  const dayEvs = eventsFor(dateStr, activeCategory);
+  const list = document.getElementById('dayEvents');
+  list.innerHTML = dayEvs.length ? dayEvs.map(e => `
+    <div class="ev-item">
+      <div class="ev-dot" style="background:${CAT_COLOR[e.category]}"></div>
+      <div class="ev-info">
+        <div class="ev-title">${escHtml(e.title)}</div>
+        <div class="ev-time">${CAT_LABEL[e.category]}${e.time_start?` · ${e.time_start}${e.time_end?'-'+e.time_end:''}`:''}</div>
+        ${e.description?`<div class="ev-desc">${escHtml(e.description)}</div>`:''}
+      </div>
+      ${canManage?`<button class="btn-danger" onclick="delEvent(${e.id})">✕</button>`:''}
+    </div>`).join('') : '<div class="empty">ไม่มีกิจกรรมวันนี้</div>';
+
+  const addForm = document.getElementById('addForm');
+  addForm.style.display = canManage ? '' : 'none';
+  if (canManage) {
+    document.getElementById('af-date').value = dateStr;
+    document.getElementById('af-title').value = '';
+    document.getElementById('af-desc').value = '';
+    document.getElementById('af-start').value = '';
+    document.getElementById('af-end').value = '';
+  }
+  document.getElementById('dayOverlay').classList.add('open');
+}
+function closeDay() { document.getElementById('dayOverlay').classList.remove('open'); }
+
+async function addEvent() {
+  const category = document.getElementById('af-category').value;
+  const title = document.getElementById('af-title').value.trim();
+  const event_date = document.getElementById('af-date').value;
+  const time_start = document.getElementById('af-start').value;
+  const time_end = document.getElementById('af-end').value;
+  const description = document.getElementById('af-desc').value.trim();
+  if (!title || !event_date) { alert('กรุณากรอกชื่อกิจกรรมและวันที่'); return; }
+  try {
+    await api('/calendar-events', 'POST', { category, title, description, event_date, time_start, time_end });
+    await loadEvents();
+    openDay(event_date);
+  } catch(e) { alert('บันทึกไม่สำเร็จ: '+e.message); }
+}
+async function delEvent(id) {
+  if (!confirm('ต้องการลบกิจกรรมนี้ใช่ไหมครับ?')) return;
+  try {
+    await api('/calendar-events/'+id, 'DELETE');
+    const dateStr = document.getElementById('af-date').value;
+    await loadEvents();
+    if (dateStr) openDay(dateStr);
+  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
+}
+
+async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
+(async()=>{
+  try{
+    const me=await fetch('/api/me').then(r=>r.json());
+    if(me.error){window.location.href='/login.html';return;}
+    document.getElementById('nav-user').textContent=me.name;
+    canManage = me.role==='admin';
+    if (canManage) document.getElementById('btn-add-toggle').style.display='';
+    await loadEvents();
+  }catch(e){window.location.href='/login.html';}
+})();
+</script>
+<script src="/i18n.js"></script>
+</body></html>
