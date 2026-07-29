@@ -16,6 +16,9 @@
 a.nav-home{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#1D9E75;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}
 a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
 .nav-right{display:flex;align-items:center;gap:8px}
+.nav-toggle{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px}
+.nav-toggle:hover{background:rgba(255,255,255,.1)}
+@media (max-width:760px){.nav{padding:0 12px}.nav-toggle{display:inline-flex;align-items:center;justify-content:center}.nav-links{display:none;position:absolute;top:52px;left:0;right:0;background:#1a1a18;flex-direction:column;align-items:flex-start;gap:2px;padding:10px;box-shadow:0 8px 20px rgba(0,0,0,.3);z-index:60}.nav-links.open{display:flex}.nav-links a:not(.nav-home){padding:10px 14px;width:100%}.nav-links .nav-home{margin-bottom:6px}.nav-user{display:none}}
 .nav-user{color:#ccc;font-size:12px}
 .btn-logout{font-size:12px;color:#aaa;background:none;border:1px solid #444;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit}
 .page{max-width:1100px;margin:0 auto;padding:32px 16px}
@@ -62,7 +65,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:20px}
 <body>
 <nav class="nav">
   <a href="/index.html" class="nav-logo"><img src="/logo.png" onerror="this.style.display='none'"> EARTH (THAILAND)</a>
-  <div class="nav-links">
+  <div class="nav-links" id="navLinks">
     <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
     <a href="/about.html" data-i18n="nav.about">เกี่ยวกับเรา</a>
     <a href="/org-chart.html" class="active" data-i18n="nav.orgchart">โครงสร้างองค์กร</a>
@@ -73,6 +76,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:20px}
     <a href="/forms.html" data-i18n="nav.forms">แบบฟอร์ม - ARS</a>
   </div>
   <div class="nav-right"><span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button></div>
+  <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="เมนู"><i class="ti ti-menu-2"></i></button>
 </nav>
 <div class="page">
   <h1>🏗 โครงสร้างองค์กร</h1>

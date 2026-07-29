@@ -241,10 +241,22 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 .toast.ok { background:var(--accent); }
 .toast.err { background:var(--danger); }
 
+.sidebar-toggle { display: none; }
 @media (max-width:640px) {
-  .sidebar { width:140px; }
-  .room-cap { display:none; }
-  .dcell { min-height:60px; }
+  .topnav { flex-wrap: wrap; height: auto; padding: 8px 10px; row-gap: 6px; }
+  .topnav h1 { flex: 1 1 auto; font-size: 14px; }
+  .nav-actions { flex-wrap: wrap; width: 100%; justify-content: flex-start; }
+  .sidebar-toggle { display: inline-flex; }
+  .main { position: relative; }
+  .sidebar {
+    position: absolute; top: 0; left: 0; bottom: 0; z-index: 40;
+    width: 220px; max-width: 80vw;
+    transform: translateX(-100%); transition: transform .18s ease;
+    box-shadow: 2px 0 12px rgba(0,0,0,.15);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .room-cap { display: none; }
+  .dcell { min-height: 60px; }
 }
 
 .top-btn.view-btn { padding: 4px 10px; }
@@ -283,6 +295,7 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 <!-- TOP NAV -->
 <div class="topnav">
   <a href="/" class="nav-home-btn" title="หน้าหลัก"><i class="ti ti-home"></i></a>
+  <button class="top-btn sidebar-toggle" onclick="document.getElementById('roomSidebar').classList.toggle('open')" aria-label="เลือกรถ"><i class="ti ti-menu-2"></i></button>
   <h1 data-i18n="h1.carbooking">จองรถ</h1>
   <button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button>
   <div class="nav-actions">
@@ -534,6 +547,7 @@ function selectCar(idx) {
   document.getElementById('badgeDot').style.background = rm.color;
   document.getElementById('badgeText').textContent = `${rm.name} (${rm.note}) — คลิกวันที่เพื่อจอง`;
   renderView();
+  if (window.innerWidth <= 640) document.getElementById('roomSidebar').classList.remove('open');
 }
 
 // ===== LOAD =====
