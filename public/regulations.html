@@ -151,14 +151,15 @@ async function viewDoc(id, title) {
     const pdf = await pdfjsLib.getDocument({data: buf}).promise;
     const images = [];
     let pageW = 500, pageH = 700;
+    const renderScale = 2.5 * (window.devicePixelRatio || 1);
     for (let i=1; i<=pdf.numPages; i++) {
       const page = await pdf.getPage(i);
-      const viewport = page.getViewport({scale: 1.6});
+      const viewport = page.getViewport({scale: renderScale});
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width; canvas.height = viewport.height;
       pageW = viewport.width; pageH = viewport.height;
       await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-      images.push(canvas.toDataURL('image/jpeg', 0.88));
+      images.push(canvas.toDataURL('image/png'));
     }
     const container = document.getElementById('flipBookContainer');
     document.getElementById('flipLoading').style.display = 'none';
