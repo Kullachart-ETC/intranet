@@ -497,7 +497,7 @@ app.delete('/api/events/:id', requireLogin, async (req, res) => {
 
 // ======== SITE RESTRICTIONS (office / โรงงาน 2) ========
 // ต้องตรงกับลำดับห้อง/รถใน public/meeting-calendar.html และ public/car-booking.html
-const ROOM_SITES = ['office','office','office','office','factory','factory','factory','factory'];
+const ROOM_SITES = ['office','office','office','office','factory','factory','factory','factory','factory','factory'];
 const CAR_SITES  = ['office','factory','factory'];
 const SITE_TH    = { office: 'สำนักงาน', factory: 'โรงงาน' };
 
