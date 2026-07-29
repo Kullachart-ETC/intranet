@@ -150,15 +150,10 @@ async function viewDoc(id, title) {
     });
     const pdf = await pdfjsLib.getDocument({data: buf}).promise;
     const images = [];
-    // "logical" page size for PageFlip's layout math — deliberately kept in the
-    // same order of magnitude as minWidth/maxWidth below, independent of the
-    // much higher pixel resolution used to actually rasterize each page.
-    // Passing the raw high-res pixel size here confused PageFlip's stretch
-    // calculation and made pages render blurrier, not sharper.
     const baseViewport = (await pdf.getPage(1)).getViewport({scale: 1});
     const pageW = Math.round(baseViewport.width);
     const pageH = Math.round(baseViewport.height);
-    const renderScale = 2.5 * (window.devicePixelRatio || 1);
+    const renderScale = 2.5;
     for (let i=1; i<=pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const viewport = page.getViewport({scale: renderScale});
@@ -171,11 +166,20 @@ async function viewDoc(id, title) {
     document.getElementById('flipLoading').style.display = 'none';
     container.style.display = '';
     if (pageFlip) { try { pageFlip.destroy(); } catch(e){} pageFlip = null; }
+    // page-flip draws pages onto its own internal <canvas> sized in CSS
+    // pixels with no devicePixelRatio awareness, so on a HiDPI/retina screen
+    // its canvas is genuinely lower-res than the physical screen no matter
+    // how sharp the source image is. Work around it the same way manual
+    // canvas HiDPI fixes do: ask it to render dpr× larger than the visual
+    // target, then shrink the whole thing back down with CSS zoom (which,
+    // unlike transform, keeps layout and pointer coordinates correct).
+    const dpr = window.devicePixelRatio || 1;
+    container.style.zoom = 1 / dpr;
     pageFlip = new St.PageFlip(container, {
-      width: pageW, height: pageH,
+      width: pageW * dpr, height: pageH * dpr,
       size: 'stretch',
-      minWidth: 280, maxWidth: 900,
-      minHeight: 360, maxHeight: 1200,
+      minWidth: 280 * dpr, maxWidth: 900 * dpr,
+      minHeight: 360 * dpr, maxHeight: 1200 * dpr,
       showCover: false,
       maxShadowOpacity: 0.5
     });
