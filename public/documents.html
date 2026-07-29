@@ -41,7 +41,7 @@ h1{font-size:20px;font-weight:700;margin-bottom:20px}
 /* UPLOAD */
 .upload-area{border:2px dashed #ddd;border-radius:8px;padding:16px;margin-bottom:16px;display:none}
 .upload-area.show{display:block}
-.upload-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end}
+.upload-row{display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:8px;align-items:end}
 .table-wrap{overflow-x:auto}
 @media (max-width:640px){.upload-row{grid-template-columns:1fr}}
 .form-group{display:flex;flex-direction:column;gap:4px}
@@ -100,6 +100,10 @@ tr:last-child td{border-bottom:none}
   <div id="upload-area" class="upload-area section-card" style="padding:16px;border-radius:12px;border:2px dashed #1D9E75">
     <div id="alert" class="alert"></div>
     <div class="upload-row">
+      <div class="form-group">
+        <label>ชื่อเอกสาร</label>
+        <input type="text" id="up-title" placeholder="เช่น ระเบียบการลาหยุด 2569">
+      </div>
       <div class="form-group">
         <label>แผนก</label>
         <select id="up-dept"></select>
@@ -176,20 +180,20 @@ function renderDocs(docs) {
         <span class="dept-badge">${items.length} เอกสาร</span>
       </div>
       <div class="table-wrap"><table>
-        <thead><tr><th>ชื่อไฟล์</th><th>ขนาด</th><th>อัปโหลดโดย</th><th>วันที่</th><th></th></tr></thead>
+        <thead><tr><th>ชื่อเอกสาร</th><th>ขนาด</th><th>อัปโหลดโดย</th><th>วันที่</th><th></th></tr></thead>
         <tbody>
           ${items.map(doc => `
             <tr>
               <td>
                 <span class="file-icon">${fileIcon(doc.mime_type)}</span>
-                <span class="file-name">${escHtml(doc.original_name)}</span>
+                <span class="file-name">${escHtml(doc.title || doc.original_name)}</span>
               </td>
               <td style="color:#888;font-size:12px">${fmtSize(doc.file_size)}</td>
               <td style="color:#666;font-size:12px">${escHtml(doc.uploader_name||'-')}</td>
               <td style="color:#888;font-size:12px;white-space:nowrap">${fmtDate(doc.created_at)}</td>
               <td style="white-space:nowrap;text-align:right">
                 <a href="/api/documents/${doc.id}/download" class="btn btn-outline" style="font-size:12px;padding:4px 10px;text-decoration:none;display:inline-block">⬇ ดาวน์โหลด</a>
-                ${canManage ? `<button class="btn btn-danger" style="margin-left:4px" onclick="delDoc(${doc.id},'${escHtml(doc.original_name)}')">✕ ลบ</button>` : ''}
+                ${canManage ? `<button class="btn btn-danger" style="margin-left:4px" onclick="delDoc(${doc.id},'${escHtml(doc.title || doc.original_name)}')">✕ ลบ</button>` : ''}
               </td>
             </tr>
           `).join('')}
@@ -238,6 +242,7 @@ function showAlert(msg, type='ok') {
 }
 
 async function doUpload() {
+  const title = document.getElementById('up-title').value.trim();
   const dept = document.getElementById('up-dept').value;
   const file = document.getElementById('up-file').files[0];
   if (!file) { showAlert('กรุณาเลือกไฟล์','err'); return; }
@@ -250,8 +255,10 @@ async function doUpload() {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('dept', dept);
+    fd.append('title', title);
     await api('/documents','POST', fd);
     showAlert('อัปโหลดสำเร็จ','ok');
+    document.getElementById('up-title').value = '';
     document.getElementById('up-file').value = '';
     await loadDocs();
   } catch(e) { showAlert(e.message,'err'); }

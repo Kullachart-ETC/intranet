@@ -128,6 +128,7 @@ async function initDB() {
       uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMP DEFAULT NOW()
     );
+    ALTER TABLE documents ADD COLUMN IF NOT EXISTS title TEXT;
   `);
 
   // Seed Admin
@@ -1229,7 +1230,7 @@ app.get('/api/documents/can-manage', requireLogin, async (req, res) => {
 // GET /api/documents - list (no file_data)
 app.get('/api/documents', requireLogin, async (req, res) => {
   const { dept } = req.query;
-  let q = 'SELECT d.id, d.original_name, d.dept, d.file_size, d.mime_type, d.created_at, u.name AS uploader_name FROM documents d LEFT JOIN users u ON u.id=d.uploaded_by';
+  let q = 'SELECT d.id, d.title, d.original_name, d.dept, d.file_size, d.mime_type, d.created_at, u.name AS uploader_name FROM documents d LEFT JOIN users u ON u.id=d.uploaded_by';
   const params = [];
   if (dept) { q += ' WHERE d.dept=$1'; params.push(dept); }
   q += ' ORDER BY d.dept, d.created_at DESC';
@@ -1243,14 +1244,14 @@ app.post('/api/documents', requireLogin, docUpload.single('file'), async (req, r
     const canUpload = await isManagerOrAdmin(req.session.user.id);
     if (!canUpload) return res.status(403).json({ error: 'สิทธิ์ไม่เพียงพอ (admin หรือหัวหน้าแผนกเท่านั้น)' });
     if (!req.file) return res.status(400).json({ error: 'ไม่พบไฟล์' });
-    const { dept } = req.body;
+    const { dept, title } = req.body;
     if (!dept) return res.status(400).json({ error: 'กรุณาระบุแผนก' });
     // multer/busboy decode multipart filenames as latin1 by default — re-decode as utf8
     // so non-ASCII (Thai) filenames don't come out garbled
     const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
     await pool.query(
-      'INSERT INTO documents (original_name, dept, file_data, file_size, mime_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6)',
-      [originalName, dept, req.file.buffer, req.file.size, req.file.mimetype, req.session.user.id]
+      'INSERT INTO documents (title, original_name, dept, file_data, file_size, mime_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+      [title || null, originalName, dept, req.file.buffer, req.file.size, req.file.mimetype, req.session.user.id]
     );
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
@@ -1491,8 +1492,8 @@ app.get('/api/search', requireLogin, async (req, res) => {
     const posts = await pool.query('SELECT id, title, body FROM posts WHERE title ILIKE $1 OR body ILIKE $1 LIMIT 5', [like]);
     posts.rows.forEach(p => results.push({ type: 'ประกาศ', id: p.id, title: p.title, snippet: (p.body||'').slice(0,120), url: '/index.html' }));
 
-    const docs = await pool.query('SELECT id, original_name, dept FROM documents WHERE original_name ILIKE $1 LIMIT 5', [like]);
-    docs.rows.forEach(d => results.push({ type: 'เอกสาร', id: d.id, title: d.original_name, snippet: d.dept, url: '/documents.html' }));
+    const docs = await pool.query('SELECT id, title, original_name, dept FROM documents WHERE title ILIKE $1 OR original_name ILIKE $1 LIMIT 5', [like]);
+    docs.rows.forEach(d => results.push({ type: 'เอกสาร', id: d.id, title: d.title || d.original_name, snippet: d.dept, url: '/documents.html' }));
 
     const wb = await pool.query('SELECT id, title, body FROM webboard_posts WHERE title ILIKE $1 OR body ILIKE $1 LIMIT 5', [like]);
     wb.rows.forEach(w => results.push({ type: 'เว็บบอร์ด', id: w.id, title: w.title, snippet: (w.body||'').slice(0,120), url: `/webboard.html?id=${w.id}` }));
