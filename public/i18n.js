@@ -43,7 +43,15 @@ const I18N_DICT = {
   'lbl.username': {th:'ชื่อผู้ใช้งาน',   en:'Username'},
   'lbl.password': {th:'รหัสผ่าน',        en:'Password'},
   'ph.username':  {th:'กรอก Username',  en:'Enter Username'},
-  'ph.password':  {th:'กรอก Password',  en:'Enter Password'}
+  'ph.password':  {th:'กรอก Password',  en:'Enter Password'},
+
+  // index.html quick-links tiles
+  'ql.leave':       {th:'ใบลาออนไลน์',     en:'Online Leave'},
+  'ql.meeting':     {th:'จองห้องประชุม',   en:'Book Meeting Room'},
+  'ql.car':         {th:'จองรถ',           en:'Book Car'},
+  'ql.forms':       {th:'แบบฟอร์ม EARTH',  en:'EARTH Forms'},
+  'ql.webboard':    {th:'เว็บบอร์ด',        en:'Webboard'},
+  'ql.regulations': {th:'ระเบียบบริษัท',    en:'Regulations'}
 };
 
 function applyI18N(){
