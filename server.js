@@ -387,7 +387,7 @@ app.get('/api/me', async (req, res) => {
 });
 
 app.use((req, res, next) => {
-  if (req.path === '/login' || req.path.startsWith('/api/')) return next();
+  if (req.path === '/login' || req.path === '/i18n.js' || req.path.startsWith('/api/')) return next();
   if (!req.session.user) return res.redirect('/login');
   next();
 });
