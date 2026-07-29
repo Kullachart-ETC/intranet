@@ -185,7 +185,8 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 .ar-month-cell:hover:not(.other) { background: #F4F6FF; }
 .ar-month-daynum { font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
 .ar-month-cell.other .ar-month-daynum { color: #ccc; }
-.ar-month-rooms { font-size: 9px; color: var(--primary); line-height: 1.4; word-break: break-word; }
+.ar-month-rooms { display: flex; flex-wrap: wrap; gap: 2px; }
+.ar-month-room-chip { font-size: 8px; font-weight: 600; color: #fff; padding: 1px 4px; border-radius: 3px; line-height: 1.5; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* MODAL */
 .overlay {
@@ -1093,21 +1094,22 @@ function renderAllRoomsMonth() {
     const cellDate = new Date(cy,cm,d);
     const dateStr  = fmt(cellDate);
 
-    let roomNames = [];
+    let roomChips = '';
     if (!other) {
       const mySite  = me && me.work_schedule === 'factory' ? 'factory' : 'office';
       const isAdmin = me && me.role === 'admin';
       const dayB = bookings.filter(b => b.date === dateStr);
       const idxSet = [...new Set(dayB.map(b => parseInt(b.room_idx)))];
-      roomNames = idxSet
+      roomChips = idxSet
         .map(idx => ROOMS[idx])
         .filter(r => r && (isAdmin || r.site === mySite))
-        .map(r => shortRoomName(r.name));
+        .map(r => `<span class="ar-month-room-chip" style="background:${r.color}">${shortRoomName(r.name)}</span>`)
+        .join('');
     }
 
     html += `<div class="ar-month-cell${other?' other':''}"${!other?` onclick="openAllRoomsModal('${dateStr}')"`:''}>
       <div class="ar-month-daynum">${d}</div>
-      <div class="ar-month-rooms">${roomNames.join(', ')}</div>
+      <div class="ar-month-rooms">${roomChips}</div>
     </div>`;
   }
   html += '</div>';
