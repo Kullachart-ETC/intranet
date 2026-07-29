@@ -1065,9 +1065,14 @@ function renderAllRoomsMonth() {
 
     let roomNames = [];
     if (!other) {
+      const mySite  = me && me.work_schedule === 'factory' ? 'factory' : 'office';
+      const isAdmin = me && me.role === 'admin';
       const dayB = bookings.filter(b => b.date === dateStr);
       const idxSet = [...new Set(dayB.map(b => parseInt(b.room_idx)))];
-      roomNames = idxSet.map(idx => ROOMS[idx] ? shortRoomName(ROOMS[idx].name) : null).filter(Boolean);
+      roomNames = idxSet
+        .map(idx => ROOMS[idx])
+        .filter(r => r && (isAdmin || r.site === mySite))
+        .map(r => shortRoomName(r.name));
     }
 
     html += `<div class="ar-month-cell${other?' other':''}"${!other?` onclick="openAllRoomsModal('${dateStr}')"`:''}>
