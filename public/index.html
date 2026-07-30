@@ -1062,7 +1062,7 @@ async function loadBoard(){
   renderBoard();
 }
 async function loadCalendar(){
-  state.employees=await api('/users');
+  state.employees=await api('/employees');
   state.events=await api('/events');
   renderCalendar();
 }
@@ -1085,7 +1085,7 @@ async function loadLeave(){
     loadThaiEconNews();
     loadTechNews();
     loadThaiIndustrialNews();
-    await loadCalendar();
+    try { await loadCalendar(); } catch(e) { console.error('loadCalendar failed', e); }
     loadLeave();
     // โหลดจำนวนรออนุมัติ
     const pending=await api('/leave/pending');
