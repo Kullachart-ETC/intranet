@@ -533,6 +533,21 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="overlay" id="ev-view-modal">
+  <div class="modal" style="width:420px">
+    <h3 id="ev-view-title">รายละเอียดกิจกรรม</h3>
+    <div class="form-row"><label>พนักงาน</label><div id="ev-view-emp" style="font-size:14px;font-weight:500"></div></div>
+    <div class="form-row"><label>วันที่</label><div id="ev-view-date" style="font-size:14px"></div></div>
+    <div class="form-row"><label>เวลา</label><div id="ev-view-time" style="font-size:14px"></div></div>
+    <div class="form-row"><label>ประเภท</label><div id="ev-view-type" style="font-size:14px"></div></div>
+    <div class="form-row"><label>หมายเหตุ</label><div id="ev-view-note" style="font-size:14px;color:#666"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="ev-view-del" onclick="deleteEventFromView()">ลบ</button>
+      <button class="btn" onclick="closeModal('ev-view-modal')">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="bk-modal">
   <div class="modal">
     <h3>จองห้องประชุม</h3>
@@ -738,7 +753,7 @@ function renderCal(){
     html+=`<div class="day-cell${isToday?' today':''}" onclick="pickDate('${ds}')"><div class="day-num">${d}</div>${evs.map(e=>{const emp=state.employees[e.emp_idx]||{};const color=state.selectedEmp===null?(emp.color||'#888'):(EV_COLOR[e.type]||'#888');const timeStr=e.time_start?e.time_start.substring(0,5):'';
       const evTitle=e.title||EV_LABEL[e.type]||e.type;
       const label=state.selectedEmp===null?(emp.name||'').split(' ')[0]:(timeStr?timeStr+' '+evTitle:evTitle);
-      return`<div class="ev-chip" style="background:${color}" title="${timeStr?timeStr+' - '+(e.time_end||'').substring(0,5)+' '+evTitle:evTitle}" onclick="event.stopPropagation();deleteEventPrompt(${e.id})">${label}</div>`;}).join('')}</div>`;
+      return`<div class="ev-chip" style="background:${color}" title="${timeStr?timeStr+' - '+(e.time_end||'').substring(0,5)+' '+evTitle:evTitle}" onclick="event.stopPropagation();viewEvent(${e.id})">${label}</div>`;}).join('')}</div>`;
   }
   $('cal-grid').innerHTML=html;
 }
@@ -746,6 +761,29 @@ function changeMonth(d){state.calMonth+=d;if(state.calMonth<0){state.calMonth=11
 function pickDate(ds){$('ev-date').value=ds;$('ev-time-start').value='09:00';$('ev-time-end').value='10:00';if(state.selectedEmp!==null)$('ev-emp').value=state.selectedEmp;openModal('ev-modal');}
 async function submitEvent(){const date=$('ev-date').value;if(!date){alert('กรุณาเลือกวันที่');return;}await api('/events','POST',{emp_idx:parseInt($('ev-emp').value),date,type:$('ev-type').value,note:$('ev-note').value,title:$('ev-title').value,time_start:$('ev-time-start').value,time_end:$('ev-time-end').value});closeModal('ev-modal');$('ev-note').value='';$('ev-title').value='';state.events=await api('/events');renderCal();}
 async function deleteEventPrompt(id){if(!confirm('ต้องการลบ?'))return;await api('/events/'+id,'DELETE');state.events=await api('/events');renderCal();}
+
+let viewingEventId=null;
+function viewEvent(id){
+  const e=state.events.find(x=>x.id===id);
+  if(!e)return;
+  viewingEventId=id;
+  const emp=state.employees[e.emp_idx]||{};
+  $('ev-view-title').textContent=e.title||EV_LABEL[e.type]||e.type;
+  $('ev-view-emp').textContent=emp.name||'-';
+  $('ev-view-date').textContent=new Date(e.date).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'});
+  $('ev-view-time').textContent=e.time_start?`${e.time_start.substring(0,5)} - ${(e.time_end||'').substring(0,5)}`:'ไม่ระบุ';
+  $('ev-view-type').textContent=EV_LABEL[e.type]||e.type;
+  $('ev-view-note').textContent=e.note||'-';
+  openModal('ev-view-modal');
+}
+async function deleteEventFromView(){
+  if(viewingEventId===null)return;
+  if(!confirm('ต้องการลบกิจกรรมนี้ใช่ไหม?'))return;
+  await api('/events/'+viewingEventId,'DELETE');
+  state.events=await api('/events');
+  renderCal();
+  closeModal('ev-view-modal');
+}
 
 // Rooms
 function renderRooms(){
