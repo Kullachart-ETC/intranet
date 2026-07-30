@@ -130,8 +130,8 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
 .wday.wknd { color: rgba(255,190,190,0.9); }
 .days { display: grid; grid-template-columns: repeat(7,1fr); }
 .dcell {
-  min-height: 88px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
-  padding: 5px 4px; cursor: pointer; transition: background 0.1s; position: relative;
+  height: 100px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 5px 4px; cursor: pointer; transition: background 0.1s; position: relative; overflow: hidden;
 }
 .dcell:nth-child(7n) { border-right: none; }
 .dcell:hover { background: #F4F6FF; }
@@ -256,7 +256,7 @@ a.nav-home-btn:hover{background:var(--primary);color:#fff;transform:scale(1.08)}
   }
   .sidebar.open { transform: translateX(0); }
   .room-cap { display: none; }
-  .dcell { min-height: 60px; }
+  .dcell { height: 96px; }
 }
 
 .top-btn.view-btn { padding: 4px 10px; }
