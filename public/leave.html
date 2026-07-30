@@ -163,7 +163,7 @@ tr:last-child td { border-bottom: none; }
       ✅ อนุมัติ <span class="badge" id="pendingBadge">0</span>
     </button>
     <button class="tab" id="tab-admin-btn" onclick="showTab('tab-admin')" style="display:none">
-      🔧 Admin
+      🔧 Admin / รายงาน
     </button>
   </div>
 
@@ -278,16 +278,35 @@ tr:last-child td { border-bottom: none; }
   <!-- ===== TAB: Admin ===== -->
   <div class="section" id="tab-admin">
     <div class="card">
-      <h2>🔧 ใบลาทั้งหมด</h2>
-      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
-        <select id="adminFilter" onchange="loadAdminLeave()" style="border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-family:inherit;">
-          <option value="">ทุกสถานะ</option>
-          <option value="pending">รออนุมัติ</option>
-          <option value="approved">อนุมัติแล้ว</option>
-          <option value="rejected">ไม่อนุมัติ</option>
-        </select>
-        <button class="btn btn-ghost btn-sm" onclick="loadAdminLeave()">🔄 รีเฟรช</button>
+      <h2>📥 ดาวน์โหลดรายงาน Excel</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn btn-primary" href="/api/admin/leave-balance-excel">📊 วันลาคงเหลือรายบุคคล</a>
+        <a class="btn btn-primary" href="/api/admin/leave-report-excel">📋 รายงานการลาครบถ้วน</a>
+        <button class="btn btn-primary" id="rf-download-btn" onclick="downloadLeaveList()">📑 รายการใบลาตามตัวกรอง</button>
       </div>
+    </div>
+    <div class="card">
+      <h2>🔧 ใบลาทั้งหมด</h2>
+      <div class="form-row" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;align-items:end;margin-bottom:12px">
+        <div class="fg" style="margin:0"><label>ประเภทการลา</label>
+          <select id="rf-type" onchange="loadAdminLeave()"><option value="">ทั้งหมด</option></select>
+        </div>
+        <div class="fg" style="margin:0"><label>สถานะ</label>
+          <select id="adminFilter" onchange="loadAdminLeave()">
+            <option value="">ทุกสถานะ</option>
+            <option value="pending">รออนุมัติ</option>
+            <option value="approved">อนุมัติแล้ว</option>
+            <option value="rejected">ไม่อนุมัติ</option>
+          </select>
+        </div>
+        <div class="fg" style="margin:0"><label>แผนก</label>
+          <select id="rf-dept" onchange="loadAdminLeave()"><option value="">ทั้งหมด</option></select>
+        </div>
+        <div class="fg" style="margin:0"><label>วันที่เริ่ม (ตั้งแต่)</label><input type="date" id="rf-from" onchange="loadAdminLeave()"></div>
+        <div class="fg" style="margin:0"><label>วันที่สิ้นสุด (ถึง)</label><input type="date" id="rf-to" onchange="loadAdminLeave()"></div>
+        <button class="btn btn-ghost btn-sm" onclick="clearAdminFilter()">ล้างตัวกรอง</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px" id="rf-count"></div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -383,7 +402,7 @@ async function init() {
   await loadQuota();
   await loadMyLeave();
   await loadPending();
-  if (me.role === 'admin') await loadAdminLeave();
+  if (me.role === 'admin') { await loadAdminFilterOptions(); await loadAdminLeave(); }
 }
 
 // ===== TABS =====
@@ -505,14 +524,31 @@ async function loadPending() {
 }
 
 // ===== ADMIN ALL LEAVE =====
+function adminFilterParams() {
+  const params = new URLSearchParams();
+  const type   = document.getElementById('rf-type').value;
+  const from   = document.getElementById('rf-from').value;
+  const to     = document.getElementById('rf-to').value;
+  const status = document.getElementById('adminFilter').value;
+  const dept   = document.getElementById('rf-dept').value;
+  if (type)   params.set('leave_type', type);
+  if (from)   params.set('date_from', from);
+  if (to)     params.set('date_to', to);
+  if (status) params.set('status', status);
+  if (dept)   params.set('dept', dept);
+  return params;
+}
+function clearAdminFilter() {
+  ['rf-type','rf-from','rf-to','adminFilter','rf-dept'].forEach(id => document.getElementById(id).value = '');
+  loadAdminLeave();
+}
 async function loadAdminLeave() {
+  const tbody = document.getElementById('adminBody');
+  tbody.innerHTML = '<tr><td colspan="10" class="empty">กำลังโหลด...</td></tr>';
+  document.getElementById('rf-count').textContent = '';
   try {
-    const filter = document.getElementById('adminFilter')?.value || '';
-    const r = await fetch('/api/leave/all');
-    let rows = await r.json();
-    if (filter) rows = rows.filter(x => x.status === filter);
-
-    const tbody = document.getElementById('adminBody');
+    const rows = await fetch('/api/leave/report-list?' + adminFilterParams()).then(r=>r.json());
+    document.getElementById('rf-count').textContent = `พบ ${rows.length} รายการ`;
     if (!rows.length) {
       tbody.innerHTML = '<tr><td colspan="10"><div class="empty">ไม่มีข้อมูล</div></td></tr>';
       return;
@@ -531,6 +567,42 @@ async function loadAdminLeave() {
         <td>${lr.approver_name||'-'}</td>
       </tr>`).join('');
   } catch(e) { console.error(e); }
+}
+async function downloadLeaveList() {
+  const btn = document.getElementById('rf-download-btn');
+  btn.disabled = true; btn.textContent = 'กำลังโหลด...';
+  try {
+    const p = adminFilterParams();
+    const params = new URLSearchParams({
+      type: p.get('leave_type')||'', dept: p.get('dept')||'', status: p.get('status')||'',
+      from: p.get('date_from')||'', to: p.get('date_to')||''
+    });
+    const r = await fetch('/api/admin/leave-list-excel?' + params);
+    if (!r.ok) { alert('ไม่สามารถดาวน์โหลดได้'); return; }
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = 'leave_list_' + new Date().toISOString().split('T')[0] + '.xlsx';
+    a.click(); URL.revokeObjectURL(url);
+  } catch(e) { alert('เกิดข้อผิดพลาด: ' + e.message); }
+  btn.disabled = false; btn.textContent = '📑 รายการใบลาตามตัวกรอง';
+}
+async function loadAdminFilterOptions() {
+  const typeSel = document.getElementById('rf-type');
+  Object.entries(LEAVE_NAMES).forEach(([val,label]) => {
+    const o = document.createElement('option'); o.value = val; o.textContent = label;
+    typeSel.appendChild(o);
+  });
+  try {
+    const users = await fetch('/api/users').then(r=>r.ok?r.json():[]);
+    const depts = [...new Set(users.map(u=>u.dept).filter(Boolean))].sort();
+    const deptSel = document.getElementById('rf-dept');
+    depts.forEach(d => {
+      const o = document.createElement('option'); o.value = d; o.textContent = d;
+      deptSel.appendChild(o);
+    });
+  } catch(e) {}
 }
 
 // ===== APPLY LEAVE =====
