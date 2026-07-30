@@ -66,15 +66,9 @@ h1{font-size:24px;font-weight:700;margin-bottom:24px}
   <div class="nav-links" id="navLinks">
     <a href="/index.html" class="nav-home" title="หน้าหลัก"><i class="ti ti-home"></i></a>
     <a href="/about.html" class="active" data-i18n="nav.about">เกี่ยวกับเรา</a>
-    <a href="/org-chart.html" data-i18n="nav.orgchart">โครงสร้างองค์กร</a>
-    <a href="/news.html" data-i18n="nav.news">ข่าวสารกิจกรรม</a>
-    <a href="/webboard.html" data-i18n="nav.webboard">เว็บบอร์ด</a>
-    <a href="/regulations.html" data-i18n="nav.regulations">ระเบียบบริษัท</a>
-    <a href="/media-center.html">Media Center</a>
-    <a href="/forms.html" data-i18n="nav.forms">แบบฟอร์ม - ARS</a>
-    <a href="/calendar.html">ปฏิทินกิจกรรม</a>
-    <a href="/knowledge-base.html">Knowledge Base</a>
-    <a href="/csr.html">CSR</a>
+    <a href="/index.html?section=calendar">ปฏิทินงาน</a>
+    <a href="/index.html">ประชาสัมพันธ์</a>
+    <a href="/index.html?section=admin" id="nav-admin-link" style="display:none">จัดการผู้ใช้</a>
   </div>
   <div class="nav-right"><div class="search-box"><input id="navSearch" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter'&&this.value.trim())location.href='/search.html?q='+encodeURIComponent(this.value.trim())"><button onclick="const v=document.getElementById('navSearch').value.trim();if(v)location.href='/search.html?q='+encodeURIComponent(v)"><i class="ti ti-search"></i></button></div><span class="nav-user" id="nav-user"></span><button id="lang-toggle" class="btn-logout" onclick="toggleLang()">EN</button><button class="btn-logout" data-i18n="nav.logout" onclick="logout()">ออกจากระบบ</button></div>
   <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="เมนู"><i class="ti ti-menu-2"></i></button>
@@ -163,7 +157,7 @@ h1{font-size:24px;font-weight:700;margin-bottom:24px}
 </div>
 <script>
 async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
-(async()=>{try{const me=await fetch('/api/me').then(r=>r.json());if(me.error){window.location.href='/login.html';return;}document.getElementById('nav-user').textContent=me.name;}catch(e){window.location.href='/login.html';}})();
+(async()=>{try{const me=await fetch('/api/me').then(r=>r.json());if(me.error){window.location.href='/login.html';return;}document.getElementById('nav-user').textContent=me.name;document.getElementById('nav-admin-link').style.display=me.role==='admin'?'':'none';}catch(e){window.location.href='/login.html';}})();
 </script>
 <script src="/i18n.js"></script>
 </body></html>

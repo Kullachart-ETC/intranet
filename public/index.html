@@ -285,15 +285,10 @@ tr:last-child td{border-bottom:none}
     <span class="logo-text">EARTH (THAILAND)</span>
   </div>
   <nav class="nav">
-    <button id="nav-board-btn" class="active" data-i18n="idx.board" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
-    <button data-i18n="idx.calendar" onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
-    <button data-i18n="idx.documents" onclick="window.location.href='/documents.html'">📁 คลังเอกสาร</button>
     <button data-i18n="idx.about" onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
-    <button data-i18n="idx.orgchart" onclick="window.location.href='/org-chart.html'">🗂️ โครงสร้างองค์กร</button>
-    <button data-i18n="idx.webboard" onclick="window.location.href='/webboard.html'">💬 เว็บบอร์ด</button>
-    <button data-i18n="idx.regulations" onclick="window.location.href='/regulations.html'">📜 ระเบียบบริษัท</button>
+    <button id="nav-calendar-btn" data-i18n="idx.calendar" onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
+    <button id="nav-board-btn" class="active" data-i18n="idx.board" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
     <button id="admin-btn" onclick="showPage('admin',this)" style="display:none">⚙️ จัดการผู้ใช้</button>
-    <button id="report-btn" data-i18n="idx.leavereport" onclick="window.location.href='/leave-report.html'" style="display:none">📊 รายงานการลา</button>
   </nav>
   <div class="user-area">
     <div class="search-box"><input id="navSearch" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter'&&this.value.trim())location.href='/search.html?q='+encodeURIComponent(this.value.trim())"><button onclick="const v=document.getElementById('navSearch').value.trim();if(v)location.href='/search.html?q='+encodeURIComponent(v)"><i class="ti ti-search"></i></button></div>
@@ -1083,18 +1078,22 @@ async function loadLeave(){
     state.me=await api('/me');
     $('user-name').textContent=state.me.name+' ('+state.me.dept+')';
     $('user-badge').textContent=state.me.role;
-    if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';$('report-btn').style.display='';}
+    if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';}
     // แสดง tab รออนุมัติเฉพาะหัวหน้า (is_manager) หรือ admin
     if(state.me.is_manager||state.me.role==='admin'){$('approve-tab').style.display='';$('team-cal-tab').style.display='';}
     await loadBoard();
     loadThaiEconNews();
     loadTechNews();
     loadThaiIndustrialNews();
-    loadCalendar();
+    await loadCalendar();
     loadLeave();
     // โหลดจำนวนรออนุมัติ
     const pending=await api('/leave/pending');
     $('pending-count').textContent=pending.length||'';
+    // เปิดหน้าย่อยตาม ?section= ที่ลิงก์มาจากหน้าอื่น (เช่น index.html?section=calendar)
+    const section=new URLSearchParams(location.search).get('section');
+    if(section==='calendar') showPage('calendar',$('nav-calendar-btn'));
+    else if(section==='admin'&&state.me.role==='admin') showPage('admin',$('admin-btn'));
   }catch(e){window.location.href='/login';}
 })();
 </script>
