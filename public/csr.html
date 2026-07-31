@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CSR - EARTH (THAILAND)</title>
+<title>MK Activity - EARTH (THAILAND)</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
 <style>
@@ -79,7 +79,7 @@ h1{font-size:22px;font-weight:700}
 </nav>
 <div class="page">
   <div class="page-head">
-    <h1>🤝 CSR — กิจกรรมเพื่อสังคม</h1>
+    <h1>📊 MK Activity</h1>
     <button class="btn btn-primary" id="btnAdd" style="display:none" onclick="openAddModal()">+ เพิ่มกิจกรรม</button>
   </div>
   <div id="csrGrid" class="csr-grid"><div class="empty">กำลังโหลด...</div></div>
@@ -99,7 +99,7 @@ h1{font-size:22px;font-weight:700}
 
 <div class="overlay" id="addOverlay" onclick="if(event.target===this)closeAddModal()">
   <div class="modal">
-    <div class="mhead"><h2>เพิ่มกิจกรรม CSR</h2><button class="mclose" onclick="closeAddModal()">✕</button></div>
+    <div class="mhead"><h2>เพิ่มกิจกรรม MK Activity</h2><button class="mclose" onclick="closeAddModal()">✕</button></div>
     <div class="mbody">
       <div class="fg"><label>ชื่อกิจกรรม</label><input id="ad-title" type="text"></div>
       <div class="fg"><label>วันที่</label><input id="ad-date" type="date"></div>
@@ -128,7 +128,7 @@ async function api(path, method='GET', body=null) {
 
 function renderGrid() {
   const el = document.getElementById('csrGrid');
-  if (!activities.length) { el.innerHTML = '<div class="empty">ยังไม่มีกิจกรรม CSR</div>'; return; }
+  if (!activities.length) { el.innerHTML = '<div class="empty">ยังไม่มีกิจกรรม MK Activity</div>'; return; }
   el.innerHTML = activities.map(a => {
     const photoIds = a.photo_ids || [];
     const thumb = photoIds.length ? `<img class="csr-thumb" src="/api/csr/photos/${photoIds[0]}" loading="lazy">` : `<div class="csr-thumb-empty"><i class="ti ti-photo"></i></div>`;

@@ -1502,7 +1502,7 @@ app.get('/api/search', requireLogin, async (req, res) => {
     kb.rows.forEach(k => results.push({ type: 'Knowledge Base', id: k.id, title: k.title, snippet: (k.body||'').slice(0,120), url: '/knowledge-base.html' }));
 
     const csr = await pool.query('SELECT id, title, description FROM csr_activities WHERE title ILIKE $1 OR description ILIKE $1 LIMIT 5', [like]);
-    csr.rows.forEach(c => results.push({ type: 'CSR', id: c.id, title: c.title, snippet: (c.description||'').slice(0,120), url: '/csr.html' }));
+    csr.rows.forEach(c => results.push({ type: 'MK Activity', id: c.id, title: c.title, snippet: (c.description||'').slice(0,120), url: '/csr.html' }));
 
     res.json(results);
   } catch(e) { res.status(500).json({ error: e.message }); }
