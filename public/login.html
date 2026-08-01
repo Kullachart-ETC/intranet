@@ -22,19 +22,20 @@ body{
   background:linear-gradient(165deg, #ffffff 0%, #fafbfe 100%);
   border:1px solid #E4EAF3;
   border-radius:14px;
-  padding:44px 40px 40px;
+  padding:32px 40px 28px;
   width:400px;
   max-width:95vw;
   box-shadow:0 6px 20px rgba(20,40,80,0.10);
 }
 @media (max-width:480px){
-  .card{padding:32px 24px 24px}
+  .card{padding:24px 24px 20px}
 }
 
 /* โลโก้: fade-in ครั้งเดียวตอนโหลด (~500ms) แล้วนิ่งสนิท ไม่มี loop */
-.logo-wrap{text-align:center;margin-bottom:40px;animation:logoFadeIn .5s ease-out both}
+.logo-wrap{text-align:center;margin-bottom:28px;animation:logoFadeIn .5s ease-out both}
 .globe-wrap{position:relative;display:inline-block;width:80px;height:80px;margin-bottom:8px;animation:globeShadowFade .5s ease-out .2s both}
-.globe-clip{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden}
+.globe-glow{position:absolute;inset:-14%;border-radius:50%;background:radial-gradient(circle,rgba(26,95,168,.20) 0%,rgba(26,95,168,0) 70%);filter:blur(6px);z-index:0}
+.globe-clip{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;z-index:1}
 .globe-img{width:100%;height:100%;object-fit:contain}
 .globe-shine-sweep{position:absolute;top:0;left:0;width:26px;height:100%;background:linear-gradient(75deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.6) 50%,rgba(255,255,255,0) 100%);pointer-events:none;transform:translateX(-60px) skewX(-18deg);animation:globeShineSweep .5s ease-out .2s both}
 .earth-text-img{width:122px;height:auto;display:block;margin:0 auto}
@@ -90,12 +91,12 @@ body{
   font-weight:600;
   cursor:pointer;
   font-family:inherit;
-  transition:opacity .2s ease, transform .2s ease, box-shadow .2s ease;
+  transition:background .2s ease, box-shadow .2s ease, transform .1s ease;
   margin-top:8px;
   box-shadow:0 2px 6px rgba(15,44,111,.12);
 }
-.btn-login:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,44,111,.22);}
-.btn-login:active{transform:translateY(0) scale(0.98);box-shadow:0 2px 6px rgba(15,44,111,.2);}
+.btn-login:hover{background:linear-gradient(135deg,#164E8F,#123F73);box-shadow:0 3px 8px rgba(15,44,111,.18);}
+.btn-login:active{transform:scale(0.98);box-shadow:0 2px 6px rgba(15,44,111,.2);}
 .btn-login:focus-visible,.lang-toggle-btn:focus-visible{outline:2px solid #1a5fa8;outline-offset:2px}
 .lang-toggle-btn{position:fixed;bottom:20px;right:24px;background:none;border:none;color:#3b5a85;font-size:13px;cursor:pointer;font-family:inherit;padding:6px 10px;border-radius:8px;transition:background-color .15s ease}
 .lang-toggle-btn:hover{background:rgba(26,95,168,.08)}
@@ -112,7 +113,7 @@ body{
 }
 .footer-note{
   text-align:center;
-  margin-top:1rem;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -120,6 +121,7 @@ body{
 <div class="card">
   <div class="logo-wrap">
     <div class="globe-wrap">
+      <div class="globe-glow"></div>
       <div class="globe-clip">
         <img class="globe-img" src="/logo-globe.png" alt="EARTH globe">
         <div class="globe-shine-sweep"></div>
