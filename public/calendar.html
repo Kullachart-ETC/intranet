@@ -2,9 +2,11 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ปฏิทินกิจกรรม - EARTH (THAILAND)</title>
+<title>ปฏิทิน - EARTH (THAILAND)</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
 .nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
@@ -26,52 +28,15 @@ a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
 .search-box input::placeholder{color:#888}
 .search-box button{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:4px 6px}
 .page{max-width:1000px;margin:0 auto;padding:32px 16px}
-h1{font-size:22px;font-weight:700}
-.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px}
+h1{font-size:22px;font-weight:700;margin-bottom:20px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-.tab{padding:7px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s;display:flex;align-items:center;gap:6px}
+.tab{padding:8px 18px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s;font-weight:500}
 .tab:hover{border-color:#1D9E75;color:#1D9E75}
-.tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
-.tab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
-.btn-primary{background:#1D9E75;color:#fff}
-.btn-primary:hover{background:#178a63}
-.btn-danger{background:#fff;border:1px solid #f5c6c6;color:#dc2626;font-size:12px;padding:4px 10px}
-.btn-danger:hover{background:#fef2f2}
-.btn-ghost{background:none;border:1px solid #ddd;color:#666}
-.month-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px}
-.month-nav button{width:32px;height:32px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:16px}
-.month-nav span{font-size:16px;font-weight:700;min-width:150px;text-align:center}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#eee;border:1px solid #eee;border-radius:10px;overflow:hidden}
-.cal-head{background:#f8f8f6;font-size:11px;font-weight:600;color:#888;text-align:center;padding:8px 2px}
-.cal-cell{background:#fff;min-height:78px;padding:6px;cursor:pointer;transition:.1s}
-.cal-cell:hover{background:#F4FBF8}
-.cal-cell.other{background:#fafafa;cursor:default;color:#ccc}
-.cal-cell.today{background:#EAF7F1}
-.cal-daynum{font-size:12px;font-weight:600;margin-bottom:4px}
-.cal-cell.today .cal-daynum{color:#1D9E75}
-.cal-dots{display:flex;flex-wrap:wrap;gap:3px}
-.cal-dot{width:8px;height:8px;border-radius:50%}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:16px}
-.overlay.open{display:flex}
-.modal{background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.22)}
-.mhead{display:flex;align-items:center;padding:16px 18px 12px;border-bottom:1px solid #eee;gap:8px}
-.mhead h2{font-size:15px;font-weight:700;flex:1}
-.mclose{background:none;border:none;font-size:20px;cursor:pointer;color:#888;width:28px;height:28px;border-radius:6px}
-.mclose:hover{background:#f5f5f3}
-.mbody{padding:16px 18px}
-.ev-item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:8px;background:#f8f8f6;margin-bottom:8px}
-.ev-dot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0}
-.ev-info{flex:1;min-width:0}
-.ev-title{font-size:13px;font-weight:600}
-.ev-time{font-size:11px;color:#888}
-.ev-desc{font-size:12px;color:#666;margin-top:2px}
-.fg{margin-bottom:12px}
-.fg label{display:block;font-size:12px;color:#666;margin-bottom:4px}
-.fg input,.fg select,.fg textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit}
-.fg textarea{min-height:60px;resize:vertical}
-.add-form{border-top:1px dashed #ddd;margin-top:14px;padding-top:14px}
-.empty{text-align:center;color:#aaa;padding:20px;font-size:13px}
+.tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.view-card{background:#fff;border-radius:12px;padding:18px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.flip-loading{text-align:center;padding:60px 20px;color:#888;font-size:13px}
+#flipBookContainer{margin:0 auto}
+#flipBookContainer canvas,#flipBookContainer img{box-shadow:0 2px 10px rgba(0,0,0,.15)}
 </style>
 </head>
 <body>
@@ -91,176 +56,79 @@ h1{font-size:22px;font-weight:700}
   <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="เมนู"><i class="ti ti-menu-2"></i></button>
 </nav>
 <div class="page">
-  <div class="page-head">
-    <h1>📅 ปฏิทินกิจกรรม</h1>
-    <button class="btn btn-primary" id="btn-add-toggle" style="display:none" onclick="openDay(fmt(new Date()))">+ เพิ่มกิจกรรม</button>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" data-cat="all" onclick="filterCategory('all',this)"><span class="tab-dot" style="background:#999"></span>ทั้งหมด</button>
-    <button class="tab" data-cat="holiday" onclick="filterCategory('holiday',this)"><span class="tab-dot" style="background:#DC2626"></span>ปฏิทินวันหยุด</button>
-    <button class="tab" data-cat="meeting" onclick="filterCategory('meeting',this)"><span class="tab-dot" style="background:#2563EB"></span>ประชุม</button>
-    <button class="tab" data-cat="training" onclick="filterCategory('training',this)"><span class="tab-dot" style="background:#7C3AED"></span>อบรม</button>
-  </div>
-
-  <div class="month-nav">
-    <button onclick="changeMonth(-1)">‹</button>
-    <span id="monthLabel"></span>
-    <button onclick="changeMonth(1)">›</button>
-  </div>
-  <div id="calGrid" class="cal-grid"></div>
-</div>
-
-<div class="overlay" id="dayOverlay" onclick="if(event.target===this)closeDay()">
-  <div class="modal">
-    <div class="mhead"><h2 id="dayTitle">รายการ</h2><button class="mclose" onclick="closeDay()">✕</button></div>
-    <div class="mbody">
-      <div id="dayEvents"></div>
-      <div class="add-form" id="addForm" style="display:none">
-        <div class="fg"><label>ประเภท</label>
-          <select id="af-category">
-            <option value="holiday">ปฏิทินวันหยุด</option>
-            <option value="meeting">ประชุม</option>
-            <option value="training">อบรม</option>
-          </select>
-        </div>
-        <div class="fg"><label>ชื่อกิจกรรม</label><input id="af-title" type="text" placeholder="เช่น วันหยุดชดเชย, ประชุมฝ่ายขาย"></div>
-        <div class="fg"><label>วันที่</label><input id="af-date" type="date"></div>
-        <div class="fg"><label>เวลาเริ่ม - สิ้นสุด (ไม่บังคับ)</label>
-          <div style="display:flex;gap:8px">
-            <input id="af-start" type="time">
-            <input id="af-end" type="time">
-          </div>
-        </div>
-        <div class="fg"><label>รายละเอียด (ไม่บังคับ)</label><textarea id="af-desc"></textarea></div>
-        <button class="btn btn-primary" onclick="addEvent()">บันทึก</button>
-      </div>
-    </div>
+  <h1>📅 ปฏิทิน</h1>
+  <div class="tabs" id="calTabs"></div>
+  <div class="view-card">
+    <div class="flip-loading" id="flipLoading">กำลังโหลดเอกสาร...</div>
+    <div id="flipBookContainer" style="display:none"></div>
   </div>
 </div>
-
 <script>
-let events = [];
-let activeCategory = 'all';
-let cursor = new Date();
-let canManage = false;
-const CAT_COLOR = { holiday:'#DC2626', meeting:'#2563EB', training:'#7C3AED' };
-const CAT_LABEL = { holiday:'ปฏิทินวันหยุด', meeting:'ประชุม', training:'อบรม' };
-const thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const CALENDARS = [
+  { file: 'Calendar PC&Mer 2026.pdf', label: 'PC&Mer' },
+  { file: 'Calendar Meeting 2026 HO&Fac 2026.pdf', label: 'Meeting HO&Fac' },
+  { file: 'Calendar Depot 2026.pdf', label: 'Depot' },
+  { file: 'Calendar TT 2026.pdf', label: 'TT' },
+  { file: 'Calendar SD 2026.pdf', label: 'SD' }
+];
+let pageFlip = null;
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-function fmt(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function monthStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
-function escHtml(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-async function api(path, method='GET', body=null) {
-  const opts = { method, headers:{} };
-  if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
-  const r = await fetch('/api'+path, opts);
-  if (!r.ok) { const e = await r.json().catch(()=>({error:r.statusText})); throw new Error(e.error||r.statusText); }
-  return r.json();
+function renderTabs(activeIdx) {
+  document.getElementById('calTabs').innerHTML = CALENDARS.map((c, i) =>
+    `<button class="tab${i===activeIdx?' active':''}" onclick="loadCal(${i})">${c.label}</button>`
+  ).join('');
 }
 
-function filterCategory(cat, btn) {
-  activeCategory = cat;
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderGrid();
-}
-
-function changeMonth(delta) {
-  cursor = new Date(cursor.getFullYear(), cursor.getMonth()+delta, 1);
-  loadEvents();
-}
-
-async function loadEvents() {
-  document.getElementById('monthLabel').textContent = `${thM[cursor.getMonth()]} ${cursor.getFullYear()+543}`;
-  events = await api(`/calendar-events?month=${monthStr(cursor)}`).catch(()=>[]);
-  renderGrid();
-}
-
-function eventsFor(dateStr, cat) {
-  return events.filter(e => e.event_date.slice(0,10)===dateStr && (cat==='all' || e.category===cat));
-}
-
-function renderGrid() {
-  const y = cursor.getFullYear(), m = cursor.getMonth();
-  const firstDow = new Date(y,m,1).getDay();
-  const daysInM  = new Date(y,m+1,0).getDate();
-  const daysInP  = new Date(y,m,0).getDate();
-  const total    = Math.ceil((firstDow+daysInM)/7)*7;
-  const todayStr = fmt(new Date());
-
-  let html = '';
-  ['อา','จ','อ','พ','พฤ','ศ','ส'].forEach(dn => html += `<div class="cal-head">${dn}</div>`);
-
-  for (let i=0; i<total; i++) {
-    let d, cm, cy, other=false;
-    if (i<firstDow)               { d=daysInP-firstDow+i+1; cm=m-1; cy=y; other=true; }
-    else if (i>=firstDow+daysInM) { d=i-firstDow-daysInM+1; cm=m+1; cy=y; other=true; }
-    else                           { d=i-firstDow+1; cm=m; cy=y; }
-    const dateStr = fmt(new Date(cy,cm,d));
-    const dayEvs = other ? [] : eventsFor(dateStr, activeCategory);
-    const dots = dayEvs.map(e => `<span class="cal-dot" style="background:${CAT_COLOR[e.category]}"></span>`).join('');
-    html += `<div class="cal-cell${other?' other':''}${dateStr===todayStr?' today':''}"${!other?` onclick="openDay('${dateStr}')"`:''}>
-      <div class="cal-daynum">${d}</div>
-      <div class="cal-dots">${dots}</div>
-    </div>`;
-  }
-  document.getElementById('calGrid').innerHTML = html;
-}
-
-function openDay(dateStr) {
-  const [y,m,d] = dateStr.split('-').map(Number);
-  const thaiM = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-  document.getElementById('dayTitle').textContent = `${d} ${thaiM[m]} ${y+543}`;
-  const dayEvs = eventsFor(dateStr, activeCategory);
-  const list = document.getElementById('dayEvents');
-  list.innerHTML = dayEvs.length ? dayEvs.map(e => `
-    <div class="ev-item">
-      <div class="ev-dot" style="background:${CAT_COLOR[e.category]}"></div>
-      <div class="ev-info">
-        <div class="ev-title">${escHtml(e.title)}</div>
-        <div class="ev-time">${CAT_LABEL[e.category]}${e.time_start?` · ${e.time_start}${e.time_end?'-'+e.time_end:''}`:''}</div>
-        ${e.description?`<div class="ev-desc">${escHtml(e.description)}</div>`:''}
-      </div>
-      ${canManage?`<button class="btn-danger" onclick="delEvent(${e.id})">✕</button>`:''}
-    </div>`).join('') : '<div class="empty">ไม่มีกิจกรรมวันนี้</div>';
-
-  const addForm = document.getElementById('addForm');
-  addForm.style.display = canManage ? '' : 'none';
-  if (canManage) {
-    document.getElementById('af-date').value = dateStr;
-    document.getElementById('af-title').value = '';
-    document.getElementById('af-desc').value = '';
-    document.getElementById('af-start').value = '';
-    document.getElementById('af-end').value = '';
-  }
-  document.getElementById('dayOverlay').classList.add('open');
-}
-function closeDay() { document.getElementById('dayOverlay').classList.remove('open'); }
-
-async function addEvent() {
-  const category = document.getElementById('af-category').value;
-  const title = document.getElementById('af-title').value.trim();
-  const event_date = document.getElementById('af-date').value;
-  const time_start = document.getElementById('af-start').value;
-  const time_end = document.getElementById('af-end').value;
-  const description = document.getElementById('af-desc').value.trim();
-  if (!title || !event_date) { alert('กรุณากรอกชื่อกิจกรรมและวันที่'); return; }
+async function loadCal(idx) {
+  renderTabs(idx);
+  const cal = CALENDARS[idx];
+  document.getElementById('flipLoading').style.display = '';
+  document.getElementById('flipLoading').textContent = 'กำลังโหลดเอกสาร...';
+  document.getElementById('flipBookContainer').style.display = 'none';
+  document.getElementById('flipBookContainer').innerHTML = '';
   try {
-    await api('/calendar-events', 'POST', { category, title, description, event_date, time_start, time_end });
-    await loadEvents();
-    openDay(event_date);
-  } catch(e) { alert('บันทึกไม่สำเร็จ: '+e.message); }
-}
-async function delEvent(id) {
-  if (!confirm('ต้องการลบกิจกรรมนี้ใช่ไหมครับ?')) return;
-  try {
-    await api('/calendar-events/'+id, 'DELETE');
-    const dateStr = document.getElementById('af-date').value;
-    await loadEvents();
-    if (dateStr) openDay(dateStr);
-  } catch(e) { alert('ลบไม่สำเร็จ: '+e.message); }
+    const buf = await fetch('/' + encodeURIComponent(cal.file)).then(r => {
+      if (!r.ok) throw new Error('โหลดไฟล์ไม่สำเร็จ');
+      return r.arrayBuffer();
+    });
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const images = [];
+    const baseViewport = (await pdf.getPage(1)).getViewport({ scale: 1 });
+    const pageW = Math.round(baseViewport.width);
+    const pageH = Math.round(baseViewport.height);
+    const renderScale = 2.5;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: renderScale });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      images.push(canvas.toDataURL('image/png'));
+    }
+    const container = document.getElementById('flipBookContainer');
+    document.getElementById('flipLoading').style.display = 'none';
+    container.style.display = '';
+    if (pageFlip) { try { pageFlip.destroy(); } catch(e){} pageFlip = null; }
+    // page-flip draws onto its own internal <canvas> sized in CSS pixels with
+    // no devicePixelRatio awareness, so on a HiDPI screen it looks blurry no
+    // matter how sharp the source image is. Render dpr× larger, then shrink
+    // the whole thing back down with CSS zoom (unlike transform, this keeps
+    // layout and pointer coordinates correct).
+    const dpr = window.devicePixelRatio || 1;
+    container.style.zoom = 1 / dpr;
+    pageFlip = new St.PageFlip(container, {
+      width: pageW * dpr, height: pageH * dpr,
+      size: 'stretch',
+      minWidth: 280 * dpr, maxWidth: 900 * dpr,
+      minHeight: 360 * dpr, maxHeight: 1200 * dpr,
+      showCover: false,
+      maxShadowOpacity: 0.5
+    });
+    pageFlip.loadFromImages(images);
+  } catch(e) {
+    document.getElementById('flipLoading').textContent = 'ไม่สามารถแสดงเอกสารได้: ' + e.message;
+  }
 }
 
 async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
@@ -268,10 +136,10 @@ async function logout(){await fetch('/api/logout',{method:'POST'});window.locati
   try{
     const me=await fetch('/api/me').then(r=>r.json());
     if(me.error){window.location.href='/login.html';return;}
-    document.getElementById('nav-user').textContent=me.name;document.getElementById('nav-admin-link').style.display=me.role==='admin'?'':'none';
-    canManage = me.role==='admin';
-    if (canManage) document.getElementById('btn-add-toggle').style.display='';
-    await loadEvents();
+    document.getElementById('nav-user').textContent=me.name;
+    document.getElementById('nav-admin-link').style.display=me.role==='admin'?'':'none';
+    renderTabs(0);
+    loadCal(0);
   }catch(e){window.location.href='/login.html';}
 })();
 </script>
