@@ -134,6 +134,8 @@ body:has(#page-board.active){background:#0f3460}
 .quick-link-photo:hover{transform:translateY(-4px)}
 .quick-link-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,rgba(0,0,0,.15) 55%,rgba(0,0,0,0) 100%)}
 .quick-link-photo span{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.quick-link-photo.no-label{padding:0}
+.quick-link-photo.no-label::before{content:none}
 .quick-link-icon{position:relative;display:flex;align-items:flex-end;min-height:150px;border-radius:14px;overflow:hidden;color:#fff;text-decoration:none;font-size:17px;font-weight:700;padding:18px 20px;transition:transform .15s}
 .quick-link-icon:hover{transform:translateY(-4px)}
 .quick-link-icon i{position:absolute;right:14px;top:14px;font-size:56px;opacity:.35}
@@ -352,9 +354,9 @@ tr:last-child td{border-bottom:none}
           <a href="/forms.html" class="quick-link-photo" style="background:#0f766e url('/doc.png') center/cover no-repeat"><span data-i18n="ql.forms">แบบฟอร์ม EARTH</span></a>
           <a href="/webboard.html" class="quick-link-photo" style="background-image:url('/board.png')"><span data-i18n="ql.webboard">เว็บบอร์ด</span></a>
           <a href="/regulations.html" class="quick-link-photo" style="background-image:url('/rule.jpg')"><span data-i18n="ql.regulations">ระเบียบบริษัท</span></a>
-          <a href="/calendar.html" class="quick-link-photo" style="background-image:url('/calendar.png');background-size:contain;background-color:#fff"><span data-i18n="ql.calendar">ปฏิทินกิจกรรม</span></a>
-          <a href="/knowledge-base.html" class="quick-link-photo" style="background-image:url('/know.png');background-size:contain;background-color:#fff"><span data-i18n="ql.kb">Knowledge Base</span></a>
-          <a href="/csr.html" class="quick-link-photo" style="background-image:url('/mkt.png');background-size:contain;background-color:#fff"><span data-i18n="ql.csr">MK Activity</span></a>
+          <a href="/calendar.html" class="quick-link-photo no-label" title="ปฏิทินกิจกรรม" style="background-image:url('/calendar.png');background-size:100% 100%;background-repeat:no-repeat"></a>
+          <a href="/knowledge-base.html" class="quick-link-photo no-label" title="Knowledge Base" style="background-image:url('/know.png');background-size:100% 100%;background-repeat:no-repeat"></a>
+          <a href="/csr.html" class="quick-link-photo no-label" title="MK Activity" style="background-image:url('/mkt.png');background-size:100% 100%;background-repeat:no-repeat"></a>
         </div>
       </div>
     </div>
