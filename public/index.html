@@ -136,7 +136,8 @@ body:has(#page-board.active){background:#0f3460}
 .quick-link-photo span{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 .quick-link-photo.no-label{padding:0}
 .quick-link-photo.no-label::before{content:none}
-.quick-link-photo.no-label[data-tip]::after{
+.tile-wrap{position:relative}
+.tile-wrap[data-tip]::after{
   content:attr(data-tip);
   position:absolute;
   bottom:calc(100% + 8px);
@@ -157,7 +158,7 @@ body:has(#page-board.active){background:#0f3460}
   transition:opacity .15s,visibility .15s;
   z-index:20;
 }
-.quick-link-photo.no-label[data-tip]:hover::after{opacity:1;visibility:visible}
+.tile-wrap[data-tip]:hover::after{opacity:1;visibility:visible}
 .quick-link-icon{position:relative;display:flex;align-items:flex-end;min-height:150px;border-radius:14px;overflow:hidden;color:#fff;text-decoration:none;font-size:17px;font-weight:700;padding:18px 20px;transition:transform .15s}
 .quick-link-icon:hover{transform:translateY(-4px)}
 .quick-link-icon i{position:absolute;right:14px;top:14px;font-size:56px;opacity:.35}
@@ -370,15 +371,15 @@ tr:last-child td{border-bottom:none}
       <div class="isms-card">
         <h3>⚡ เมนูลัด</h3>
         <div class="quick-links">
-          <a href="javascript:void(0)" onclick="goToLeave()" class="quick-link-photo no-label" data-tip="ใบลาออนไลน์" style="background-image:url('/holiday.png')"></a>
-          <a href="/meeting-calendar.html" class="quick-link-photo no-label" data-tip="จองห้องประชุม" style="background-image:url('/meeting-room.png')"></a>
-          <a href="/car-booking.html" class="quick-link-photo no-label" data-tip="จองรถ" style="background-image:url('/car.png');background-position:center 85%"></a>
-          <a href="/forms.html" class="quick-link-photo no-label" data-tip="แบบฟอร์ม EARTH" style="background:#0f766e url('/doc.png') center/cover no-repeat"></a>
-          <a href="/webboard.html" class="quick-link-photo no-label" data-tip="เว็บบอร์ด" style="background-image:url('/board.png')"></a>
-          <a href="/regulations.html" class="quick-link-photo no-label" data-tip="ระเบียบบริษัท" style="background-image:url('/rule.jpg')"></a>
-          <a href="/calendar.html" class="quick-link-photo no-label" data-tip="ปฏิทินกิจกรรม" style="background-image:url('/calendar.png');background-size:100% 100%;background-repeat:no-repeat"></a>
-          <a href="/knowledge-base.html" class="quick-link-photo no-label" data-tip="Knowledge Base" style="background-image:url('/know.png');background-size:100% 100%;background-repeat:no-repeat"></a>
-          <a href="/csr.html" class="quick-link-photo no-label" data-tip="MK Activity" style="background-image:url('/mkt.png');background-size:100% 100%;background-repeat:no-repeat"></a>
+          <div class="tile-wrap" data-tip="ใบลาออนไลน์"><a href="javascript:void(0)" onclick="goToLeave()" class="quick-link-photo no-label"  style="background-image:url('/holiday.png')"></a></div>
+          <div class="tile-wrap" data-tip="จองห้องประชุม"><a href="/meeting-calendar.html" class="quick-link-photo no-label"  style="background-image:url('/meeting-room.png')"></a></div>
+          <div class="tile-wrap" data-tip="จองรถ"><a href="/car-booking.html" class="quick-link-photo no-label"  style="background-image:url('/car.png');background-position:center 85%"></a></div>
+          <div class="tile-wrap" data-tip="แบบฟอร์ม EARTH"><a href="/forms.html" class="quick-link-photo no-label"  style="background:#0f766e url('/doc.png') center/cover no-repeat"></a></div>
+          <div class="tile-wrap" data-tip="เว็บบอร์ด"><a href="/webboard.html" class="quick-link-photo no-label"  style="background-image:url('/board.png')"></a></div>
+          <div class="tile-wrap" data-tip="ระเบียบบริษัท"><a href="/regulations.html" class="quick-link-photo no-label"  style="background-image:url('/rule.jpg')"></a></div>
+          <div class="tile-wrap" data-tip="ปฏิทินกิจกรรม"><a href="/calendar.html" class="quick-link-photo no-label"  style="background-image:url('/calendar.png');background-size:100% 100%;background-repeat:no-repeat"></a></div>
+          <div class="tile-wrap" data-tip="Knowledge Base"><a href="/knowledge-base.html" class="quick-link-photo no-label"  style="background-image:url('/know.png');background-size:100% 100%;background-repeat:no-repeat"></a></div>
+          <div class="tile-wrap" data-tip="MK Activity"><a href="/csr.html" class="quick-link-photo no-label"  style="background-image:url('/mkt.png');background-size:100% 100%;background-repeat:no-repeat"></a></div>
         </div>
       </div>
     </div>
