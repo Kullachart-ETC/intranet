@@ -53,13 +53,14 @@ body::after{
   z-index:1;
 }
 .logo-wrap{text-align:center;margin-bottom:.5rem}
-.globe-wrap{position:relative;display:inline-block;width:84px;height:84px;margin-bottom:6px;perspective:400px}
-.globe-img{width:100%;height:100%;object-fit:cover;border-radius:50%;animation:globeSpin 9s linear infinite;will-change:transform;box-shadow:inset -14px -14px 26px rgba(0,0,0,.35),inset 8px 8px 18px rgba(255,255,255,.25)}
-.globe-shine{position:absolute;top:6%;left:12%;width:46%;height:34%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.95) 0%,rgba(255,255,255,.55) 30%,rgba(255,255,255,0) 70%);pointer-events:none;z-index:2;filter:blur(1px)}
+.globe-wrap{position:relative;display:inline-block;width:84px;height:84px;margin-bottom:6px;perspective:400px;border-radius:50%;overflow:hidden}
+.globe-cyl{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:globeSpin 9s linear infinite;will-change:transform}
+.globe-strip{position:absolute;top:0;left:50%;height:100%;background-image:url('/logo-globe.png');background-repeat:no-repeat}
+.globe-shine{position:absolute;top:6%;left:12%;width:46%;height:34%;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.95) 0%,rgba(255,255,255,.55) 30%,rgba(255,255,255,0) 70%);pointer-events:none;z-index:5;filter:blur(1px)}
 .globe-shadow{width:60%;height:12px;margin:2px auto 0;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.32) 0%,rgba(0,0,0,0) 75%)}
 .earth-text-img{width:130px;height:auto;display:block;margin:0 auto}
 @keyframes globeSpin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
-@media (prefers-reduced-motion:reduce){.globe-img{animation:none}}
+@media (prefers-reduced-motion:reduce){.globe-cyl{animation:none}}
 .hero-wrap{text-align:center;margin-bottom:.4rem}
 .hero-fx{position:relative;display:inline-block;transition:transform .25s ease-in-out}
 .hero-fx:hover{transform:scale(1.03)}
@@ -183,7 +184,7 @@ body::after{
 <div class="card">
   <div class="logo-wrap">
     <div class="globe-wrap">
-      <img class="globe-img" src="/logo-globe.png" alt="EARTH globe">
+      <div class="globe-cyl" id="globeCyl"></div>
       <div class="globe-shine"></div>
     </div>
     <div class="globe-shadow"></div>
@@ -232,6 +233,28 @@ async function login(){
     window.location.href='/';
   }catch(e){err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่';err.style.display='block';}
 }
+(function(){
+  const cyl = document.getElementById('globeCyl');
+  if(!cyl) return;
+  const N = 24, R = 42;
+  const stripAngle = 360 / N;
+  const stripW = (2 * Math.PI * R) / N;
+  const texW = 2 * Math.PI * R;
+  for (let i = 0; i < N; i++) {
+    const strip = document.createElement('div');
+    strip.className = 'globe-strip';
+    const angle = i * stripAngle;
+    strip.style.width = stripW + 'px';
+    strip.style.marginLeft = (-stripW / 2) + 'px';
+    strip.style.backgroundSize = texW + 'px 84px';
+    strip.style.backgroundPosition = (-(i * stripW)) + 'px 0';
+    strip.style.transform = `rotateY(${angle}deg) translateZ(${R}px)`;
+    const rad = angle * Math.PI / 180;
+    const shade = Math.max(0.3, Math.cos(rad) * 0.55 + 0.55);
+    strip.style.filter = `brightness(${shade})`;
+    cyl.appendChild(strip);
+  }
+})();
 </script>
 <script src="/i18n.js"></script>
 </body>
