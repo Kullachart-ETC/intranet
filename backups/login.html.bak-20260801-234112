@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบ — EARTH (THAILAND)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Prompt',sans-serif;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(160deg, #f8f9fb 0%, #eef1f6 100%);
+  position:relative;
+}
+.card{
+  position:relative;
+  z-index:1;
+  background:linear-gradient(165deg, #ffffff 0%, #fbfcfe 100%);
+  border-radius:16px;
+  padding:1.25rem 2.25rem 1.5rem;
+  width:380px;
+  max-width:95vw;
+  box-shadow:0 8px 30px rgba(20,30,50,0.12);
+  animation:cardFadeIn .6s ease-out both;
+}
+@keyframes cardFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes softGlow{0%,100%{opacity:.45}50%{opacity:1}}
+
+/* โลโก้: fade-in ครั้งเดียวตอนโหลด + soft glow เบาๆ, ลูกโลกและตัวอักษร EARTH นิ่ง ไม่หมุน */
+.logo-wrap{text-align:center;margin-bottom:.6rem;animation:cardFadeIn .7s ease-out both}
+.globe-wrap{position:relative;display:inline-block;width:84px;height:84px;margin-bottom:6px}
+.globe-glow{position:absolute;inset:-16%;border-radius:50%;background:radial-gradient(circle,rgba(26,95,168,.28) 0%,rgba(26,95,168,0) 70%);filter:blur(6px);animation:softGlow 4s ease-in-out infinite;z-index:0}
+.globe-img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.18))}
+.earth-text-img{width:130px;height:auto;display:block;margin:0 auto}
+
+/* ARS Hero: อยู่ระหว่างโลโก้กับฟอร์ม ลอยขึ้นลงช้าๆ + หายใจ + gold glow + hover ขยาย 1.03 */
+.hero-wrap{text-align:center;margin-bottom:.7rem}
+.hero-fx{position:relative;display:inline-block;transition:transform .25s ease-out}
+.hero-fx:hover{transform:scale(1.03)}
+.hero-float{animation:heroFloat 5s ease-in-out infinite;will-change:transform}
+.hero-breathe{position:relative;animation:heroBreathe 4s ease-in-out infinite;will-change:transform}
+.hero-glow{position:absolute;inset:8% 20%;border-radius:50%;background:radial-gradient(circle,rgba(255,196,50,.5) 0%,rgba(255,196,50,0) 70%);filter:blur(8px);animation:softGlow 3.5s ease-in-out infinite;z-index:0}
+.hero-img{position:relative;z-index:1;height:140px;width:auto;display:block;margin:0 auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+@keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes heroBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+
+@media (prefers-reduced-motion:reduce){
+  .card,.logo-wrap{animation:none}
+  .globe-glow,.hero-glow{animation:none;opacity:.6}
+  .hero-float,.hero-breathe{animation:none}
+}
+
+.slogan-img{max-width:100%;height:auto;display:block;margin:0 auto}
+.slogan-img.challenge{width:220px}
+.divider{
+  border:none;
+  border-top:1px solid #eee;
+  margin-bottom:1rem;
+}
+.form-label{
+  font-size:13px;
+  color:#555;
+  display:block;
+  margin-bottom:5px;
+  font-weight:500;
+}
+.form-input{
+  width:100%;
+  height:54px;
+  border:1.5px solid #e0e0e0;
+  border-radius:12px;
+  padding:0 16px;
+  font-size:15px;
+  font-family:'Prompt',sans-serif;
+  margin-bottom:16px;
+  transition:border-color .2s ease, box-shadow .2s ease, transform .15s ease;
+  color:#1a1a18;
+}
+.form-input:hover{
+  border-color:#b9c8dd;
+}
+.form-input:focus{
+  outline:none;
+  border-color:#1a5fa8;
+  box-shadow:0 0 0 3px rgba(26,95,168,0.12);
+  transform:translateY(-1px);
+}
+.btn-login{
+  width:100%;
+  height:54px;
+  background:linear-gradient(135deg,#1a5fa8,#0f2c6f);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:'Prompt',sans-serif;
+  transition:opacity .2s ease, transform .2s ease, box-shadow .2s ease;
+  margin-top:4px;
+  box-shadow:0 2px 8px rgba(15,44,111,.15);
+}
+.btn-login:hover{opacity:0.97;transform:translateY(-2px);box-shadow:0 10px 22px rgba(15,44,111,.35);}
+.btn-login:active{transform:translateY(0) scale(0.98);box-shadow:0 2px 6px rgba(15,44,111,.2);}
+.btn-login:focus-visible,.lang-toggle-btn:focus-visible{outline:2px solid #1a5fa8;outline-offset:2px}
+.lang-toggle-btn{position:absolute;top:14px;right:14px;background:#F0F2F7;color:#0f2c6f;border:1px solid #dde1ea;border-radius:14px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.lang-toggle-btn:hover{background:#e2e6ee}
+.error-box{
+  background:#fff0f0;
+  border:1px solid #ffd0d0;
+  color:#c0392b;
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:13px;
+  margin-bottom:14px;
+  display:none;
+  text-align:center;
+}
+.footer-note{
+  text-align:center;
+  margin-top:1rem;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-wrap">
+    <div class="globe-wrap">
+      <div class="globe-glow"></div>
+      <img class="globe-img" src="/logo-globe.png" alt="EARTH globe">
+    </div>
+    <img class="earth-text-img" src="/logo-earth-text.png" alt="EARTH">
+  </div>
+  <div class="hero-wrap">
+    <div class="hero-fx">
+      <div class="hero-float">
+        <div class="hero-breathe">
+          <div class="hero-glow"></div>
+          <img class="hero-img" src="/ars-hero-solo.png" alt="ARS Hero">
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr class="divider">
+  <button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button>
+  <div class="error-box" id="err"></div>
+  <label class="form-label" data-i18n="lbl.username">ชื่อผู้ใช้งาน</label>
+  <input class="form-input" type="text" id="username" data-i18n-placeholder="ph.username" placeholder="กรอก Username" autocomplete="username">
+  <label class="form-label" data-i18n="lbl.password">รหัสผ่าน</label>
+  <input class="form-input" type="password" id="password" data-i18n-placeholder="ph.password" placeholder="กรอก Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+  <button class="btn-login" data-i18n="btn.login" onclick="login()">เข้าสู่ระบบ</button>
+  <div class="footer-note"><img class="slogan-img challenge" src="/slogan-challenge.png" alt="CHALLENGE & CHANGE + GRIT"></div>
+</div>
+<script>
+async function login(){
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  const err=document.getElementById('err');
+  err.style.display='none';
+  if(!username||!password){err.textContent='กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';err.style.display='block';return;}
+  try{
+    const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data=await r.json();
+    if(!r.ok){err.textContent=data.error;err.style.display='block';return;}
+    window.location.href='/';
+  }catch(e){err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่';err.style.display='block';}
+}
+</script>
+<script src="/i18n.js"></script>
+</body>
+</html>
