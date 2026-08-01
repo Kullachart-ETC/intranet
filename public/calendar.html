@@ -6,7 +6,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Sarabun',sans-serif;background:#F5F5F3;color:#1a1a18}
 .nav{background:#1a1a18;padding:0 24px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:50}
@@ -33,10 +32,15 @@ h1{font-size:22px;font-weight:700;margin-bottom:20px}
 .tab{padding:8px 18px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s;font-weight:500}
 .tab:hover{border-color:#1D9E75;color:#1D9E75}
 .tab.active{background:#1D9E75;border-color:#1D9E75;color:#fff}
-.view-card{background:#fff;border-radius:12px;padding:18px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.view-card{background:#fff;border-radius:12px;padding:18px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.06);text-align:center}
 .flip-loading{text-align:center;padding:60px 20px;color:#888;font-size:13px}
-#flipBookContainer{margin:0 auto}
-#flipBookContainer canvas,#flipBookContainer img{box-shadow:0 2px 10px rgba(0,0,0,.15)}
+#pdfCanvas{max-width:100%;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.page-nav{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:14px}
+.btn{padding:8px 16px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;transition:.15s}
+.btn:hover{border-color:#1D9E75;color:#1D9E75}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:disabled:hover{border-color:#ddd;color:inherit}
+.page-indicator{font-size:13px;color:#666;min-width:80px}
 </style>
 </head>
 <body>
@@ -60,7 +64,14 @@ h1{font-size:22px;font-weight:700;margin-bottom:20px}
   <div class="tabs" id="calTabs"></div>
   <div class="view-card">
     <div class="flip-loading" id="flipLoading">กำลังโหลดเอกสาร...</div>
-    <div id="flipBookContainer" style="display:none"></div>
+    <div id="pdfViewer" style="display:none">
+      <canvas id="pdfCanvas"></canvas>
+      <div class="page-nav">
+        <button class="btn" id="prevBtn" onclick="changePage(-1)">‹ ก่อนหน้า</button>
+        <span class="page-indicator" id="pageIndicator"></span>
+        <button class="btn" id="nextBtn" onclick="changePage(1)">ถัดไป ›</button>
+      </div>
+    </div>
   </div>
 </div>
 <script>
@@ -71,8 +82,9 @@ const CALENDARS = [
   { file: 'Calendar TT 2026.pdf', label: 'TT' },
   { file: 'Calendar SD 2026.pdf', label: 'SD' }
 ];
-let pageFlip = null;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let currentPdf = null;
+let currentPage = 1;
 
 function renderTabs(activeIdx) {
   document.getElementById('calTabs').innerHTML = CALENDARS.map((c, i) =>
@@ -85,50 +97,49 @@ async function loadCal(idx) {
   const cal = CALENDARS[idx];
   document.getElementById('flipLoading').style.display = '';
   document.getElementById('flipLoading').textContent = 'กำลังโหลดเอกสาร...';
-  document.getElementById('flipBookContainer').style.display = 'none';
-  document.getElementById('flipBookContainer').innerHTML = '';
+  document.getElementById('pdfViewer').style.display = 'none';
   try {
     const buf = await fetch('/' + encodeURIComponent(cal.file)).then(r => {
       if (!r.ok) throw new Error('โหลดไฟล์ไม่สำเร็จ');
       return r.arrayBuffer();
     });
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    const images = [];
-    const baseViewport = (await pdf.getPage(1)).getViewport({ scale: 1 });
-    const pageW = Math.round(baseViewport.width);
-    const pageH = Math.round(baseViewport.height);
-    const renderScale = 2.5;
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: renderScale });
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width; canvas.height = viewport.height;
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-      images.push(canvas.toDataURL('image/png'));
-    }
-    const container = document.getElementById('flipBookContainer');
+    currentPdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    currentPage = 1;
     document.getElementById('flipLoading').style.display = 'none';
-    container.style.display = '';
-    if (pageFlip) { try { pageFlip.destroy(); } catch(e){} pageFlip = null; }
-    // page-flip draws onto its own internal <canvas> sized in CSS pixels with
-    // no devicePixelRatio awareness, so on a HiDPI screen it looks blurry no
-    // matter how sharp the source image is. Render dpr× larger, then shrink
-    // the whole thing back down with CSS zoom (unlike transform, this keeps
-    // layout and pointer coordinates correct).
-    const dpr = window.devicePixelRatio || 1;
-    container.style.zoom = 1 / dpr;
-    pageFlip = new St.PageFlip(container, {
-      width: pageW * dpr, height: pageH * dpr,
-      size: 'stretch',
-      minWidth: 280 * dpr, maxWidth: 900 * dpr,
-      minHeight: 360 * dpr, maxHeight: 1200 * dpr,
-      showCover: false,
-      maxShadowOpacity: 0.5
-    });
-    pageFlip.loadFromImages(images);
+    document.getElementById('pdfViewer').style.display = '';
+    await renderPage();
   } catch(e) {
+    document.getElementById('flipLoading').style.display = '';
     document.getElementById('flipLoading').textContent = 'ไม่สามารถแสดงเอกสารได้: ' + e.message;
   }
+}
+
+// Renders only the current page on demand — much faster than pre-rendering
+// every page up front, which is what made the old page-flip book slow on
+// multi-page calendars.
+async function renderPage() {
+  const page = await currentPdf.getPage(currentPage);
+  const dpr = window.devicePixelRatio || 1;
+  const containerWidth = Math.min(document.querySelector('.view-card').clientWidth - 36, 800);
+  const baseViewport = page.getViewport({ scale: 1 });
+  const scale = containerWidth / baseViewport.width;
+  const viewport = page.getViewport({ scale: scale * dpr });
+  const canvas = document.getElementById('pdfCanvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  canvas.style.width = (viewport.width / dpr) + 'px';
+  canvas.style.height = (viewport.height / dpr) + 'px';
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  document.getElementById('pageIndicator').textContent = `หน้า ${currentPage} / ${currentPdf.numPages}`;
+  document.getElementById('prevBtn').disabled = currentPage <= 1;
+  document.getElementById('nextBtn').disabled = currentPage >= currentPdf.numPages;
+}
+
+function changePage(delta) {
+  const next = currentPage + delta;
+  if (!currentPdf || next < 1 || next > currentPdf.numPages) return;
+  currentPage = next;
+  renderPage();
 }
 
 async function logout(){await fetch('/api/logout',{method:'POST'});window.location.href='/login.html';}
