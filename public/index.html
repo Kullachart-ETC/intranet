@@ -6,7 +6,7 @@
 <title>Intranet — EARTH (THAILAND)</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&family=Kanit:wght@500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:#f5f5f3;color:#1a1a18;font-size:15px}
 /* BUG BANNER — mosquito flies in, gets sprayed, falls */
@@ -136,6 +136,28 @@ body:has(#page-board.active){background:#0f3460}
 .quick-link-photo span{position:relative;z-index:1;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 .quick-link-photo.no-label{padding:0}
 .quick-link-photo.no-label::before{content:none}
+.quick-link-photo.no-label[data-tip]::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:calc(100% + 8px);
+  left:50%;
+  transform:translateX(-50%);
+  background:#1a1a18;
+  color:#fff;
+  padding:7px 14px;
+  border-radius:8px;
+  font-family:'Kanit',sans-serif;
+  font-weight:500;
+  font-size:14.7px;
+  white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .15s,visibility .15s;
+  z-index:20;
+}
+.quick-link-photo.no-label[data-tip]:hover::after{opacity:1;visibility:visible}
 .quick-link-icon{position:relative;display:flex;align-items:flex-end;min-height:150px;border-radius:14px;overflow:hidden;color:#fff;text-decoration:none;font-size:17px;font-weight:700;padding:18px 20px;transition:transform .15s}
 .quick-link-icon:hover{transform:translateY(-4px)}
 .quick-link-icon i{position:absolute;right:14px;top:14px;font-size:56px;opacity:.35}
@@ -348,15 +370,15 @@ tr:last-child td{border-bottom:none}
       <div class="isms-card">
         <h3>⚡ เมนูลัด</h3>
         <div class="quick-links">
-          <a href="javascript:void(0)" onclick="goToLeave()" class="quick-link-photo no-label" title="ใบลาออนไลน์" style="background-image:url('/holiday.png')"></a>
-          <a href="/meeting-calendar.html" class="quick-link-photo no-label" title="จองห้องประชุม" style="background-image:url('/meeting-room.png')"></a>
-          <a href="/car-booking.html" class="quick-link-photo no-label" title="จองรถ" style="background-image:url('/car.png');background-position:center 85%"></a>
-          <a href="/forms.html" class="quick-link-photo no-label" title="แบบฟอร์ม EARTH" style="background:#0f766e url('/doc.png') center/cover no-repeat"></a>
-          <a href="/webboard.html" class="quick-link-photo no-label" title="เว็บบอร์ด" style="background-image:url('/board.png')"></a>
-          <a href="/regulations.html" class="quick-link-photo no-label" title="ระเบียบบริษัท" style="background-image:url('/rule.jpg')"></a>
-          <a href="/calendar.html" class="quick-link-photo no-label" title="ปฏิทินกิจกรรม" style="background-image:url('/calendar.png');background-size:100% 100%;background-repeat:no-repeat"></a>
-          <a href="/knowledge-base.html" class="quick-link-photo no-label" title="Knowledge Base" style="background-image:url('/know.png');background-size:100% 100%;background-repeat:no-repeat"></a>
-          <a href="/csr.html" class="quick-link-photo no-label" title="MK Activity" style="background-image:url('/mkt.png');background-size:100% 100%;background-repeat:no-repeat"></a>
+          <a href="javascript:void(0)" onclick="goToLeave()" class="quick-link-photo no-label" data-tip="ใบลาออนไลน์" style="background-image:url('/holiday.png')"></a>
+          <a href="/meeting-calendar.html" class="quick-link-photo no-label" data-tip="จองห้องประชุม" style="background-image:url('/meeting-room.png')"></a>
+          <a href="/car-booking.html" class="quick-link-photo no-label" data-tip="จองรถ" style="background-image:url('/car.png');background-position:center 85%"></a>
+          <a href="/forms.html" class="quick-link-photo no-label" data-tip="แบบฟอร์ม EARTH" style="background:#0f766e url('/doc.png') center/cover no-repeat"></a>
+          <a href="/webboard.html" class="quick-link-photo no-label" data-tip="เว็บบอร์ด" style="background-image:url('/board.png')"></a>
+          <a href="/regulations.html" class="quick-link-photo no-label" data-tip="ระเบียบบริษัท" style="background-image:url('/rule.jpg')"></a>
+          <a href="/calendar.html" class="quick-link-photo no-label" data-tip="ปฏิทินกิจกรรม" style="background-image:url('/calendar.png');background-size:100% 100%;background-repeat:no-repeat"></a>
+          <a href="/knowledge-base.html" class="quick-link-photo no-label" data-tip="Knowledge Base" style="background-image:url('/know.png');background-size:100% 100%;background-repeat:no-repeat"></a>
+          <a href="/csr.html" class="quick-link-photo no-label" data-tip="MK Activity" style="background-image:url('/mkt.png');background-size:100% 100%;background-repeat:no-repeat"></a>
         </div>
       </div>
     </div>
