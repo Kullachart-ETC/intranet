@@ -85,6 +85,7 @@ body::after{
   width:94%;
   margin:0 auto 5px;
   font-weight:500;
+  letter-spacing:.2px;
 }
 .form-input{
   width:94%;
@@ -117,6 +118,7 @@ body::after{
   border-radius:8px;
   font-size:15px;
   font-weight:600;
+  letter-spacing:.3px;
   cursor:pointer;
   font-family:inherit;
   transition:background .2s ease, box-shadow .2s ease, transform .1s ease;
@@ -144,11 +146,16 @@ body::after{
   text-align:center;
   margin-top:10px;
 }
+#orbit-group{transform-box:fill-box;transform-origin:50% 50%;animation:orbitSpin 240s linear infinite}
+@keyframes orbitSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  #orbit-group{animation:none}
+}
 </style>
 </head>
 <body>
 <div style="position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0">
-  <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <svg width="100%" height="100%" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <g id="globe">
         <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
@@ -160,16 +167,19 @@ body::after{
         <line x1="60" y1="6" x2="60" y2="114" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
       </g>
     </defs>
-    <use href="#globe" transform="translate(20,30) scale(1.6)" opacity="0.9"/>
-    <use href="#globe" transform="translate(580,60) scale(2)" opacity="0.8"/>
-    <use href="#globe" transform="translate(-20,350) scale(2.4)" opacity="0.7"/>
-    <use href="#globe" transform="translate(700,280) scale(1.4)" opacity="0.9"/>
-    <use href="#globe" transform="translate(300,10) scale(1.2)" opacity="0.6"/>
-    <use href="#globe" transform="translate(130,500) scale(1.8)" opacity="0.7"/>
-    <use href="#globe" transform="translate(480,420) scale(1.5)" opacity="0.8"/>
-    <use href="#globe" transform="translate(750,500) scale(2.2)" opacity="0.6"/>
-    <use href="#globe" transform="translate(350,300) scale(0.8)" opacity="0.5"/>
-    <use href="#globe" transform="translate(600,180) scale(1.0)" opacity="0.6"/>
+    <!-- orbital arrangement, not random scatter: two rings centered on the card, echoing the single globe logo it surrounds -->
+    <g id="orbit-group">
+      <use href="#globe" transform="translate(708.5,531.7) scale(0.55)" opacity="0.65"/>
+      <use href="#globe" transform="translate(377.3,697.8) scale(0.62)" opacity="0.6"/>
+      <use href="#globe" transform="translate(236.2,385.7) scale(0.48)" opacity="0.55"/>
+      <use href="#globe" transform="translate(570.9,238.7) scale(0.58)" opacity="0.6"/>
+      <use href="#globe" transform="translate(767.7,716.1) scale(0.9)" opacity="0.4"/>
+      <use href="#globe" transform="translate(418.5,873.3) scale(0.75)" opacity="0.35"/>
+      <use href="#globe" transform="translate(70.3,644.0) scale(1.1)" opacity="0.45"/>
+      <use href="#globe" transform="translate(139.3,190.9) scale(0.65)" opacity="0.4"/>
+      <use href="#globe" transform="translate(449,29) scale(0.85)" opacity="0.3"/>
+      <use href="#globe" transform="translate(821.7,248) scale(0.7)" opacity="0.4"/>
+    </g>
   </svg>
 </div>
 <div class="circle-mid"></div>
