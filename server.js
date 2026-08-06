@@ -496,18 +496,6 @@ app.delete('/api/events/:id', requireLogin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ======== SITE RESTRICTIONS (office / โรงงาน 2) ========
-// ต้องตรงกับลำดับห้อง/รถใน public/meeting-calendar.html และ public/car-booking.html
-const ROOM_SITES = ['office','office','office','office','factory','factory','factory','factory','factory','factory'];
-const CAR_SITES  = ['office','factory','factory'];
-const SITE_TH    = { office: 'สำนักงาน', factory: 'โรงงาน' };
-
-async function getUserSiteAndRole(userId) {
-  const r = await pool.query('SELECT work_schedule, role FROM users WHERE id=$1', [userId]);
-  const row = r.rows[0] || {};
-  return { site: row.work_schedule || 'office', role: row.role || 'user' };
-}
-
 // ======== API BOOKINGS ========
 app.get('/api/bookings', requireLogin, async (req, res) => {
   const r = await pool.query('SELECT * FROM bookings');
@@ -515,12 +503,6 @@ app.get('/api/bookings', requireLogin, async (req, res) => {
 });
 app.post('/api/bookings', requireLogin, async (req, res) => {
   const { room_idx, date, slot, name, purpose } = req.body;
-
-  const { site: userSite, role } = await getUserSiteAndRole(req.session.user.id);
-  const roomSite = ROOM_SITES[parseInt(room_idx)] || 'office';
-  if (role !== 'admin' && roomSite !== userSite) {
-    return res.status(403).json({ error: `คุณสังกัดฝั่ง${SITE_TH[userSite]} ไม่มีสิทธิ์จองห้องประชุมฝั่ง${SITE_TH[roomSite]}` });
-  }
 
   const [newStart, newEnd] = slot.split('-');
   const existing = await pool.query(
@@ -547,12 +529,6 @@ app.get('/api/car-bookings', requireLogin, async (req, res) => {
 });
 app.post('/api/car-bookings', requireLogin, async (req, res) => {
   const { car_idx, date, slot, name, purpose } = req.body;
-
-  const { site: userSite, role } = await getUserSiteAndRole(req.session.user.id);
-  const carSite = CAR_SITES[parseInt(car_idx)] || 'office';
-  if (role !== 'admin' && carSite !== userSite) {
-    return res.status(403).json({ error: `คุณสังกัดฝั่ง${SITE_TH[userSite]} ไม่มีสิทธิ์จองรถฝั่ง${SITE_TH[carSite]}` });
-  }
 
   const [newStart, newEnd] = slot.split('-');
   const existing = await pool.query(

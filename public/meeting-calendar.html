@@ -639,55 +639,20 @@ let arCursor  = new Date();
 // ===== INIT =====
 async function init() {
   try { const r = await fetch('/api/me'); if(r.ok) me = await r.json(); } catch(e){}
-  applyMySiteRestriction();
+  showMySiteBadge();
   await loadBookings();
 }
 
-// ===== SITE RESTRICTION (จองได้เฉพาะห้องฝั่งตัวเอง office/Factory 2 — admin จองได้ทุกฝั่ง) =====
-function applyMySiteRestriction() {
-  const mySite  = me && me.work_schedule === 'factory' ? 'factory' : 'office';
-  const isAdmin = me && me.role === 'admin';
+// ===== SITE BADGE (แสดงฝั่งของตัวเอง — จองข้ามฝั่งได้ ไม่มีการจำกัดสิทธิ์) =====
+function showMySiteBadge() {
+  const mySite = me && me.work_schedule === 'factory' ? 'factory' : 'office';
   const badge = document.getElementById('siteBadge-' + mySite);
   if (badge) badge.style.display = '';
-
-  if (mySite === 'factory') {
-    const sidebar  = document.getElementById('roomSidebar');
-    const divider  = document.getElementById('siteDivider');
-    const factory  = document.getElementById('siteSection-factory');
-    const office   = document.getElementById('siteSection-office');
-    if (sidebar && divider && factory && office) {
-      sidebar.insertBefore(factory, office);
-      sidebar.insertBefore(divider, office);
-    }
-  }
-
-  if (!isAdmin) {
-    ROOMS.forEach((rm, i) => {
-      if (rm.site !== mySite) {
-        const btn = document.getElementById('rb'+i);
-        if (btn) {
-          btn.disabled = true;
-          btn.style.opacity = '0.4';
-          btn.style.cursor = 'not-allowed';
-          btn.title = `ห้องนี้อยู่ฝั่ง${SITE_LABELS[rm.site]} — คุณสังกัดฝั่ง${SITE_LABELS[mySite]} จองไม่ได้`;
-        }
-      }
-    });
-    // เลือกห้องแรกของฝั่งตัวเองเป็นค่าเริ่มต้น (ห้อง 0 อาจเป็นฝั่งตรงข้าม)
-    const firstOwn = ROOMS.findIndex(rm => rm.site === mySite);
-    if (firstOwn >= 0 && ROOMS[selRoom].site !== mySite) selectRoom(firstOwn);
-  }
 }
 
 // ===== ROOM SELECT =====
 function selectRoom(idx) {
   const rm = ROOMS[idx];
-  const mySite  = me && me.work_schedule === 'factory' ? 'factory' : 'office';
-  const isAdmin = me && me.role === 'admin';
-  if (!isAdmin && rm.site !== mySite) {
-    toast(`ห้องนี้อยู่ฝั่ง${SITE_LABELS[rm.site]} คุณสังกัดฝั่ง${SITE_LABELS[mySite]} ไม่มีสิทธิ์จองครับ`, 'err');
-    return;
-  }
   selRoom = idx;
   document.querySelectorAll('.room-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
   document.getElementById('badgeDot').style.background = rm.color;
@@ -1096,13 +1061,11 @@ function renderAllRoomsMonth() {
 
     let roomChips = '';
     if (!other) {
-      const mySite  = me && me.work_schedule === 'factory' ? 'factory' : 'office';
-      const isAdmin = me && me.role === 'admin';
       const dayB = bookings.filter(b => b.date === dateStr);
       const idxSet = [...new Set(dayB.map(b => parseInt(b.room_idx)))];
       roomChips = idxSet
         .map(idx => ROOMS[idx])
-        .filter(r => r && (isAdmin || r.site === mySite))
+        .filter(r => r)
         .map(r => `<span class="ar-month-room-chip" style="background:${r.color}">${shortRoomName(r.name)}</span>`)
         .join('');
     }
