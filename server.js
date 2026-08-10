@@ -343,13 +343,17 @@ const LEAVE_TYPES = {
 };
 
 async function generateLeaveNo() {
-  const now = new Date();
-  const year = now.getFullYear();
+  const year = new Date().getFullYear();
+  const prefix = `LV${year}`;
+  // MAX(เลขที่มีอยู่)+1 แทน COUNT(*) เพราะ COUNT จะนับใหม่ต่ำกว่าเดิมถ้ามีใบลาปีนี้ถูกลบไปก่อนหน้า
+  // ทำให้เลขที่สร้างซ้ำกับใบลาที่ยังอยู่ในระบบ (ชน unique constraint)
   const r = await pool.query(
-    'SELECT COUNT(*) FROM leave_requests WHERE EXTRACT(YEAR FROM created_at)=$1', [year]
+    `SELECT COALESCE(MAX(SUBSTRING(leave_no FROM LENGTH($1)+1)::INT), 0) AS maxnum
+     FROM leave_requests WHERE leave_no LIKE $1 || '%'`,
+    [prefix]
   );
-  const count = parseInt(r.rows[0].count) + 1;
-  return `LV${year}${String(count).padStart(4,'0')}`;
+  const next = parseInt(r.rows[0].maxnum, 10) + 1;
+  return `${prefix}${String(next).padStart(4,'0')}`;
 }
 
 // ======== MIDDLEWARE ========
