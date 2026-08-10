@@ -753,14 +753,16 @@ app.get('/api/leave/my', requireLogin, async (req, res) => {
   res.json(r.rows);
 });
 
-// ดูใบลาที่รอฉันอนุมัติ (admin เห็นทุกใบที่รออนุมัติ ให้ตรงกับสิทธิ์ที่ /approve อนุญาตให้ admin อนุมัติได้ทุกใบอยู่แล้ว)
+// ดูใบลาที่รอฉันอนุมัติ
+// เห็นถ้า: เป็น admin (เห็นทุกใบ) หรือถูกกำหนดเป็นผู้อนุมัติตอนยื่น (approver_id) หรือเป็นหัวหน้าปัจจุบันของผู้ยื่น (u.manager_id)
+// เงื่อนไขหลังจำเป็นเพราะ approver_id ถูกล็อกไว้ตอนยื่นใบลาเพียงครั้งเดียว ถ้ามีการแก้/ตั้งรหัสหัวหน้าใหม่ทีหลัง ใบลาเก่าจะไม่ตามไปด้วยถ้าไม่เช็ค manager_id ปัจจุบันประกอบ
 app.get('/api/leave/pending', requireLogin, async (req, res) => {
   const isAdmin = req.session.user.role === 'admin';
   const r = await pool.query(
     `SELECT lr.*, u.name as user_name, u.dept, u.email as user_email
      FROM leave_requests lr
      LEFT JOIN users u ON lr.user_id=u.id
-     WHERE lr.status='pending' AND ($2 OR lr.approver_id=$1)
+     WHERE lr.status='pending' AND ($2 OR lr.approver_id=$1 OR u.manager_id=$1)
      ORDER BY lr.created_at DESC`,
     [req.session.user.id, isAdmin]
   );
@@ -882,11 +884,17 @@ app.put('/api/leave/:id', requireLogin, async (req, res) => {
 app.put('/api/leave/:id/approve', requireLogin, async (req, res) => {
   try {
     const { status, reject_reason } = req.body;
-    const lr    = await pool.query('SELECT * FROM leave_requests WHERE id=$1', [req.params.id]);
+    const lr    = await pool.query(
+      `SELECT lr.*, u.manager_id AS current_manager_id
+       FROM leave_requests lr LEFT JOIN users u ON lr.user_id=u.id
+       WHERE lr.id=$1`,
+      [req.params.id]
+    );
     const leave = lr.rows[0];
     if (!leave) return res.status(404).json({ error: 'ไม่พบใบลา' });
-    if (leave.approver_id !== req.session.user.id && req.session.user.role !== 'admin')
-      return res.status(403).json({ error: 'ไม่มีสิทธิ์อนุมัติ' });
+    const me = req.session.user;
+    const canApprove = me.role === 'admin' || leave.approver_id === me.id || leave.current_manager_id === me.id;
+    if (!canApprove) return res.status(403).json({ error: 'ไม่มีสิทธิ์อนุมัติ' });
 
     await pool.query(
       'UPDATE leave_requests SET status=$1,reject_reason=$2,approved_at=NOW() WHERE id=$3',
