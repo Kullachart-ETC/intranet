@@ -657,7 +657,6 @@ app.post('/api/leave', requireLogin, async (req, res) => {
         return res.status(400).json({ error: `วันพักร้อนไม่เพียงพอ (คงเหลือ ${(bal.remaining/WORK_HOURS_PER_DAY).toFixed(2)} วัน)` });
     }
 
-    const leaveNo = await generateLeaveNo();
     const userR   = await pool.query('SELECT * FROM users WHERE id=$1', [userId]);
     const user    = userR.rows[0];
     // ถ้าไม่มีหัวหน้า (เช่น Director) → ส่งให้ admin อนุมัติ
@@ -667,12 +666,23 @@ app.post('/api/leave', requireLogin, async (req, res) => {
       if (adminR.rows.length > 0) approverId = adminR.rows[0].id;
     }
 
-    await pool.query(
-      `INSERT INTO leave_requests
-        (leave_no,user_id,leave_type,start_datetime,end_datetime,hours,days,reason,status,approver_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`,
-      [leaveNo, userId, leave_type, start_datetime, end_datetime, hours, days, reason||'', approverId]
-    );
+    // generateLeaveNo() ใช้ COUNT(*) ซึ่งชนกันได้เมื่อยื่นพร้อมกัน — retry ด้วยเลขใหม่เมื่อชนกัน
+    let leaveNo;
+    for (let attempt = 1; ; attempt++) {
+      leaveNo = await generateLeaveNo();
+      try {
+        await pool.query(
+          `INSERT INTO leave_requests
+            (leave_no,user_id,leave_type,start_datetime,end_datetime,hours,days,reason,status,approver_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9)`,
+          [leaveNo, userId, leave_type, start_datetime, end_datetime, hours, days, reason||'', approverId]
+        );
+        break;
+      } catch (e) {
+        if (e.code === '23505' && e.constraint === 'leave_requests_leave_no_key' && attempt < 5) continue;
+        throw e;
+      }
+    }
 
     // Email หัวหน้า
     if (approverId) {
