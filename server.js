@@ -100,6 +100,7 @@ async function initDB() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS tel_ext TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS org_site TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS org_level INTEGER;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS active_session_id TEXT;
     CREATE TABLE IF NOT EXISTS leave_quotas (
       id SERIAL PRIMARY KEY,
       user_id INTEGER,
@@ -366,16 +367,34 @@ app.get('/login', (req, res) => {
   if (req.session.user) return res.redirect('/');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+function isSessionAlive(store, sid) {
+  return new Promise(resolve => {
+    store.get(sid, (err, sess) => resolve(!err && !!sess));
+  });
+}
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const result = await pool.query('SELECT * FROM users WHERE username=$1', [username]);
   const user = result.rows[0];
   if (!user || !bcrypt.compareSync(password, user.password))
     return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+
+  if (user.active_session_id && user.active_session_id !== req.sessionID) {
+    const stillActive = await isSessionAlive(req.sessionStore, user.active_session_id);
+    if (stillActive) {
+      return res.status(409).json({ error: 'บัญชีนี้กำลังเข้าสู่ระบบอยู่ที่อีกเครื่องหนึ่ง กรุณาออกจากระบบเครื่องเดิมก่อน' });
+    }
+  }
+
   req.session.user = { id: user.id, username: user.username, name: user.name, dept: user.dept, role: user.role, email: user.email, work_schedule: user.work_schedule || 'office' };
+  await pool.query('UPDATE users SET active_session_id=$1 WHERE id=$2', [req.sessionID, user.id]);
   res.json({ ok: true, user: req.session.user });
 });
-app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ ok: true }); });
+app.post('/api/logout', async (req, res) => {
+  const uid = req.session.user && req.session.user.id;
+  if (uid) await pool.query('UPDATE users SET active_session_id=NULL WHERE id=$1 AND active_session_id=$2', [uid, req.sessionID]);
+  req.session.destroy(() => res.json({ ok: true }));
+});
 app.get('/api/me', async (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'ไม่ได้เข้าสู่ระบบ' });
   try {
