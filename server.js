@@ -753,15 +753,16 @@ app.get('/api/leave/my', requireLogin, async (req, res) => {
   res.json(r.rows);
 });
 
-// ดูใบลาที่รอฉันอนุมัติ
+// ดูใบลาที่รอฉันอนุมัติ (admin เห็นทุกใบที่รออนุมัติ ให้ตรงกับสิทธิ์ที่ /approve อนุญาตให้ admin อนุมัติได้ทุกใบอยู่แล้ว)
 app.get('/api/leave/pending', requireLogin, async (req, res) => {
+  const isAdmin = req.session.user.role === 'admin';
   const r = await pool.query(
     `SELECT lr.*, u.name as user_name, u.dept, u.email as user_email
      FROM leave_requests lr
      LEFT JOIN users u ON lr.user_id=u.id
-     WHERE lr.approver_id=$1 AND lr.status='pending'
+     WHERE lr.status='pending' AND ($2 OR lr.approver_id=$1)
      ORDER BY lr.created_at DESC`,
-    [req.session.user.id]
+    [req.session.user.id, isAdmin]
   );
   res.json(r.rows);
 });
