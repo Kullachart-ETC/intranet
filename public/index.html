@@ -677,6 +677,20 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div class="overlay" id="pending-leave-popup">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="font-size:40px;margin-bottom:8px">🔔</div>
+    <h3 style="margin-bottom:6px">มีใบลารออนุมัติ</h3>
+    <p style="color:#666;font-size:14px;margin-bottom:0">
+      คุณมีใบลา <b id="pending-popup-count" style="color:#e24b4a"></b> รายการที่รอการอนุมัติจากคุณ
+    </p>
+    <div class="modal-footer" style="justify-content:center">
+      <button class="btn" onclick="closeModal('pending-leave-popup')">ปิด</button>
+      <button class="btn btn-primary" onclick="closeModal('pending-leave-popup');goToLeaveApprove()">ไปที่หน้าอนุมัติ</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const ROOMS=[{name:'VIP ROOM',cap:20,fac:'จอ LED 85", Whiteboard, VC'},{name:'Meeting Room 1',cap:10,fac:'TV 65", Whiteboard'},{name:'Meeting Room 2',cap:6,fac:'TV 55"'},{name:'Meeting Room 3',cap:30,fac:'จอ LED 98", เวที, Mic'}];
 const SLOTS=['08:00–09:00','09:00–10:00','10:00–11:00','11:00–12:00','13:00–14:00','14:00–15:00','15:00–16:00','16:00–17:00'];
@@ -704,6 +718,10 @@ function showPage(id,btn){
 }
 function goToLeave(){
   showPage('leave',null);
+}
+function goToLeaveApprove(){
+  showPage('leave',null);
+  showLeaveTab('approve',$('approve-tab'));
 }
 
 async function api(path,method='GET',body=null){
@@ -1115,6 +1133,12 @@ async function loadLeave(){
     // โหลดจำนวนรออนุมัติ
     const pending=await api('/leave/pending');
     $('pending-count').textContent=pending.length||'';
+    // แจ้งเตือนแบบ popup ถ้ามีใบลารออนุมัติ (แสดงครั้งเดียวต่อ session)
+    if(pending.length && !sessionStorage.getItem('pendingLeavePopupShown')){
+      sessionStorage.setItem('pendingLeavePopupShown','1');
+      $('pending-popup-count').textContent=pending.length+' รายการ';
+      openModal('pending-leave-popup');
+    }
     // เปิดหน้าย่อยตาม ?section= ที่ลิงก์มาจากหน้าอื่น (เช่น index.html?section=calendar)
     const section=new URLSearchParams(location.search).get('section');
     if(section==='calendar') showPage('calendar',$('nav-calendar-btn'));
