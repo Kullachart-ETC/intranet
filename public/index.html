@@ -931,9 +931,14 @@ function changeTeamCalMonth(d){
   loadTeamLeaveCalendar();
 }
 
+function setPendingCount(n){
+  const el=$('pending-count');
+  el.textContent=n||'';
+  el.style.display=n?'':'none';
+}
 async function loadPendingLeave(){
   const leaves=await api('/leave/pending');
-  $('pending-count').textContent=leaves.length||''
+  setPendingCount(leaves.length);
   if(!leaves.length){$('leave-approve').innerHTML='<div class="loading">ไม่มีใบลารออนุมัติ</div>';return;}
   $('leave-approve').innerHTML=leaves.map(l=>`<div class="pending-card"><div class="pending-card-head"><div><div class="pending-name">${l.user_name}</div><div class="pending-dept">${l.dept} · ${l.leave_no}</div></div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><div class="pending-detail">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')} (${parseFloat(l.days).toFixed(2)} วัน)<br>${l.reason||'ไม่ระบุเหตุผล'}</div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="approveLeave(${l.id},'approved')">✓ อนุมัติ</button><button class="btn btn-danger btn-sm" onclick="openRejectModal(${l.id})">✗ ไม่อนุมัติ</button></div></div>`).join('');
 }
@@ -943,7 +948,7 @@ async function approveLeave(id,status){
     await api('/leave/'+id+'/approve','PUT',{status});
     loadPendingLeave();
     const cnt=await api('/leave/pending');
-    $('pending-count').textContent=cnt.length||'';
+    setPendingCount(cnt.length);
   }catch(e){alert('อนุมัติไม่สำเร็จ: '+e.message);}
 }
 
@@ -1132,7 +1137,7 @@ async function loadLeave(){
     loadLeave();
     // โหลดจำนวนรออนุมัติ
     const pending=await api('/leave/pending');
-    $('pending-count').textContent=pending.length||'';
+    setPendingCount(pending.length);
     // แจ้งเตือนแบบ popup ถ้ามีใบลารออนุมัติ (แสดงครั้งเดียวต่อ session)
     if(pending.length && !sessionStorage.getItem('pendingLeavePopupShown')){
       sessionStorage.setItem('pendingLeavePopupShown','1');
