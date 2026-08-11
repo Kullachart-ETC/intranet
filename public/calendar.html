@@ -26,7 +26,7 @@ a.nav-home:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
 .search-box input{background:none;border:none;color:#fff;font-size:12px;font-family:inherit;width:110px;outline:none}
 .search-box input::placeholder{color:#888}
 .search-box button{background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:4px 6px}
-.page{max-width:1000px;margin:0 auto;padding:32px 16px}
+.page{max-width:1200px;margin:0 auto;padding:32px 16px}
 h1{font-size:22px;font-weight:700;margin-bottom:20px}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .tab{padding:8px 18px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-family:inherit;transition:.15s;font-weight:500}
@@ -120,7 +120,7 @@ async function loadCal(idx) {
 async function renderPage() {
   const page = await currentPdf.getPage(currentPage);
   const dpr = window.devicePixelRatio || 1;
-  const containerWidth = Math.min(document.querySelector('.view-card').clientWidth - 36, 800);
+  const containerWidth = Math.min(document.querySelector('.view-card').clientWidth - 36, 960);
   const baseViewport = page.getViewport({ scale: 1 });
   const scale = containerWidth / baseViewport.width;
   const viewport = page.getViewport({ scale: scale * dpr });
