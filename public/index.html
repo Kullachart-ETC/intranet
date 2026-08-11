@@ -85,10 +85,12 @@ body{font-family:'Noto Sans Thai',sans-serif;background:#f5f5f3;color:#1a1a18;fo
 .logo{display:flex;align-items:center;gap:8px}
 .logo img{height:32px;object-fit:contain}
 .logo-text{font-size:15px;font-weight:600;color:#fff}
-.nav{display:flex;gap:2px;flex-wrap:wrap;flex:1}
+.nav{display:flex;gap:2px;flex-wrap:wrap;flex:1;align-items:center}
 .nav button{background:none;border:none;padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;color:#aaa;font-family:'Noto Sans Thai',sans-serif}
 .nav button:hover{background:rgba(255,255,255,.1);color:#fff}
 .nav button.active{background:rgba(255,255,255,.1);color:#fff;font-weight:500}
+.nav-home-btn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#fff;color:#1D9E75;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s;margin-right:4px}
+.nav-home-btn:hover{background:#1D9E75;color:#fff;transform:scale(1.08)}
 
 .user-area{display:flex;align-items:center;gap:8px;margin-left:auto;padding-left:8px;border-left:1px solid #444;flex-shrink:0}
 .search-box{display:flex;align-items:center;background:rgba(255,255,255,.1);border-radius:20px;padding:2px 4px 2px 10px}
@@ -107,9 +109,6 @@ body:has(#page-board.active){background:#0f3460}
 .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
 .page-header h2{font-size:19px;font-weight:600}
 .page-title{display:flex;align-items:center;gap:10px}
-.btn-home-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:#0f2c6f;color:#fff;font-size:24px;border:none;cursor:pointer;transition:.15s;flex-shrink:0;box-shadow:0 3px 10px rgba(15,44,111,0.35)}
-.btn-home-icon:hover{background:#1a5fa8;transform:scale(1.07);box-shadow:0 4px 14px rgba(15,44,111,0.45)}
-.btn-home-icon i{font-weight:700}
 .btn{background:none;border:1px solid #ccc;padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Noto Sans Thai',sans-serif;color:#444}
 .btn:hover{background:#f0f0ec}
 .btn-primary{background:#1A5FA8;color:#fff;border-color:#1A5FA8}
@@ -310,6 +309,7 @@ tr:last-child td{border-bottom:none}
     <span class="logo-text">EARTH (THAILAND)</span>
   </div>
   <nav class="nav">
+    <button class="nav-home-btn" title="หน้าหลัก" onclick="showPage('board',document.getElementById('nav-board-btn'))"><i class="ti ti-home"></i></button>
     <button data-i18n="idx.about" onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
     <button id="nav-calendar-btn" data-i18n="idx.calendar" onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
     <button id="nav-board-btn" class="active" data-i18n="idx.board" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
@@ -410,7 +410,7 @@ tr:last-child td{border-bottom:none}
 <!-- CALENDAR -->
 <div id="page-calendar" class="page">
   <div class="page-header">
-    <div class="page-title"><button class="btn-home-icon" title="หน้าหลัก" onclick="showPage('board',document.getElementById('nav-board-btn'))"><i class="ti ti-home"></i></button><h2>ปฏิทินการทำงาน</h2></div>
+    <div class="page-title"><h2>ปฏิทินการทำงาน</h2></div>
     <button class="btn btn-primary" data-i18n="btn.newevent" onclick="openModal('ev-modal')">+ เพิ่มกิจกรรม</button>
   </div>
   <div class="cal-wrap">
@@ -437,7 +437,7 @@ tr:last-child td{border-bottom:none}
 <!-- LEAVE -->
 <div id="page-leave" class="page">
   <div class="page-header">
-    <div class="page-title"><button class="btn-home-icon" title="หน้าหลัก" onclick="showPage('board',document.getElementById('nav-board-btn'))"><i class="ti ti-home"></i></button><h2>ระบบลาหยุด</h2></div>
+    <div class="page-title"><h2>ระบบลาหยุด</h2></div>
     <button class="btn btn-primary" data-i18n="btn.applyleave" onclick="initTimeSelects();openModal('leave-modal')">+ ยื่นใบลา</button>
   </div>
   <div class="tabs">
