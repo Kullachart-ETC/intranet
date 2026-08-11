@@ -1006,7 +1006,7 @@ async function loadUsers(){
   state.users=users;
   $('users-table').innerHTML=users.map(u=>{
     const mgr=users.find(x=>x.id===u.manager_id);
-    return`<tr><td><code>${u.username}</code></td><td>${u.name}</td><td>${u.dept}</td><td style="font-size:12px">${u.email||'—'}</td><td style="font-size:12px">${mgr?mgr.name:'—'}</td><td>${u.annual_leave_quota||6} วัน</td><td><span class="role-badge role-${u.role}">${u.role}</span></td><td style="display:flex;gap:4px"><button class="btn btn-sm" onclick="openPwModal(${u.id})">รหัสผ่าน</button><button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">ลบ</button></td></tr>`;
+    return`<tr><td><code>${u.username}</code></td><td>${u.name}${u.active_session_id?' <span title="กำลังเข้าสู่ระบบอยู่" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e24b4a;margin-left:4px"></span>':''}</td><td>${u.dept}</td><td style="font-size:12px">${u.email||'—'}</td><td style="font-size:12px">${mgr?mgr.name:'—'}</td><td>${u.annual_leave_quota||6} วัน</td><td><span class="role-badge role-${u.role}">${u.role}</span></td><td style="display:flex;gap:4px"><button class="btn btn-sm" onclick="openPwModal(${u.id})">รหัสผ่าน</button>${u.active_session_id?`<button class="btn btn-sm" onclick="forceLogout(${u.id})">ปลดล็อก session</button>`:''}<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">ลบ</button></td></tr>`;
   }).join('');
 }
 async function addUser(){
@@ -1019,6 +1019,7 @@ async function addUser(){
   }catch(e){alertEl.className='alert alert-err';alertEl.textContent=e.message;}
 }
 async function deleteUser(id){if(!confirm('ต้องการลบผู้ใช้นี้?'))return;await api('/users/'+id,'DELETE');loadUsers();}
+async function forceLogout(id){if(!confirm('บังคับออกจากระบบเครื่องเดิมของ user นี้?'))return;try{await api('/users/'+id+'/force-logout','PUT');loadUsers();}catch(e){alert('เกิดข้อผิดพลาด: '+e.message);}}
 async function bulkUpload(){
   const file=$('bulk-file').files[0];
   const alertEl=$('bulk-alert');

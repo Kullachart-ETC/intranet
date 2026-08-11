@@ -420,8 +420,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ======== API USERS ========
 app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
-  const r = await pool.query('SELECT id,username,name,dept,role,email,manager_id,start_date,annual_leave_quota,position,tel_ext,org_site,org_level FROM users ORDER BY id');
+  const r = await pool.query('SELECT id,username,name,dept,role,email,manager_id,start_date,annual_leave_quota,position,tel_ext,org_site,org_level,active_session_id FROM users ORDER BY id');
   res.json(r.rows);
+});
+// เคลียร์ session ค้างของ user (บังคับออกจากระบบเครื่องเดิม เพื่อให้ login ที่อื่นได้ทันที)
+app.put('/api/users/:id/force-logout', requireLogin, requireAdmin, async (req, res) => {
+  const r = await pool.query('SELECT active_session_id FROM users WHERE id=$1', [req.params.id]);
+  const sid = r.rows[0]?.active_session_id;
+  if (sid) await new Promise(resolve => req.sessionStore.destroy(sid, () => resolve()));
+  await pool.query('UPDATE users SET active_session_id=NULL WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
 });
 app.post('/api/users', requireLogin, requireAdmin, async (req, res) => {
   const { username, password, name, dept, role, email, manager_id, start_date, annual_leave_quota, work_schedule, position, tel_ext, org_site, org_level } = req.body;
