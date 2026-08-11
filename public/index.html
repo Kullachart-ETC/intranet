@@ -448,7 +448,22 @@ tr:last-child td{border-bottom:none}
     <button class="tab" id="report-tab" onclick="showLeaveTab('report',this)" style="display:none">รายงาน</button>
   </div>
   <div id="leave-quota" class="leave-tab"><div class="loading">กำลังโหลด...</div></div>
-  <div id="leave-my" class="leave-tab" style="display:none"><div class="loading">กำลังโหลด...</div></div>
+  <div id="leave-my" class="leave-tab" style="display:none">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+      <div class="form-row" style="margin:0;width:150px"><label style="font-size:12px;color:#666">จากวันที่</label><input type="date" id="my-leave-from" onchange="renderMyLeave()"></div>
+      <div class="form-row" style="margin:0;width:150px"><label style="font-size:12px;color:#666">ถึงวันที่</label><input type="date" id="my-leave-to" onchange="renderMyLeave()"></div>
+      <div class="form-row" style="margin:0;width:160px"><label style="font-size:12px;color:#666">สถานะ</label>
+        <select id="my-leave-status" onchange="renderMyLeave()">
+          <option value="">ทั้งหมด</option>
+          <option value="pending">รออนุมัติ</option>
+          <option value="approved">อนุมัติแล้ว</option>
+          <option value="rejected">ไม่อนุมัติ</option>
+        </select>
+      </div>
+      <button class="btn btn-sm" onclick="clearMyLeaveFilter()">ล้างตัวกรอง</button>
+    </div>
+    <div id="my-leave-list"><div class="loading">กำลังโหลด...</div></div>
+  </div>
   <div id="leave-teamcal" class="leave-tab" style="display:none">
     <div class="cal-box">
       <div class="cal-nav">
@@ -700,7 +715,7 @@ const MONTHS_TH=['มกราคม','กุมภาพันธ์','มี�
 const TAG_MAP={announce:{cls:'tag-announce',label:'ประกาศ'},event:{cls:'tag-event',label:'กิจกรรม'},urgent:{cls:'tag-urgent',label:'ด่วน'},welfare:{cls:'tag-welfare',label:'สวัสดิการ'}};
 const LEAVE_NAMES={sick:'ลาป่วย',annual:'ลาพักร้อน',personal:'ลากิจจำเป็น',personal_special:'ลากิจพิเศษ',maternity:'ลาคลอด',ordain:'ลาบวช',military:'ลาราชการทหาร',marriage:'ลาสมรส',work_injury:'ลาป่วยเนื่องจากงาน',unpaid:'ลาตัดเงิน'};
 
-let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[],teamCalYear:new Date().getFullYear(),teamCalMonth:new Date().getMonth(),teamLeaves:[]};
+let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[],teamCalYear:new Date().getFullYear(),teamCalMonth:new Date().getMonth(),teamLeaves:[],myLeaves:[]};
 
 const $=id=>document.getElementById(id);
 function todayStr(){const t=new Date();return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;}
@@ -891,9 +906,25 @@ async function submitLeave(){
 }
 
 async function loadMyLeave(){
-  const leaves=await api('/leave/my');
-  if(!leaves.length){$('leave-my').innerHTML='<div class="loading">ยังไม่มีประวัติการลา</div>';return;}
-  $('leave-my').innerHTML=leaves.map(l=>`<div class="leave-card"><div class="leave-card-head"><div><div class="leave-no">${l.leave_no}</div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><span class="status-${l.status}">${l.status==='pending'?'รออนุมัติ':l.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></div><div class="leave-dates">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')}</div><div class="leave-days">${parseFloat(l.days).toFixed(2)} วัน · ${l.reason||'ไม่ระบุเหตุผล'}</div>${l.reject_reason?`<div style="font-size:12px;color:#A32D2D;margin-top:4px">เหตุผล: ${l.reject_reason}</div>`:''
+  state.myLeaves=await api('/leave/my');
+  renderMyLeave();
+}
+function clearMyLeaveFilter(){
+  $('my-leave-from').value='';$('my-leave-to').value='';$('my-leave-status').value='';
+  renderMyLeave();
+}
+function renderMyLeave(){
+  const from=$('my-leave-from').value;
+  const to=$('my-leave-to').value;
+  const status=$('my-leave-status').value;
+  const leaves=(state.myLeaves||[]).filter(l=>{
+    if(status&&l.status!==status)return false;
+    if(from&&new Date(l.end_datetime)<new Date(from))return false;
+    if(to&&new Date(l.start_datetime)>new Date(to+'T23:59:59'))return false;
+    return true;
+  });
+  if(!leaves.length){$('my-leave-list').innerHTML='<div class="loading">ไม่พบประวัติการลาตามเงื่อนไขที่เลือก</div>';return;}
+  $('my-leave-list').innerHTML=leaves.map(l=>`<div class="leave-card"><div class="leave-card-head"><div><div class="leave-no">${l.leave_no}</div><span class="leave-type-badge">${LEAVE_NAMES[l.leave_type]||l.leave_type}</span></div><span class="status-${l.status}">${l.status==='pending'?'รออนุมัติ':l.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></div><div class="leave-dates">${new Date(l.start_datetime).toLocaleDateString('th-TH')} — ${new Date(l.end_datetime).toLocaleDateString('th-TH')}</div><div class="leave-days">${parseFloat(l.days).toFixed(2)} วัน · ${l.reason||'ไม่ระบุเหตุผล'}</div>${l.reject_reason?`<div style="font-size:12px;color:#A32D2D;margin-top:4px">เหตุผล: ${l.reject_reason}</div>`:''
 }${l.status==='pending'?`<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="openEditLeave(${JSON.stringify(l).split('"').join('&quot;')})">✏️ แก้ไข</button><button class="btn btn-danger btn-sm" onclick="cancelLeave(${l.id})">✕ ยกเลิก</button></div>`:''}</div>`).join('');
 }
 
