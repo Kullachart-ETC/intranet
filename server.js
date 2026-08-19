@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const zlib = require('zlib');
 
 const app = express();
 const pool = new Pool({
@@ -2207,6 +2208,87 @@ app.post('/api/admin/reset-data', requireLogin, requireAdmin, async (req, res) =
     await pool.query('DELETE FROM users WHERE username != $1', ['admin']);
     res.json({ ok: true, message: 'ล้างข้อมูลสำเร็จ: ลบพนักงานทั้งหมด (ยกเว้น admin) + ข้อมูลการลาทั้งหมด' });
   } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ======== DATABASE BACKUP (emailed daily, since Railway Postgres has no automatic backup on its own) ========
+function sqlLiteral(v) {
+  if (v === null || v === undefined) return 'NULL';
+  if (Buffer.isBuffer(v)) return `'\\x${v.toString('hex')}'`;
+  if (v instanceof Date) return `'${v.toISOString()}'`;
+  if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (typeof v === 'number') return Number.isFinite(v) ? String(v) : 'NULL';
+  if (typeof v === 'object') return `'${JSON.stringify(v).replace(/'/g, "''")}'`;
+  return `'${String(v).replace(/'/g, "''")}'`;
+}
+// สร้าง SQL ที่มีแต่ INSERT (ไม่มี CREATE TABLE) เพราะ schema ถูกสร้างอัตโนมัติโดย initDB() อยู่แล้วทุกครั้งที่ deploy
+// วิธีกู้คืน: deploy แอปไปยัง DB ว่างใหม่ (initDB() จะสร้างตารางให้) แล้วรันไฟล์นี้ผ่าน psql
+async function generateBackupSQL() {
+  const tablesR = await pool.query(`SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename`);
+  const tables = tablesR.rows.map(r => r.tablename);
+
+  let sql = `-- EARTH Intranet backup -- ${new Date().toISOString()}\n`;
+  sql += `-- Restore: deploy the app against an empty DB first (initDB() creates the schema), then run this file via psql.\n`;
+  sql += `SET session_replication_role = replica;\nBEGIN;\n\n`;
+
+  for (const table of tables) {
+    const rowsR = await pool.query(`SELECT * FROM "${table}"`);
+    if (!rowsR.rows.length) continue;
+    const cols = Object.keys(rowsR.rows[0]);
+    const colList = cols.map(c => `"${c}"`).join(',');
+    sql += `-- ${table} (${rowsR.rows.length} rows)\n`;
+    for (const row of rowsR.rows) {
+      sql += `INSERT INTO "${table}" (${colList}) VALUES (${cols.map(c => sqlLiteral(row[c])).join(',')});\n`;
+    }
+    sql += `\n`;
+  }
+
+  // reset SERIAL sequences to MAX(id) so the app's next INSERT after a restore doesn't collide with restored rows
+  const seqR = await pool.query(`
+    SELECT table_name, column_name, column_default FROM information_schema.columns
+    WHERE table_schema='public' AND column_default LIKE 'nextval(%'
+  `);
+  for (const row of seqR.rows) {
+    const m = row.column_default.match(/nextval\('([^']+)'/);
+    if (!m) continue;
+    sql += `SELECT setval('${m[1]}', COALESCE((SELECT MAX("${row.column_name}") FROM "${row.table_name}"), 1));\n`;
+  }
+
+  sql += `\nCOMMIT;\nSET session_replication_role = DEFAULT;\n`;
+  return sql;
+}
+async function sendBackupEmail() {
+  if (!process.env.SMTP_USER) { console.log('Backup skipped: SMTP_USER not configured'); return; }
+  const sql = await generateBackupSQL();
+  const gz = zlib.gzipSync(Buffer.from(sql, 'utf8'));
+  const dateStr = new Date().toISOString().slice(0, 10);
+  await transporter.sendMail({
+    from: process.env.SMTP_USER,
+    to: process.env.BACKUP_EMAIL_TO || process.env.SMTP_USER,
+    subject: `[Backup] EARTH Intranet database -- ${dateStr}`,
+    text: `แนบไฟล์สำรองข้อมูลฐานข้อมูลระบบ Intranet ประจำวันที่ ${dateStr}\n\nไฟล์เป็น .sql.gz -- แตกไฟล์แล้วรันผ่าน psql เพื่อกู้คืนข้อมูล (ดูคำอธิบายในตัวไฟล์)`,
+    attachments: [{ filename: `intranet-backup-${dateStr}.sql.gz`, content: gz }],
+  });
+  console.log('Backup email sent:', dateStr, `(${(gz.length / 1024).toFixed(1)} KB)`);
+}
+function scheduleBackup() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(2, 0, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  setTimeout(function run() {
+    sendBackupEmail().catch(e => console.error('Backup failed:', e.message));
+    setInterval(() => sendBackupEmail().catch(e => console.error('Backup failed:', e.message)), 24 * 60 * 60 * 1000);
+  }, next - now);
+  console.log('Next DB backup scheduled at', next.toISOString());
+}
+scheduleBackup();
+app.post('/api/admin/backup-now', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    await sendBackupEmail();
+    res.json({ ok: true, message: 'ส่งอีเมลสำรองข้อมูลแล้ว' });
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });

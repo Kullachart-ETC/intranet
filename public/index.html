@@ -516,6 +516,7 @@ tr:last-child td{border-bottom:none}
     <h3>🛠 จัดการข้อมูลระบบ</h3>
     <div id="sys-alert" style="margin-bottom:8px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="backupNow()">💾 สำรองข้อมูลทันที (ส่งอีเมล)</button>
       <button class="btn btn-primary" onclick="seedLeaveTest()">🧪 สร้างข้อมูลทดสอบการลา</button>
       <button class="btn btn-danger" onclick="resetLeave()">🗑 ล้างข้อมูลการลาทั้งหมด</button>
       <button class="btn btn-danger" onclick="resetBookings()">🗑 ล้างข้อมูลการจองห้องประชุม</button>
@@ -1024,6 +1025,7 @@ async function seedLeaveTest(){if(!confirm('สร้างข้อมูลท
 async function resetLeave(){if(!confirm('ลบข้อมูลการลาทั้งหมด?\n(ไม่ลบรายชื่อพนักงาน)'))return;try{const r=await api('/admin/reset-leave','POST');sysAlert(r.message,true);}catch(e){sysAlert('เกิดข้อผิดพลาด: '+e.message,false);}}
 async function resetBookings(){if(!confirm('ลบข้อมูลการจองห้องประชุมทั้งหมด?'))return;try{const r=await api('/admin/reset-bookings','POST');sysAlert(r.message,true);}catch(e){sysAlert('เกิดข้อผิดพลาด: '+e.message,false);}}
 async function resetAll(){if(!confirm('⚠️ ลบข้อมูลทั้งหมด รวมถึงพนักงาน?\nไม่สามารถกู้คืนได้!'))return;try{const r=await api('/admin/reset-data','POST');sysAlert(r.message,true);await loadUsers();}catch(e){sysAlert('เกิดข้อผิดพลาด: '+e.message,false);}}
+async function backupNow(){try{sysAlert('กำลังสำรองข้อมูลและส่งอีเมล...',true);const r=await api('/admin/backup-now','POST');sysAlert(r.message,true);}catch(e){sysAlert('สำรองข้อมูลไม่สำเร็จ: '+e.message,false);}}
 
 // Admin
 async function loadUsersForSelect(){
