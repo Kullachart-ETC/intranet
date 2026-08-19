@@ -80,6 +80,10 @@ function applyI18N(){
     const e = I18N_DICT[el.getAttribute('data-i18n-placeholder')];
     if(e) el.placeholder = e[lang] || e.th;
   });
+  document.querySelectorAll('[data-i18n-tip]').forEach(el=>{
+    const e = I18N_DICT[el.getAttribute('data-i18n-tip')];
+    if(e) el.setAttribute('data-tip', e[lang] || e.th);
+  });
   document.querySelectorAll('#lang-toggle').forEach(btn=>{
     btn.textContent = lang === 'en' ? 'ไทย' : 'EN';
   });
