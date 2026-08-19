@@ -45,6 +45,18 @@ const I18N_DICT = {
   'ph.username':  {th:'กรอก Username',  en:'Enter Username'},
   'ph.password':  {th:'กรอก Password',  en:'Enter Password'},
 
+  // change-password modal (login page)
+  'link.changepw':        {th:'เปลี่ยนรหัสผ่าน',           en:'Change Password'},
+  'modal.changepw.title': {th:'เปลี่ยนรหัสผ่าน',           en:'Change Password'},
+  'lbl.oldpassword':      {th:'รหัสผ่านเดิม',              en:'Current Password'},
+  'lbl.newpassword':      {th:'รหัสผ่านใหม่',              en:'New Password'},
+  'lbl.confirmpassword':  {th:'ยืนยันรหัสผ่านใหม่',         en:'Confirm New Password'},
+  'ph.oldpassword':       {th:'กรอกรหัสผ่านเดิม',          en:'Enter current password'},
+  'ph.newpassword':       {th:'อย่างน้อย 6 ตัวอักษร',       en:'At least 6 characters'},
+  'ph.confirmpassword':   {th:'กรอกรหัสผ่านใหม่อีกครั้ง',   en:'Re-enter new password'},
+  'btn.cancel':           {th:'ยกเลิก',                    en:'Cancel'},
+  'btn.savepw':           {th:'บันทึก',                    en:'Save'},
+
   // index.html quick-links tiles
   'ql.leave':       {th:'ใบลาออนไลน์',     en:'Online Leave'},
   'ql.meeting':     {th:'จองห้องประชุม',   en:'Book Meeting Room'},

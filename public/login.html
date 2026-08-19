@@ -154,6 +154,18 @@ body::after{
   text-align:center;
   margin-top:10px;
 }
+.change-pw-link{display:block;margin:12px auto 0;background:none;border:none;color:#1a5fa8;font-size:12.5px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:4px}
+.change-pw-link:hover{color:#164E8F}
+.pw-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,45,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
+.pw-overlay.open{display:flex}
+.pw-card{position:relative;background:#fff;border-radius:14px;padding:28px 28px 24px;width:380px;max-width:100%;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.pw-card h3{font-size:17px;color:#1a1a18;margin-bottom:16px;text-align:center}
+.success-box{background:#eafaf1;border:1px solid #b7e4c7;color:#1a7a4c;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;text-align:center}
+.pw-card .input-wrap,.pw-card .form-label{width:100%}
+.pw-actions{display:flex;gap:10px;margin-top:8px}
+.pw-actions .btn-login{width:100%;margin:0}
+.btn-secondary{background:#F0F2F5!important;color:#333!important;box-shadow:none!important}
+.btn-secondary:hover{background:#E4E7EC!important}
 #orbit-group{transform-box:fill-box;transform-origin:50% 50%;animation:orbitSpin 240s linear infinite}
 @keyframes orbitSpin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){
@@ -216,8 +228,42 @@ body::after{
     <button type="button" class="input-eye-toggle" onclick="togglePasswordVisibility()" aria-label="แสดง/ซ่อนรหัสผ่าน"><i class="ti ti-eye" id="eye-icon" aria-hidden="true"></i></button>
   </div>
   <button class="btn-login" data-i18n="btn.login" onclick="login()">เข้าสู่ระบบ</button>
+  <button type="button" class="change-pw-link" onclick="openChangePwModal()" data-i18n="link.changepw">เปลี่ยนรหัสผ่าน</button>
   <div class="footer-note"><img class="slogan-img challenge" src="/slogan-challenge.png" alt="CHALLENGE & CHANGE + GRIT"></div>
 </div>
+
+<div class="pw-overlay" id="pw-modal" onclick="if(event.target===this)closeChangePwModal()">
+  <div class="pw-card">
+    <h3 data-i18n="modal.changepw.title">เปลี่ยนรหัสผ่าน</h3>
+    <div class="error-box" id="pw-err"></div>
+    <div class="success-box" id="pw-success"></div>
+    <label class="form-label" data-i18n="lbl.username">ชื่อผู้ใช้งาน</label>
+    <div class="input-wrap">
+      <i class="ti ti-user input-icon" aria-hidden="true"></i>
+      <input class="form-input" type="text" id="pw-username" data-i18n-placeholder="ph.username" placeholder="กรอก Username" autocomplete="username">
+    </div>
+    <label class="form-label" data-i18n="lbl.oldpassword">รหัสผ่านเดิม</label>
+    <div class="input-wrap">
+      <i class="ti ti-lock input-icon" aria-hidden="true"></i>
+      <input class="form-input" type="password" id="pw-old" data-i18n-placeholder="ph.oldpassword" placeholder="กรอกรหัสผ่านเดิม" autocomplete="current-password">
+    </div>
+    <label class="form-label" data-i18n="lbl.newpassword">รหัสผ่านใหม่</label>
+    <div class="input-wrap">
+      <i class="ti ti-lock input-icon" aria-hidden="true"></i>
+      <input class="form-input" type="password" id="pw-new" data-i18n-placeholder="ph.newpassword" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password">
+    </div>
+    <label class="form-label" data-i18n="lbl.confirmpassword">ยืนยันรหัสผ่านใหม่</label>
+    <div class="input-wrap">
+      <i class="ti ti-lock input-icon" aria-hidden="true"></i>
+      <input class="form-input" type="password" id="pw-confirm" data-i18n-placeholder="ph.confirmpassword" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitChangePw()">
+    </div>
+    <div class="pw-actions">
+      <button type="button" class="btn-login btn-secondary" onclick="closeChangePwModal()" data-i18n="btn.cancel">ยกเลิก</button>
+      <button type="button" class="btn-login" onclick="submitChangePw()" data-i18n="btn.savepw">บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <script>
 async function login(){
   const username=document.getElementById('username').value.trim();
@@ -238,6 +284,39 @@ function togglePasswordVisibility(){
   const isHidden=pw.type==='password';
   pw.type=isHidden?'text':'password';
   icon.className=isHidden?'ti ti-eye-off':'ti ti-eye';
+}
+function openChangePwModal(){
+  document.getElementById('pw-username').value=document.getElementById('username').value.trim();
+  document.getElementById('pw-old').value='';
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-confirm').value='';
+  document.getElementById('pw-err').style.display='none';
+  document.getElementById('pw-success').style.display='none';
+  document.getElementById('pw-modal').classList.add('open');
+}
+function closeChangePwModal(){
+  document.getElementById('pw-modal').classList.remove('open');
+}
+async function submitChangePw(){
+  const username=document.getElementById('pw-username').value.trim();
+  const oldPw=document.getElementById('pw-old').value;
+  const newPw=document.getElementById('pw-new').value;
+  const confirmPw=document.getElementById('pw-confirm').value;
+  const err=document.getElementById('pw-err');
+  const success=document.getElementById('pw-success');
+  err.style.display='none';success.style.display='none';
+  if(!username||!oldPw||!newPw||!confirmPw){err.textContent='กรุณากรอกข้อมูลให้ครบ';err.style.display='block';return;}
+  if(newPw.length<6){err.textContent='รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร';err.style.display='block';return;}
+  if(newPw!==confirmPw){err.textContent='รหัสผ่านใหม่ไม่ตรงกัน';err.style.display='block';return;}
+  try{
+    const r=await fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,old_password:oldPw,new_password:newPw})});
+    const data=await r.json();
+    if(!r.ok){err.textContent=data.error;err.style.display='block';return;}
+    success.textContent='เปลี่ยนรหัสผ่านสำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่';
+    success.style.display='block';
+    document.getElementById('username').value=username;
+    setTimeout(()=>{closeChangePwModal();document.getElementById('password').focus();},1800);
+  }catch(e){err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่';err.style.display='block';}
 }
 </script>
 <script src="/i18n.js"></script>

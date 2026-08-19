@@ -399,6 +399,21 @@ app.post('/api/logout', async (req, res) => {
   if (uid) await pool.query('UPDATE users SET active_session_id=NULL WHERE id=$1 AND active_session_id=$2', [uid, req.sessionID]);
   req.session.destroy(() => res.json({ ok: true }));
 });
+// เปลี่ยนรหัสผ่านด้วยตนเองจากหน้า login (ไม่ต้อง login ก่อน — ยืนยันตัวตนด้วย username + รหัสผ่านเดิม)
+app.post('/api/change-password', async (req, res) => {
+  const { username, old_password, new_password } = req.body;
+  if (!username || !old_password || !new_password)
+    return res.status(400).json({ error: 'กรุณากรอกข้อมูลให้ครบ' });
+  if (String(new_password).length < 6)
+    return res.status(400).json({ error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร' });
+  const result = await pool.query('SELECT * FROM users WHERE username=$1', [username]);
+  const user = result.rows[0];
+  if (!user || !bcrypt.compareSync(old_password, user.password))
+    return res.status(401).json({ error: 'ชื่อผู้ใช้หรือรหัสผ่านเดิมไม่ถูกต้อง' });
+  const hash = bcrypt.hashSync(String(new_password), 10);
+  await pool.query('UPDATE users SET password=$1 WHERE id=$2', [hash, user.id]);
+  res.json({ ok: true });
+});
 app.get('/api/me', async (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'ไม่ได้เข้าสู่ระบบ' });
   try {
