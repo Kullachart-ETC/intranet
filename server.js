@@ -131,6 +131,33 @@ async function initDB() {
       created_at TIMESTAMP DEFAULT NOW()
     );
     ALTER TABLE documents ADD COLUMN IF NOT EXISTS title TEXT;
+
+    -- ระบบเช็คอิน-เอาท์ (attendance) สำหรับพนักงานต่างจังหวัด/หลายสาขา
+    CREATE TABLE IF NOT EXISTS work_sites (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      lat NUMERIC NOT NULL,
+      lng NUMERIC NOT NULL,
+      radius_m INTEGER DEFAULT 300,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS attendance_site_id INTEGER;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS attendance_tracking BOOLEAN DEFAULT false;
+    CREATE TABLE IF NOT EXISTS attendance_logs (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      type TEXT CHECK (type IN ('in','out')),
+      logged_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Bangkok'),
+      lat NUMERIC,
+      lng NUMERIC,
+      distance_m NUMERIC,
+      within_radius BOOLEAN,
+      site_id INTEGER,
+      site_name TEXT,
+      photo_data BYTEA,
+      mime_type TEXT,
+      note TEXT
+    );
   `);
 
   // Seed Admin
@@ -169,6 +196,34 @@ const SCHEDULES = {
   office:  { start:{h:8,m:30}, end:{h:17,m:40}, breakS:{h:12,m:0}, breakE:{h:13,m:0}, hpd: 8 + 10/60 },
   factory: { start:{h:8,m:0},  end:{h:17,m:0},  breakS:{h:12,m:0}, breakE:{h:13,m:0}, hpd: 8.0 }
 };
+
+// ระยะทางระหว่างพิกัด 2 จุด (เมตร) — ใช้เช็คว่าพนักงานเช็คอินอยู่ในรัศมีสาขาที่สังกัดหรือไม่
+function haversineMeters(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = d => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// วันที่ปัจจุบันตามเวลาไทย (UTC+7) แบบ YYYY-MM-DD — ใช้ Date.now() + offset เป็น ms ล้วนๆ ไม่พึ่ง
+// Date.prototype.getHours()/toLocaleString ที่ผลลัพธ์ขึ้นกับ timezone ของ Node process (ไม่แน่นอนบน Railway)
+function thaiTodayStr() {
+  return new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+// "YYYY-MM-DDTHH:MM:SS" (ตัวเลขเป็นเวลาไทยอยู่แล้ว จาก to_char ของ Postgres) -> นาทีนับจากเที่ยงคืน
+function hhmmToMinutes(isoLikeStr) {
+  return parseInt(isoLikeStr.slice(11, 13), 10) * 60 + parseInt(isoLikeStr.slice(14, 16), 10);
+}
+// แปลงตัวเลขเวลาไทย (string) เป็น Date ผ่าน Date.UTC() เพื่อการลบหาระยะเวลาที่แม่นยำ
+// โดยไม่สนใจ timezone ของ Node process เลย (ใช้แค่ผลต่างของค่า ไม่ได้อ้างอิงเวลาโลกจริง)
+function parseThaiLocalAsUTC(isoLikeStr) {
+  const [datePart, timePart] = isoLikeStr.split('T');
+  const [y, mo, d] = datePart.split('-').map(Number);
+  const [h, mi, s] = timePart.split(':').map(Number);
+  return new Date(Date.UTC(y, mo - 1, d, h, mi, s || 0));
+}
 
 // ค่าเริ่มต้น (backward compat)
 const WORK_HOURS_PER_DAY = SCHEDULES.office.hpd;
@@ -420,7 +475,9 @@ app.get('/api/me', async (req, res) => {
   try {
     const r = await pool.query('SELECT COUNT(*) FROM users WHERE manager_id=$1', [req.session.user.id]);
     const is_manager = parseInt(r.rows[0].count) > 0;
-    res.json({ ...req.session.user, is_manager });
+    // query สดทุกครั้งเพราะ admin อาจเพิ่งเปิด/ปิด attendance_tracking ระหว่างที่ session ยังอยู่
+    const att = await pool.query('SELECT attendance_tracking, attendance_site_id FROM users WHERE id=$1', [req.session.user.id]);
+    res.json({ ...req.session.user, is_manager, attendance_tracking: att.rows[0]?.attendance_tracking || false, attendance_site_id: att.rows[0]?.attendance_site_id || null });
   } catch(e) {
     res.json(req.session.user);
   }
@@ -436,8 +493,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ======== API USERS ========
 app.get('/api/users', requireLogin, requireAdmin, async (req, res) => {
-  const r = await pool.query('SELECT id,username,name,dept,role,email,manager_id,start_date,annual_leave_quota,position,tel_ext,org_site,org_level,active_session_id FROM users ORDER BY id');
+  const r = await pool.query('SELECT id,username,name,dept,role,email,manager_id,start_date,annual_leave_quota,position,tel_ext,org_site,org_level,active_session_id,attendance_tracking,attendance_site_id FROM users ORDER BY id');
   res.json(r.rows);
+});
+// เปิด/ปิดการเช็คอิน-เอาท์ให้ user รายคน + ผูกสาขาที่สังกัด
+app.put('/api/users/:id/attendance', requireLogin, requireAdmin, async (req, res) => {
+  const { attendance_tracking, attendance_site_id } = req.body;
+  await pool.query('UPDATE users SET attendance_tracking=$1, attendance_site_id=$2 WHERE id=$3', [!!attendance_tracking, attendance_site_id || null, req.params.id]);
+  res.json({ ok: true });
 });
 // เคลียร์ session ค้างของ user (บังคับออกจากระบบเครื่องเดิม เพื่อให้ login ที่อื่นได้ทันที)
 app.put('/api/users/:id/force-logout', requireLogin, requireAdmin, async (req, res) => {
@@ -2210,6 +2273,155 @@ app.post('/api/admin/reset-data', requireLogin, requireAdmin, async (req, res) =
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// ======== ATTENDANCE (เช็คอิน-เอาท์ พนักงานหลายสาขา) ========
+async function canViewAttendanceOf(viewerId, viewerRole, targetUserId) {
+  if (viewerRole === 'admin') return true;
+  if (viewerId === targetUserId) return true;
+  const r = await pool.query('SELECT manager_id FROM users WHERE id=$1', [targetUserId]);
+  return r.rows[0]?.manager_id === viewerId;
+}
+
+// -- Admin: จัดการสาขา (ชื่อ + พิกัด + รัศมีที่ยอมรับ) --
+app.get('/api/admin/work-sites', requireLogin, requireAdmin, async (req, res) => {
+  const r = await pool.query('SELECT * FROM work_sites ORDER BY name');
+  res.json(r.rows);
+});
+app.post('/api/admin/work-sites', requireLogin, requireAdmin, async (req, res) => {
+  const { name, lat, lng, radius_m } = req.body;
+  if (!name || lat === undefined || lng === undefined) return res.status(400).json({ error: 'กรอกข้อมูลให้ครบ' });
+  await pool.query('INSERT INTO work_sites (name,lat,lng,radius_m) VALUES ($1,$2,$3,$4)', [name, lat, lng, radius_m || 300]);
+  res.json({ ok: true });
+});
+app.put('/api/admin/work-sites/:id', requireLogin, requireAdmin, async (req, res) => {
+  const { name, lat, lng, radius_m } = req.body;
+  await pool.query('UPDATE work_sites SET name=$1,lat=$2,lng=$3,radius_m=$4 WHERE id=$5', [name, lat, lng, radius_m || 300, req.params.id]);
+  res.json({ ok: true });
+});
+app.delete('/api/admin/work-sites/:id', requireLogin, requireAdmin, async (req, res) => {
+  await pool.query('DELETE FROM work_sites WHERE id=$1', [req.params.id]);
+  res.json({ ok: true });
+});
+
+// -- Employee: เช็คอิน / เช็คเอาท์ --
+async function recordAttendance(req, res, type) {
+  try {
+    const uid = req.session.user.id;
+    const userR = await pool.query('SELECT attendance_tracking, attendance_site_id FROM users WHERE id=$1', [uid]);
+    const user = userR.rows[0];
+    if (!user || !user.attendance_tracking)
+      return res.status(403).json({ error: 'บัญชีนี้ไม่ได้เปิดใช้งานระบบเช็คอิน-เอาท์' });
+
+    const { lat, lng, note } = req.body;
+    if (lat === undefined || lng === undefined)
+      return res.status(400).json({ error: 'ไม่พบพิกัด GPS กรุณาอนุญาตการเข้าถึงตำแหน่งของเบราว์เซอร์' });
+    const latN = parseFloat(lat), lngN = parseFloat(lng);
+
+    let distance_m = null, within_radius = null, site_id = null, site_name = null;
+    if (user.attendance_site_id) {
+      const siteR = await pool.query('SELECT * FROM work_sites WHERE id=$1', [user.attendance_site_id]);
+      const site = siteR.rows[0];
+      if (site) {
+        distance_m = haversineMeters(latN, lngN, parseFloat(site.lat), parseFloat(site.lng));
+        within_radius = distance_m <= site.radius_m;
+        site_id = site.id;
+        site_name = site.name;
+      }
+    }
+
+    await pool.query(
+      `INSERT INTO attendance_logs (user_id,type,lat,lng,distance_m,within_radius,site_id,site_name,photo_data,mime_type,note)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [uid, type, latN, lngN, distance_m, within_radius, site_id, site_name,
+       req.file ? req.file.buffer : null, req.file ? req.file.mimetype : null, note || null]
+    );
+    res.json({ ok: true, within_radius, distance_m: distance_m !== null ? Math.round(distance_m) : null, site_name });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
+app.post('/api/attendance/check-in', requireLogin, docUpload.single('photo'), (req, res) => recordAttendance(req, res, 'in'));
+app.post('/api/attendance/check-out', requireLogin, docUpload.single('photo'), (req, res) => recordAttendance(req, res, 'out'));
+
+app.get('/api/attendance/today', requireLogin, async (req, res) => {
+  // logged_at เก็บเป็น "เวลาไทยตรงๆ" อยู่แล้ว (ดู schema: NOW() AT TIME ZONE 'Asia/Bangkok')
+  // ให้ Postgres format เป็น string ตรงๆ แทนที่จะปล่อยให้ pg parse เป็น JS Date object
+  // (การ parse ของ pg/JS ขึ้นกับ timezone ของ Node process ซึ่งไม่แน่นอนบน Railway)
+  const r = await pool.query(
+    `SELECT id, type, to_char(logged_at,'YYYY-MM-DD"T"HH24:MI:SS') as logged_at,
+            within_radius, distance_m, site_name, note
+     FROM attendance_logs WHERE user_id=$1 AND logged_at::date=$2 ORDER BY logged_at`,
+    [req.session.user.id, thaiTodayStr()]
+  );
+  res.json(r.rows);
+});
+
+app.get('/api/attendance/photo/:id', requireLogin, async (req, res) => {
+  const r = await pool.query('SELECT photo_data, mime_type, user_id FROM attendance_logs WHERE id=$1', [req.params.id]);
+  const log = r.rows[0];
+  if (!log || !log.photo_data) return res.status(404).end();
+  const me = req.session.user;
+  if (!(await canViewAttendanceOf(me.id, me.role, log.user_id))) return res.status(403).end();
+  res.set('Content-Type', log.mime_type || 'image/jpeg');
+  res.send(log.photo_data);
+});
+
+// -- รายงาน: admin เห็นทุกคน, หัวหน้าเห็นเฉพาะตัวเอง+ลูกทีมตรง --
+app.get('/api/attendance/report', requireLogin, async (req, res) => {
+  const me = req.session.user;
+  const isAdmin = me.role === 'admin';
+  const from = req.query.from || thaiTodayStr();
+  const to = req.query.to || from;
+  const scope = isAdmin ? '' : 'AND (al.user_id=$3 OR u.manager_id=$3)';
+  const params = isAdmin ? [from, to] : [from, to, me.id];
+
+  // ดึง logged_at เป็น string ("YYYY-MM-DDTHH:MM:SS") ตรงๆ จาก Postgres แทนการปล่อยให้ pg
+  // parse เป็น JS Date object ซึ่งตีความ timezone ต่างกันได้ตาม Node process — ใช้ string ล้วนๆ
+  // ในการจัดกลุ่ม/เทียบเวลา จะได้ไม่ขึ้นกับ timezone ของเครื่องที่รัน server เลย
+  const r = await pool.query(
+    `SELECT al.id, al.user_id, al.type, to_char(al.logged_at,'YYYY-MM-DD"T"HH24:MI:SS') as logged_at,
+            al.within_radius, al.distance_m, al.site_name, al.note,
+            u.name as user_name, u.dept, u.work_schedule
+     FROM attendance_logs al JOIN users u ON al.user_id=u.id
+     WHERE al.logged_at::date BETWEEN $1 AND $2 ${scope}
+     ORDER BY al.user_id, al.logged_at`,
+    params
+  );
+
+  // จัดกลุ่มเป็นรายวันต่อคน: หา check-in แรกสุด, check-out ล่าสุด, คำนวณชั่วโมงทำงาน + สถานะมาสาย
+  const groups = {};
+  for (const row of r.rows) {
+    const dateKey = row.logged_at.slice(0, 10);
+    const key = `${row.user_id}_${dateKey}`;
+    if (!groups[key]) groups[key] = { user_id: row.user_id, user_name: row.user_name, dept: row.dept, work_schedule: row.work_schedule, date: dateKey, checkIn: null, checkOut: null, logs: [] };
+    groups[key].logs.push(row);
+    if (row.type === 'in' && (!groups[key].checkIn || row.logged_at < groups[key].checkIn.logged_at)) groups[key].checkIn = row;
+    if (row.type === 'out' && (!groups[key].checkOut || row.logged_at > groups[key].checkOut.logged_at)) groups[key].checkOut = row;
+  }
+
+  const result = Object.values(groups).map(g => {
+    let hours = null, late = false;
+    const sch = SCHEDULES[g.work_schedule] || SCHEDULES.office;
+    if (g.checkIn) {
+      late = hhmmToMinutes(g.checkIn.logged_at) > (sch.start.h * 60 + sch.start.m);
+    }
+    if (g.checkIn && g.checkOut) {
+      hours = (parseThaiLocalAsUTC(g.checkOut.logged_at) - parseThaiLocalAsUTC(g.checkIn.logged_at)) / 3600000;
+    }
+    return {
+      user_id: g.user_id, user_name: g.user_name, dept: g.dept, date: g.date,
+      check_in: g.checkIn ? g.checkIn.logged_at : null,
+      check_out: g.checkOut ? g.checkOut.logged_at : null,
+      check_in_within_radius: g.checkIn ? g.checkIn.within_radius : null,
+      check_out_within_radius: g.checkOut ? g.checkOut.within_radius : null,
+      hours: hours !== null ? Math.round(hours * 100) / 100 : null,
+      late,
+      logs: g.logs.map(l => ({ id: l.id, type: l.type, logged_at: l.logged_at, within_radius: l.within_radius, distance_m: l.distance_m, site_name: l.site_name, note: l.note })),
+    };
+  }).sort((a, b) => (a.date === b.date ? a.user_name.localeCompare(b.user_name) : b.date.localeCompare(a.date)));
+
+  res.json(result);
 });
 
 // ======== DATABASE BACKUP (emailed daily, since Railway Postgres has no automatic backup on its own) ========

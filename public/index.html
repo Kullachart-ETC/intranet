@@ -313,6 +313,7 @@ tr:last-child td{border-bottom:none}
     <button data-i18n="idx.about" onclick="window.location.href='/about.html'">🏢 เกี่ยวกับเรา</button>
     <button id="nav-calendar-btn" data-i18n="idx.calendar" onclick="showPage('calendar',this)">📅 ปฏิทินงาน</button>
     <button id="nav-board-btn" class="active" data-i18n="idx.board" onclick="showPage('board',this)">📢 ประชาสัมพันธ์</button>
+    <button id="attendance-report-btn" onclick="showPage('attendance',this)" style="display:none">🕐 เช็คอิน-เอาท์</button>
     <button id="admin-btn" onclick="showPage('admin',this)" style="display:none">⚙️ จัดการผู้ใช้</button>
   </nav>
   <div class="user-area">
@@ -365,6 +366,16 @@ tr:last-child td{border-bottom:none}
   <div style="position:relative;z-index:1">
     <div class="page-header"><h2 style="color:#fff">Board ประชาสัมพันธ์</h2>
       <button class="btn btn-primary" data-i18n="btn.newpost" onclick="openModal('post-modal')">+ โพสต์ใหม่</button>
+    </div>
+    <div class="isms-card" id="attendance-widget" style="display:none;margin-bottom:1.25rem">
+      <h3>🕐 เช็คอิน-เอาท์วันนี้</h3>
+      <div id="att-status" style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:10px">กำลังโหลด...</div>
+      <input type="file" id="att-photo" accept="image/*" capture="user" style="display:none" onchange="attPhotoSelected()">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" id="att-checkin-btn" onclick="attTriggerCheckin('in')" style="display:none">📷 เช็คอินเข้างาน</button>
+        <button class="btn btn-primary" id="att-checkout-btn" onclick="attTriggerCheckin('out')" style="display:none">📷 เช็คเอาท์ออกงาน</button>
+      </div>
+      <textarea id="att-note" placeholder="หมายเหตุ (ถ้ามี เช่น ออกพื้นที่ลูกค้า)" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:13px;resize:vertical;min-height:36px"></textarea>
     </div>
     <div class="board-layout">
       <div class="posts-grid" id="posts-list"><div class="loading" style="color:#fff">กำลังโหลด...</div></div>
@@ -478,6 +489,24 @@ tr:last-child td{border-bottom:none}
   <div id="leave-report" class="leave-tab" style="display:none"><div class="loading">กำลังโหลด...</div></div>
 </div>
 
+<!-- ATTENDANCE REPORT -->
+<div id="page-attendance" class="page">
+  <div class="page-header"><h2>🕐 รายงานเช็คอิน-เอาท์</h2></div>
+  <div class="admin-section">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-row" style="margin:0"><label>จากวันที่</label><input type="date" id="att-report-from"></div>
+      <div class="form-row" style="margin:0"><label>ถึงวันที่</label><input type="date" id="att-report-to"></div>
+      <button class="btn btn-primary" onclick="loadAttendanceReport()">ค้นหา</button>
+    </div>
+  </div>
+  <div class="admin-section">
+    <div class="table-wrap"><table>
+      <thead><tr><th>วันที่</th><th>พนักงาน</th><th>ฝ่าย</th><th>เช็คอิน</th><th>เช็คเอาท์</th><th>ชั่วโมงทำงาน</th><th>สถานะ</th><th>รูป</th></tr></thead>
+      <tbody id="att-report-body"><tr><td colspan="8" style="text-align:center;color:#aaa">กำลังโหลด...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
 <!-- ADMIN -->
 <div id="page-admin" class="page">
   <div class="page-header"><h2>จัดการผู้ใช้งาน</h2></div>
@@ -524,10 +553,26 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
   <div class="admin-section">
+    <h3>🕐 จัดการสาขา (สำหรับเช็คอิน-เอาท์)</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:10px">ปักหมุดที่ตั้งสาขาใน Google Maps แล้ว copy พิกัด lat/lng มาใส่ — ทำครั้งเดียวต่อสาขา</p>
+    <div id="site-alert"></div>
+    <div class="admin-form-grid">
+      <div class="form-row" style="margin:0"><label>ชื่อสาขา</label><input id="new-site-name" type="text" placeholder="สาขาเชียงใหม่"></div>
+      <div class="form-row" style="margin:0"><label>Latitude</label><input id="new-site-lat" type="text" placeholder="18.7883"></div>
+      <div class="form-row" style="margin:0"><label>Longitude</label><input id="new-site-lng" type="text" placeholder="98.9853"></div>
+      <div class="form-row" style="margin:0"><label>รัศมี (เมตร)</label><input id="new-site-radius" type="number" value="300"></div>
+    </div>
+    <button class="btn btn-primary" onclick="addWorkSite()" style="margin-top:8px">+ เพิ่มสาขา</button>
+    <div class="table-wrap" style="margin-top:14px"><table>
+      <thead><tr><th>ชื่อสาขา</th><th>Latitude</th><th>Longitude</th><th>รัศมี (ม.)</th><th>จัดการ</th></tr></thead>
+      <tbody id="sites-table"><tr><td colspan="5" style="text-align:center;color:#aaa">กำลังโหลด...</td></tr></tbody>
+    </table></div>
+  </div>
+  <div class="admin-section">
     <h3>รายชื่อผู้ใช้ทั้งหมด</h3>
     <div class="table-wrap"><table>
-      <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>ฝ่าย</th><th>Email</th><th>หัวหน้า</th><th>โควต้าลา</th><th>สิทธิ์</th><th>จัดการ</th></tr></thead>
-      <tbody id="users-table"><tr><td colspan="8" style="text-align:center;color:#aaa">กำลังโหลด...</td></tr></tbody>
+      <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>ฝ่าย</th><th>Email</th><th>หัวหน้า</th><th>โควต้าลา</th><th>สิทธิ์</th><th>เช็คอิน-เอาท์</th><th>จัดการ</th></tr></thead>
+      <tbody id="users-table"><tr><td colspan="9" style="text-align:center;color:#aaa">กำลังโหลด...</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -716,7 +761,7 @@ const MONTHS_TH=['มกราคม','กุมภาพันธ์','มี�
 const TAG_MAP={announce:{cls:'tag-announce',label:'ประกาศ'},event:{cls:'tag-event',label:'กิจกรรม'},urgent:{cls:'tag-urgent',label:'ด่วน'},welfare:{cls:'tag-welfare',label:'สวัสดิการ'}};
 const LEAVE_NAMES={sick:'ลาป่วย',annual:'ลาพักร้อน',personal:'ลากิจจำเป็น',personal_special:'ลากิจพิเศษ',maternity:'ลาคลอด',ordain:'ลาบวช',military:'ลาราชการทหาร',marriage:'ลาสมรส',work_injury:'ลาป่วยเนื่องจากงาน',unpaid:'ลาตัดเงิน'};
 
-let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[],teamCalYear:new Date().getFullYear(),teamCalMonth:new Date().getMonth(),teamLeaves:[],myLeaves:[]};
+let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[],teamCalYear:new Date().getFullYear(),teamCalMonth:new Date().getMonth(),teamLeaves:[],myLeaves:[],workSites:[]};
 
 const $=id=>document.getElementById(id);
 function todayStr(){const t=new Date();return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;}
@@ -730,7 +775,8 @@ function showPage(id,btn){
   if(id==='calendar')renderCalendar();
   if(id==='rooms')renderRooms();
   if(id==='leave')loadLeaveQuota();
-  if(id==='admin'){loadUsers();loadUsersForSelect();}
+  if(id==='admin'){loadWorkSites().then(loadUsers);loadUsersForSelect();}
+  if(id==='attendance'){initAttendanceReportDates();loadAttendanceReport();}
 }
 function goToLeave(){
   showPage('leave',null);
@@ -1037,10 +1083,45 @@ async function loadUsersForSelect(){
 async function loadUsers(){
   const users=await api('/users');
   state.users=users;
+  const sites=state.workSites||[];
+  const siteOpts=uid=>'<option value="">-- ไม่ระบุสาขา --</option>'+sites.map(s=>`<option value="${s.id}" ${users.find(u=>u.id===uid).attendance_site_id===s.id?'selected':''}>${s.name}</option>`).join('');
   $('users-table').innerHTML=users.map(u=>{
     const mgr=users.find(x=>x.id===u.manager_id);
-    return`<tr><td><code>${u.username}</code></td><td>${u.name}${u.active_session_id?' <span title="กำลังเข้าสู่ระบบอยู่" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e24b4a;margin-left:4px"></span>':''}</td><td>${u.dept}</td><td style="font-size:12px">${u.email||'—'}</td><td style="font-size:12px">${mgr?mgr.name:'—'}</td><td>${u.annual_leave_quota||6} วัน</td><td><span class="role-badge role-${u.role}">${u.role}</span></td><td style="display:flex;gap:4px"><button class="btn btn-sm" onclick="openPwModal(${u.id})">รหัสผ่าน</button>${u.active_session_id?`<button class="btn btn-sm" onclick="forceLogout(${u.id})">ปลดล็อก session</button>`:''}<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">ลบ</button></td></tr>`;
+    return`<tr><td><code>${u.username}</code></td><td>${u.name}${u.active_session_id?' <span title="กำลังเข้าสู่ระบบอยู่" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e24b4a;margin-left:4px"></span>':''}</td><td>${u.dept}</td><td style="font-size:12px">${u.email||'—'}</td><td style="font-size:12px">${mgr?mgr.name:'—'}</td><td>${u.annual_leave_quota||6} วัน</td><td><span class="role-badge role-${u.role}">${u.role}</span></td><td style="font-size:12px"><label style="display:flex;align-items:center;gap:4px;white-space:nowrap"><input type="checkbox" id="att-chk-${u.id}" ${u.attendance_tracking?'checked':''} onchange="saveUserAttendance(${u.id})"> เปิดใช้</label><select id="att-site-${u.id}" onchange="saveUserAttendance(${u.id})" style="margin-top:4px;font-size:11px;padding:2px">${siteOpts(u.id)}</select></td><td style="display:flex;gap:4px"><button class="btn btn-sm" onclick="openPwModal(${u.id})">รหัสผ่าน</button>${u.active_session_id?`<button class="btn btn-sm" onclick="forceLogout(${u.id})">ปลดล็อก session</button>`:''}<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">ลบ</button></td></tr>`;
   }).join('');
+}
+async function saveUserAttendance(uid){
+  const tracking=$('att-chk-'+uid).checked;
+  const siteId=$('att-site-'+uid).value||null;
+  try{await api('/users/'+uid+'/attendance','PUT',{attendance_tracking:tracking,attendance_site_id:siteId});}
+  catch(e){alert('บันทึกไม่สำเร็จ: '+e.message);}
+}
+async function loadWorkSites(){
+  try{
+    state.workSites=await api('/admin/work-sites');
+    $('sites-table').innerHTML=state.workSites.length?state.workSites.map(s=>
+      `<tr><td>${s.name}</td><td>${s.lat}</td><td>${s.lng}</td><td>${s.radius_m}</td><td><button class="btn btn-sm btn-danger" onclick="deleteWorkSite(${s.id})">ลบ</button></td></tr>`
+    ).join(''):'<tr><td colspan="5" style="text-align:center;color:#aaa">ยังไม่มีสาขา</td></tr>';
+  }catch(e){$('sites-table').innerHTML=`<tr><td colspan="5" style="text-align:center;color:#e24b4a">โหลดไม่สำเร็จ: ${e.message}</td></tr>`;}
+}
+async function addWorkSite(){
+  const alertEl=$('site-alert');alertEl.className='alert';alertEl.textContent='';
+  const name=$('new-site-name').value.trim();
+  const lat=parseFloat($('new-site-lat').value);
+  const lng=parseFloat($('new-site-lng').value);
+  const radius_m=parseInt($('new-site-radius').value)||300;
+  if(!name||isNaN(lat)||isNaN(lng)){alertEl.className='alert alert-err';alertEl.textContent='กรอกชื่อสาขาและพิกัด lat/lng ให้ครบ';return;}
+  try{
+    await api('/admin/work-sites','POST',{name,lat,lng,radius_m});
+    alertEl.className='alert alert-ok';alertEl.textContent='เพิ่มสาขาสำเร็จ';
+    $('new-site-name').value='';$('new-site-lat').value='';$('new-site-lng').value='';$('new-site-radius').value=300;
+    await loadWorkSites();await loadUsers();
+  }catch(e){alertEl.className='alert alert-err';alertEl.textContent=e.message;}
+}
+async function deleteWorkSite(id){
+  if(!confirm('ลบสาขานี้? พนักงานที่ผูกกับสาขานี้จะไม่มีสาขาอ้างอิงอีกต่อไป'))return;
+  await api('/admin/work-sites/'+id,'DELETE');
+  await loadWorkSites();await loadUsers();
 }
 async function addUser(){
   const alertEl=$('admin-alert');alertEl.className='alert';alertEl.textContent='';
@@ -1154,6 +1235,92 @@ async function loadLeave(){
   await loadPendingLeave();
 }
 
+// ===== ATTENDANCE (เช็คอิน-เอาท์) =====
+let attPendingType=null, attPendingCoords=null;
+async function loadAttendanceToday(){
+  const widget=$('attendance-widget');
+  if(!state.me||!state.me.attendance_tracking){widget.style.display='none';return;}
+  widget.style.display='';
+  try{
+    const logs=await api('/attendance/today');
+    const lastIn=[...logs].reverse().find(l=>l.type==='in');
+    const lastOut=[...logs].reverse().find(l=>l.type==='out');
+    $('att-checkin-btn').style.display=lastIn?'none':'';
+    $('att-checkout-btn').style.display=(lastIn&&!lastOut)?'':'none';
+    if(lastIn&&lastOut){
+      $('att-status').textContent=`✅ วันนี้เช็คอิน ${lastIn.logged_at.slice(11,16)} น. และเช็คเอาท์ ${lastOut.logged_at.slice(11,16)} น. แล้ว`;
+    }else if(lastIn){
+      $('att-status').textContent=`เช็คอินแล้วเมื่อ ${lastIn.logged_at.slice(11,16)} น. — อย่าลืมเช็คเอาท์ตอนเลิกงาน`;
+    }else{
+      $('att-status').textContent='ยังไม่ได้เช็คอินวันนี้';
+    }
+  }catch(e){$('att-status').textContent='โหลดสถานะไม่สำเร็จ: '+e.message;}
+}
+function attTriggerCheckin(type){
+  if(!navigator.geolocation){alert('เบราว์เซอร์นี้ไม่รองรับการระบุตำแหน่ง');return;}
+  $('att-status').textContent='กำลังขอตำแหน่ง GPS...';
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      attPendingType=type;
+      attPendingCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      $('att-photo').click();
+    },
+    err=>{
+      $('att-status').textContent='';
+      alert('ไม่สามารถดึงตำแหน่ง GPS ได้ กรุณาอนุญาตการเข้าถึงตำแหน่งของเบราว์เซอร์: '+err.message);
+    },
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
+function initAttendanceReportDates(){
+  if($('att-report-from').value)return;
+  $('att-report-from').value=todayStr();
+  $('att-report-to').value=todayStr();
+}
+async function loadAttendanceReport(){
+  const from=$('att-report-from').value||todayStr();
+  const to=$('att-report-to').value||from;
+  const body=$('att-report-body');
+  body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#aaa">กำลังโหลด...</td></tr>';
+  try{
+    const rows=await api(`/attendance/report?from=${from}&to=${to}`);
+    if(!rows.length){body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#aaa">ไม่พบข้อมูล</td></tr>';return;}
+    body.innerHTML=rows.map(r=>{
+      const inTxt=r.check_in?r.check_in.slice(11,16)+(r.check_in_within_radius===false?' ⚠️':''):'—';
+      const outTxt=r.check_out?r.check_out.slice(11,16)+(r.check_out_within_radius===false?' ⚠️':''):'—';
+      const status=r.late?'<span style="color:#e24b4a;font-weight:600">มาสาย</span>':(r.check_in?'<span style="color:#0F6E56">ตรงเวลา</span>':'—');
+      const photos=r.logs.filter(l=>l.type==='in'||l.type==='out').map(l=>`<a href="/api/attendance/photo/${l.id}" target="_blank" title="${l.type==='in'?'เข้า':'ออก'} ${l.logged_at.slice(11,16)}">📷${l.type==='in'?'เข้า':'ออก'}</a>`).join(' ');
+      return `<tr><td>${r.date}</td><td>${r.user_name}</td><td>${r.dept||'-'}</td><td>${inTxt}</td><td>${outTxt}</td><td>${r.hours!==null?r.hours+' ชม.':'—'}</td><td>${status}</td><td style="font-size:12px">${photos||'—'}</td></tr>`;
+    }).join('');
+  }catch(e){body.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#e24b4a">โหลดไม่สำเร็จ: ${e.message}</td></tr>`;}
+}
+async function attPhotoSelected(){
+  const fileInput=$('att-photo');
+  const file=fileInput.files[0];
+  if(!file||!attPendingType||!attPendingCoords)return;
+  $('att-status').textContent='กำลังบันทึก...';
+  const fd=new FormData();
+  fd.append('photo',file);
+  fd.append('lat',attPendingCoords.lat);
+  fd.append('lng',attPendingCoords.lng);
+  fd.append('note',$('att-note').value.trim());
+  try{
+    const r=await fetch('/api/attendance/check-'+attPendingType,{method:'POST',body:fd});
+    const data=await r.json();
+    if(!r.ok){alert(data.error);$('att-status').textContent='';return;}
+    let msg=attPendingType==='in'?'✅ เช็คอินสำเร็จ':'✅ เช็คเอาท์สำเร็จ';
+    if(data.within_radius===false)msg+=` (⚠️ อยู่ห่างจากสถานที่ทำงาน ${data.site_name||''} ประมาณ ${data.distance_m} เมตร)`;
+    $('att-status').textContent=msg;
+    $('att-note').value='';
+    fileInput.value='';
+    attPendingType=null;attPendingCoords=null;
+    await loadAttendanceToday();
+  }catch(e){
+    $('att-status').textContent='';
+    alert('เกิดข้อผิดพลาด: '+e.message);
+  }
+}
+
 // Init
 (async()=>{
   try{
@@ -1163,6 +1330,8 @@ async function loadLeave(){
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';}
     // แสดง tab รออนุมัติเฉพาะหัวหน้า (is_manager) หรือ admin
     if(state.me.is_manager||state.me.role==='admin'){$('approve-tab').style.display='';$('team-cal-tab').style.display='';}
+    if(state.me.is_manager||state.me.role==='admin'){$('attendance-report-btn').style.display='';}
+    loadAttendanceToday();
     await loadBoard();
     loadThaiEconNews();
     loadTechNews();
