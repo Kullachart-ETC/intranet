@@ -552,7 +552,7 @@ tr:last-child td{border-bottom:none}
       <button class="btn btn-danger" onclick="resetAll()" style="background:#7f1d1d">⚠️ ล้างข้อมูลทั้งหมด (รวมพนักงาน)</button>
     </div>
   </div>
-  <div class="admin-section">
+  <div class="admin-section" id="admin-sites-section" style="display:none">
     <h3>🕐 จัดการสาขา (สำหรับเช็คอิน-เอาท์)</h3>
     <p style="font-size:12px;color:#888;margin-bottom:10px">ปักหมุดที่ตั้งสาขาใน Google Maps แล้ว copy พิกัด lat/lng มาใส่ — ทำครั้งเดียวต่อสาขา</p>
     <div id="site-alert"></div>
@@ -571,7 +571,7 @@ tr:last-child td{border-bottom:none}
   <div class="admin-section">
     <h3>รายชื่อผู้ใช้ทั้งหมด</h3>
     <div class="table-wrap"><table>
-      <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>ฝ่าย</th><th>Email</th><th>หัวหน้า</th><th>โควต้าลา</th><th>สิทธิ์</th><th>เช็คอิน-เอาท์</th><th>จัดการ</th></tr></thead>
+      <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>ฝ่าย</th><th>Email</th><th>หัวหน้า</th><th>โควต้าลา</th><th>สิทธิ์</th><th id="att-col-header" style="display:none">เช็คอิน-เอาท์</th><th>จัดการ</th></tr></thead>
       <tbody id="users-table"><tr><td colspan="9" style="text-align:center;color:#aaa">กำลังโหลด...</td></tr></tbody>
     </table></div>
   </div>
@@ -753,6 +753,9 @@ tr:last-child td{border-bottom:none}
 </div>
 
 <script>
+// ปิดฟีเจอร์เช็คอิน-เอาท์ไว้ก่อน (กำลังหาวิธียืนยันตัวตนที่ดีกว่านี้) — โค้ด/schema/API ทั้งหมดยังอยู่ครบ
+// แค่ซ่อน UI ทุกจุดไว้ เปิดกลับมาได้ทันทีโดยเปลี่ยนค่านี้เป็น true
+const ATTENDANCE_ENABLED=false;
 const ROOMS=[{name:'VIP ROOM',cap:20,fac:'จอ LED 85", Whiteboard, VC'},{name:'Meeting Room 1',cap:10,fac:'TV 65", Whiteboard'},{name:'Meeting Room 2',cap:6,fac:'TV 55"'},{name:'Meeting Room 3',cap:30,fac:'จอ LED 98", เวที, Mic'}];
 const SLOTS=['08:00–09:00','09:00–10:00','10:00–11:00','11:00–12:00','13:00–14:00','14:00–15:00','15:00–16:00','16:00–17:00'];
 const EV_COLOR={work:'#1D9E75',meeting:'#0f2c6f',leave:'#185FA5',sick:'#A32D2D',wfh:'#534AB7',trip:'#BA7517'};
@@ -775,8 +778,13 @@ function showPage(id,btn){
   if(id==='calendar')renderCalendar();
   if(id==='rooms')renderRooms();
   if(id==='leave')loadLeaveQuota();
-  if(id==='admin'){loadWorkSites().then(loadUsers);loadUsersForSelect();}
-  if(id==='attendance'){initAttendanceReportDates();loadAttendanceReport();}
+  if(id==='admin'){
+    $('admin-sites-section').style.display=ATTENDANCE_ENABLED?'':'none';
+    $('att-col-header').style.display=ATTENDANCE_ENABLED?'':'none';
+    if(ATTENDANCE_ENABLED)loadWorkSites().then(loadUsers);else loadUsers();
+    loadUsersForSelect();
+  }
+  if(id==='attendance'&&ATTENDANCE_ENABLED){initAttendanceReportDates();loadAttendanceReport();}
 }
 function goToLeave(){
   showPage('leave',null);
@@ -1087,7 +1095,8 @@ async function loadUsers(){
   const siteOpts=uid=>'<option value="">-- ไม่ระบุสาขา --</option>'+sites.map(s=>`<option value="${s.id}" ${users.find(u=>u.id===uid).attendance_site_id===s.id?'selected':''}>${s.name}</option>`).join('');
   $('users-table').innerHTML=users.map(u=>{
     const mgr=users.find(x=>x.id===u.manager_id);
-    return`<tr><td><code>${u.username}</code></td><td>${u.name}${u.active_session_id?' <span title="กำลังเข้าสู่ระบบอยู่" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e24b4a;margin-left:4px"></span>':''}</td><td>${u.dept}</td><td style="font-size:12px">${u.email||'—'}</td><td style="font-size:12px">${mgr?mgr.name:'—'}</td><td>${u.annual_leave_quota||6} วัน</td><td><span class="role-badge role-${u.role}">${u.role}</span></td><td style="font-size:12px"><label style="display:flex;align-items:center;gap:4px;white-space:nowrap"><input type="checkbox" id="att-chk-${u.id}" ${u.attendance_tracking?'checked':''} onchange="saveUserAttendance(${u.id})"> เปิดใช้</label><select id="att-site-${u.id}" onchange="saveUserAttendance(${u.id})" style="margin-top:4px;font-size:11px;padding:2px">${siteOpts(u.id)}</select></td><td style="display:flex;gap:4px"><button class="btn btn-sm" onclick="openPwModal(${u.id})">รหัสผ่าน</button>${u.active_session_id?`<button class="btn btn-sm" onclick="forceLogout(${u.id})">ปลดล็อก session</button>`:''}<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">ลบ</button></td></tr>`;
+    const attCell=ATTENDANCE_ENABLED?`<td style="font-size:12px"><label style="display:flex;align-items:center;gap:4px;white-space:nowrap"><input type="checkbox" id="att-chk-${u.id}" ${u.attendance_tracking?'checked':''} onchange="saveUserAttendance(${u.id})"> เปิดใช้</label><select id="att-site-${u.id}" onchange="saveUserAttendance(${u.id})" style="margin-top:4px;font-size:11px;padding:2px">${siteOpts(u.id)}</select></td>`:'<td style="display:none"></td>';
+    return`<tr><td><code>${u.username}</code></td><td>${u.name}${u.active_session_id?' <span title="กำลังเข้าสู่ระบบอยู่" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e24b4a;margin-left:4px"></span>':''}</td><td>${u.dept}</td><td style="font-size:12px">${u.email||'—'}</td><td style="font-size:12px">${mgr?mgr.name:'—'}</td><td>${u.annual_leave_quota||6} วัน</td><td><span class="role-badge role-${u.role}">${u.role}</span></td>${attCell}<td style="display:flex;gap:4px"><button class="btn btn-sm" onclick="openPwModal(${u.id})">รหัสผ่าน</button>${u.active_session_id?`<button class="btn btn-sm" onclick="forceLogout(${u.id})">ปลดล็อก session</button>`:''}<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">ลบ</button></td></tr>`;
   }).join('');
 }
 async function saveUserAttendance(uid){
@@ -1239,7 +1248,7 @@ async function loadLeave(){
 let attPendingType=null, attPendingCoords=null;
 async function loadAttendanceToday(){
   const widget=$('attendance-widget');
-  if(!state.me||!state.me.attendance_tracking){widget.style.display='none';return;}
+  if(!ATTENDANCE_ENABLED||!state.me||!state.me.attendance_tracking){widget.style.display='none';return;}
   widget.style.display='';
   try{
     const logs=await api('/attendance/today');
@@ -1330,8 +1339,10 @@ async function attPhotoSelected(){
     if(state.me.role==='admin'){$('user-badge').classList.add('admin');$('admin-btn').style.display='';}
     // แสดง tab รออนุมัติเฉพาะหัวหน้า (is_manager) หรือ admin
     if(state.me.is_manager||state.me.role==='admin'){$('approve-tab').style.display='';$('team-cal-tab').style.display='';}
-    if(state.me.is_manager||state.me.role==='admin'){$('attendance-report-btn').style.display='';}
-    loadAttendanceToday();
+    if(ATTENDANCE_ENABLED){
+      if(state.me.is_manager||state.me.role==='admin'){$('attendance-report-btn').style.display='';}
+      loadAttendanceToday();
+    }
     await loadBoard();
     loadThaiEconNews();
     loadTechNews();
