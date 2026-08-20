@@ -95,10 +95,10 @@ function toggleLang(){
 }
 document.addEventListener('DOMContentLoaded', applyI18N);
 
-// Auto-logout after 30 minutes of no user activity (mouse/keyboard/touch/scroll)
+// Auto-logout after 1 hour of no user activity (mouse/keyboard/touch/scroll)
 (function(){
   if (/\/login/.test(location.pathname)) return;
-  const TIMEOUT_MS = 30 * 60 * 1000;
+  const TIMEOUT_MS = 60 * 60 * 1000;
   let timer;
   function doLogout(){
     fetch('/api/logout', { method: 'POST' }).finally(() => { location.href = '/login.html'; });
