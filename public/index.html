@@ -1390,9 +1390,11 @@ async function attPhotoSelected(){
     // โหลดจำนวนรออนุมัติ
     const pending=await api('/leave/pending');
     setPendingCount(pending.length);
-    // แจ้งเตือนแบบ popup ถ้ามีใบลารออนุมัติ (แสดงครั้งเดียวต่อ session)
-    if(pending.length && !sessionStorage.getItem('pendingLeavePopupShown')){
-      sessionStorage.setItem('pendingLeavePopupShown','1');
+    // แจ้งเตือนแบบ popup ถ้ามีใบลารออนุมัติ — โชว์ทุกครั้งที่เพิ่ง login ใหม่ (ไม่ใช่ทุกครั้งที่ refresh/เปลี่ยนหน้า)
+    // เคลียร์ flag ทันทีไม่ว่าจะมีรายการรออนุมัติหรือไม่ กัน flag ค้างไปโผล่ตอน refresh ครั้งถัดไป
+    const justLoggedIn=sessionStorage.getItem('justLoggedIn');
+    if(justLoggedIn)sessionStorage.removeItem('justLoggedIn');
+    if(pending.length && justLoggedIn){
       $('pending-popup-count').textContent=pending.length+' รายการ';
       openModal('pending-leave-popup');
     }

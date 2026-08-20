@@ -275,6 +275,7 @@ async function login(){
     const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
     const data=await r.json();
     if(!r.ok){err.textContent=data.error;err.style.display='block';return;}
+    sessionStorage.setItem('justLoggedIn','1');
     window.location.href='/';
   }catch(e){err.textContent='เกิดข้อผิดพลาด กรุณาลองใหม่';err.style.display='block';}
 }
