@@ -569,11 +569,17 @@ tr:last-child td{border-bottom:none}
     </table></div>
   </div>
   <div class="admin-section">
-    <h3>รายชื่อผู้ใช้ทั้งหมด</h3>
+    <h3>รายชื่อผู้ใช้ทั้งหมด <span id="users-count" style="font-weight:400;font-size:13px;color:#888"></span></h3>
+    <div class="form-row" style="margin:0 0 10px;max-width:280px"><input type="text" id="users-search" placeholder="ค้นหาชื่อ/username/ฝ่าย..." oninput="onUsersSearch()"></div>
     <div class="table-wrap"><table>
       <thead><tr><th>ชื่อผู้ใช้</th><th>ชื่อ</th><th>ฝ่าย</th><th>Email</th><th>หัวหน้า</th><th>โควต้าลา</th><th>สิทธิ์</th><th id="att-col-header" style="display:none">เช็คอิน-เอาท์</th><th>จัดการ</th></tr></thead>
       <tbody id="users-table"><tr><td colspan="9" style="text-align:center;color:#aaa">กำลังโหลด...</td></tr></tbody>
     </table></div>
+    <div style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:12px">
+      <button class="btn btn-sm" onclick="changeUsersPage(-1)">‹ ก่อนหน้า</button>
+      <span id="users-page-label" style="font-size:13px;color:#666"></span>
+      <button class="btn btn-sm" onclick="changeUsersPage(1)">ถัดไป ›</button>
+    </div>
   </div>
 </div>
 
@@ -764,7 +770,7 @@ const MONTHS_TH=['มกราคม','กุมภาพันธ์','มี�
 const TAG_MAP={announce:{cls:'tag-announce',label:'ประกาศ'},event:{cls:'tag-event',label:'กิจกรรม'},urgent:{cls:'tag-urgent',label:'ด่วน'},welfare:{cls:'tag-welfare',label:'สวัสดิการ'}};
 const LEAVE_NAMES={sick:'ลาป่วย',annual:'ลาพักร้อน',personal:'ลากิจจำเป็น',personal_special:'ลากิจพิเศษ',maternity:'ลาคลอด',ordain:'ลาบวช',military:'ลาราชการทหาร',marriage:'ลาสมรส',work_injury:'ลาป่วยเนื่องจากงาน',unpaid:'ลาตัดเงิน'};
 
-let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[],teamCalYear:new Date().getFullYear(),teamCalMonth:new Date().getMonth(),teamLeaves:[],myLeaves:[],workSites:[]};
+let state={posts:[],employees:[],events:[],bookings:[],selectedEmp:null,calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),pendingBooking:null,me:null,users:[],teamCalYear:new Date().getFullYear(),teamCalMonth:new Date().getMonth(),teamLeaves:[],myLeaves:[],workSites:[],userPage:1};
 
 const $=id=>document.getElementById(id);
 function todayStr(){const t=new Date();return`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;}
@@ -1088,12 +1094,44 @@ async function loadUsersForSelect(){
   const opts='<option value="">-- ไม่มีหัวหน้า --</option>'+users.map(u=>`<option value="${u.id}">${u.name} (${u.dept})</option>`).join('');
   $('new-manager').innerHTML=opts;
 }
+const USERS_PAGE_SIZE=25;
 async function loadUsers(){
   const users=await api('/users');
   state.users=users;
+  state.userPage=1;
+  renderUsersPage();
+}
+function onUsersSearch(){
+  state.userPage=1;
+  renderUsersPage();
+}
+function changeUsersPage(delta){
+  const filtered=filteredUsers();
+  const totalPages=Math.max(1,Math.ceil(filtered.length/USERS_PAGE_SIZE));
+  state.userPage=Math.min(totalPages,Math.max(1,(state.userPage||1)+delta));
+  renderUsersPage();
+}
+function filteredUsers(){
+  const q=($('users-search').value||'').trim().toLowerCase();
+  const users=state.users||[];
+  if(!q)return users;
+  return users.filter(u=>(u.username||'').toLowerCase().includes(q)||(u.name||'').toLowerCase().includes(q)||(u.dept||'').toLowerCase().includes(q));
+}
+function renderUsersPage(){
+  const users=state.users||[];
+  const filtered=filteredUsers();
+  const totalPages=Math.max(1,Math.ceil(filtered.length/USERS_PAGE_SIZE));
+  state.userPage=Math.min(totalPages,Math.max(1,state.userPage||1));
+  const start=(state.userPage-1)*USERS_PAGE_SIZE;
+  const pageUsers=filtered.slice(start,start+USERS_PAGE_SIZE);
+
+  $('users-count').textContent=`(${filtered.length}${filtered.length!==users.length?` จากทั้งหมด ${users.length}`:''} คน)`;
+  $('users-page-label').textContent=`หน้า ${state.userPage} / ${totalPages}`;
+
   const sites=state.workSites||[];
   const siteOpts=uid=>'<option value="">-- ไม่ระบุสาขา --</option>'+sites.map(s=>`<option value="${s.id}" ${users.find(u=>u.id===uid).attendance_site_id===s.id?'selected':''}>${s.name}</option>`).join('');
-  $('users-table').innerHTML=users.map(u=>{
+  if(!pageUsers.length){$('users-table').innerHTML='<tr><td colspan="9" style="text-align:center;color:#aaa">ไม่พบผู้ใช้</td></tr>';return;}
+  $('users-table').innerHTML=pageUsers.map(u=>{
     const mgr=users.find(x=>x.id===u.manager_id);
     const attCell=ATTENDANCE_ENABLED?`<td style="font-size:12px"><label style="display:flex;align-items:center;gap:4px;white-space:nowrap"><input type="checkbox" id="att-chk-${u.id}" ${u.attendance_tracking?'checked':''} onchange="saveUserAttendance(${u.id})"> เปิดใช้</label><select id="att-site-${u.id}" onchange="saveUserAttendance(${u.id})" style="margin-top:4px;font-size:11px;padding:2px">${siteOpts(u.id)}</select></td>`:'<td style="display:none"></td>';
     return`<tr><td><code>${u.username}</code></td><td>${u.name}${u.active_session_id?' <span title="กำลังเข้าสู่ระบบอยู่" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e24b4a;margin-left:4px"></span>':''}</td><td>${u.dept}</td><td style="font-size:12px">${u.email||'—'}</td><td style="font-size:12px">${mgr?mgr.name:'—'}</td><td>${u.annual_leave_quota||6} วัน</td><td><span class="role-badge role-${u.role}">${u.role}</span></td>${attCell}<td style="display:flex;gap:4px"><button class="btn btn-sm" onclick="openPwModal(${u.id})">รหัสผ่าน</button>${u.active_session_id?`<button class="btn btn-sm" onclick="forceLogout(${u.id})">ปลดล็อก session</button>`:''}<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">ลบ</button></td></tr>`;
